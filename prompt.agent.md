@@ -98,6 +98,9 @@ Ecco un piano dettagliato per implementare le funzionalità del blog e podcast u
     - Pianificare e implementare strategie di deployment continuo (CI/CD) per facilitare il rilascio di nuove funzionalità e aggiornamenti del blog in produzione.
     - Monitorare e gestire il cluster Kubernetes per garantire il corretto funzionamento del blog e risolvere eventuali problemi che emergono nel tempo.
     - Considerare l'uso di servizi gestiti di Kubernetes (es. Google Kubernetes Engine, Amazon EKS, Azure Kubernetes Service) per semplificare la gestione del cluster e concentrarsi sullo sviluppo del blog e dei podcast.
+35. **Tema e personalizzazione**
+    - Sviluppare un tema personalizzato per il blog utilizzando Tailwind CSS e DaisyUI, assicurandosi che sia responsive e accessibile.
+    - Consentire agli utenti di personalizzare l'aspetto del blog attraverso opzioni di tema o personalizzazione dell'interfaccia.
 
 Questo piano dettagliato suddivide il lavoro in task specifici e assegna priorità a ciascuno di essi, tenendo conto delle dipendenze tra i task e pianificando il lavoro in modo efficiente.
 
