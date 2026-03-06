@@ -1,4 +1,4 @@
-Ecco un piano dettagliato per implementare le funzionalità del blog e podcast utilizzando next.js 16, daisyui 5, prisma 7, sqlite3, dotenv, next-auth 4, tailwindcss 4, typescript, eslint, prettier, husky, lint-staged, commitlint, standard-version, semantic-release e github actions.
+Ecco un piano dettagliato per implementare le funzionalità del blog e podcast utilizzando next.js 16, daisyui 5, prisma 7, postgresql, dotenv, next-auth 4, tailwindcss 4, typescript, eslint, prettier, husky, lint-staged, commitlint, standard-version, semantic-release e github actions.
 1. **Setup del progetto**
    - Inizializzare un nuovo progetto Next.js 16 con TypeScript.
    - Configurare Tailwind CSS 4 e DaisyUI 5 per lo styling.
