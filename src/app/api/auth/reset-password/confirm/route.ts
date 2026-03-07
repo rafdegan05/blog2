@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod/v4";
+import { formatZodErrors } from "@/lib/validations";
+
+const resetConfirmSchema = z.object({
+  token: z.string().min(1, "Token is required"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(128, "Password must not exceed 128 characters")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
+});
 
 /**
  * POST /api/auth/reset-password/confirm
@@ -9,18 +22,14 @@ import { prisma } from "@/lib/prisma";
  */
 export async function POST(request: Request) {
   try {
-    const { token, password } = await request.json();
+    const body = await request.json();
 
-    if (!token || !password) {
-      return NextResponse.json({ error: "Token and password are required" }, { status: 400 });
+    const parsed = resetConfirmSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
     }
 
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
-        { status: 400 }
-      );
-    }
+    const { token, password } = parsed.data;
 
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { token },

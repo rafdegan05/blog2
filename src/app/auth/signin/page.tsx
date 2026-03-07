@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import SocialProviders from "@/components/SocialProviders";
+import { loginSchema, formatZodFieldErrors } from "@/lib/validations";
 
 function SignInForm() {
   const searchParams = useSearchParams();
@@ -16,6 +17,10 @@ function SignInForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [showResendVerification, setShowResendVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
 
   useEffect(() => {
     fetch("/api/providers")
@@ -41,13 +46,36 @@ function SignInForm() {
     return errorMessages[errorCode] || errorMessages.Default;
   };
 
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setResendMessage("");
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      setResendMessage(data.message || "Verification email sent.");
+    } catch {
+      setResendMessage("An error occurred. Please try again.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleCredentialSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
+    setFieldErrors({});
+    setShowResendVerification(false);
+    setResendMessage("");
     setLoading(true);
 
-    if (!email) {
-      setFormError("Please enter your email address.");
+    // Client-side Zod validation
+    const parsed = loginSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      setFieldErrors(formatZodFieldErrors(parsed.error));
       setLoading(false);
       return;
     }
@@ -61,7 +89,25 @@ function SignInForm() {
       });
 
       if (result?.error) {
-        setFormError("Invalid email or password. Please check your credentials and try again.");
+        // Check if the failure is due to unverified email
+        try {
+          const checkRes = await fetch("/api/auth/check-verification", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const checkData = await checkRes.json();
+          if (checkData.needsVerification) {
+            setFormError(
+              "Your email address has not been verified. Please check your inbox for the verification link."
+            );
+            setShowResendVerification(true);
+          } else {
+            setFormError("Invalid email or password. Please check your credentials and try again.");
+          }
+        } catch {
+          setFormError("Invalid email or password. Please check your credentials and try again.");
+        }
       } else if (result?.url) {
         window.location.href = result.url;
       }
@@ -82,7 +128,9 @@ function SignInForm() {
           </p>
 
           {(error || formError) && (
-            <div className="alert alert-error mb-4">
+            <div
+              className={`alert ${showResendVerification ? "alert-warning" : "alert-error"} mb-4`}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="stroke-current shrink-0 h-5 w-5"
@@ -97,6 +145,23 @@ function SignInForm() {
                 />
               </svg>
               <span>{formError || (error ? getErrorMessage(error) : "")}</span>
+            </div>
+          )}
+
+          {showResendVerification && (
+            <div className="flex flex-col items-center gap-2 mb-4">
+              <button
+                onClick={handleResendVerification}
+                className="btn btn-outline btn-sm btn-primary"
+                disabled={resendLoading}
+              >
+                {resendLoading ? (
+                  <span className="loading loading-spinner loading-xs" />
+                ) : (
+                  "Resend Verification Email"
+                )}
+              </button>
+              {resendMessage && <p className="text-sm text-info">{resendMessage}</p>}
             </div>
           )}
 
@@ -115,12 +180,17 @@ function SignInForm() {
               </label>
               <input
                 type="email"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${fieldErrors.email ? "input-error" : ""}`}
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+              {fieldErrors.email && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{fieldErrors.email}</span>
+                </label>
+              )}
             </div>
             <div className="form-control">
               <label className="label">
@@ -128,11 +198,16 @@ function SignInForm() {
               </label>
               <input
                 type="password"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${fieldErrors.password ? "input-error" : ""}`}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              {fieldErrors.password && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{fieldErrors.password}</span>
+                </label>
+              )}
               <label className="label">
                 <Link href="/auth/reset-password" className="label-text-alt link link-primary">
                   Forgot password?

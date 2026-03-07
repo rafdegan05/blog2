@@ -1,10 +1,10 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import SocialProviders from "@/components/SocialProviders";
+import { registerSchema, formatZodFieldErrors } from "@/lib/validations";
 
 function RegisterForm() {
   const searchParams = useSearchParams();
@@ -17,6 +17,7 @@ function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
@@ -29,16 +30,18 @@ function RegisterForm() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
     setLoading(true);
 
-    if (password && password !== confirmPassword) {
-      setError("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
-
-    if (!password || password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    // Client-side Zod validation
+    const parsed = registerSchema.safeParse({
+      name: name || undefined,
+      email,
+      password,
+      confirmPassword,
+    });
+    if (!parsed.success) {
+      setFieldErrors(formatZodFieldErrors(parsed.error));
       setLoading(false);
       return;
     }
@@ -59,9 +62,6 @@ function RegisterForm() {
       }
 
       setSuccess(true);
-
-      // Auto sign-in after registration
-      await signIn("credentials", { email, password, callbackUrl });
     } catch {
       setError("An unexpected error occurred.");
     } finally {
@@ -74,11 +74,37 @@ function RegisterForm() {
       <div className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="card bg-base-200 w-full max-w-md shadow-xl">
           <div className="card-body text-center">
-            <h1 className="card-title text-2xl justify-center mb-2">Account Created!</h1>
+            <div className="text-success text-5xl mb-4">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 mx-auto"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h1 className="card-title text-2xl justify-center mb-2">Check Your Email</h1>
             <p className="text-base-content/60 mb-4">
-              Your account has been created successfully. Redirecting...
+              We&apos;ve sent a verification link to <strong>{email}</strong>. Please check your
+              inbox and click the link to verify your account.
             </p>
-            <span className="loading loading-spinner loading-lg mx-auto" />
+            <p className="text-base-content/40 text-sm mb-4">
+              Didn&apos;t receive the email? Check your spam folder or{" "}
+              <Link href="/auth/verify-email" className="link link-primary">
+                request a new verification link
+              </Link>
+              .
+            </p>
+            <Link href="/auth/signin" className="btn btn-outline btn-primary">
+              Go to Sign In
+            </Link>
           </div>
         </div>
       </div>
@@ -128,11 +154,16 @@ function RegisterForm() {
               </label>
               <input
                 type="text"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${fieldErrors.name ? "input-error" : ""}`}
                 placeholder="Your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+              {fieldErrors.name && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{fieldErrors.name}</span>
+                </label>
+              )}
             </div>
             <div className="form-control">
               <label className="label">
@@ -140,12 +171,17 @@ function RegisterForm() {
               </label>
               <input
                 type="email"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${fieldErrors.email ? "input-error" : ""}`}
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
+              {fieldErrors.email && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{fieldErrors.email}</span>
+                </label>
+              )}
             </div>
             <div className="form-control">
               <label className="label">
@@ -153,11 +189,21 @@ function RegisterForm() {
               </label>
               <input
                 type="password"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${fieldErrors.password ? "input-error" : ""}`}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              {fieldErrors.password && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{fieldErrors.password}</span>
+                </label>
+              )}
+              <label className="label">
+                <span className="label-text-alt text-base-content/50">
+                  Min 8 chars, with uppercase, lowercase and number
+                </span>
+              </label>
             </div>
             <div className="form-control">
               <label className="label">
@@ -165,11 +211,16 @@ function RegisterForm() {
               </label>
               <input
                 type="password"
-                className="input input-bordered w-full"
+                className={`input input-bordered w-full ${fieldErrors.confirmPassword ? "input-error" : ""}`}
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
+              {fieldErrors.confirmPassword && (
+                <label className="label">
+                  <span className="label-text-alt text-error">{fieldErrors.confirmPassword}</span>
+                </label>
+              )}
             </div>
             <button type="submit" className="btn btn-primary w-full" disabled={loading}>
               {loading ? <span className="loading loading-spinner loading-sm" /> : "Create Account"}

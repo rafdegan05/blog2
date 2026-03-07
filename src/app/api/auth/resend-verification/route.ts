@@ -4,10 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { resetPasswordRequestSchema, formatZodErrors } from "@/lib/validations";
 
 /**
- * POST /api/auth/reset-password
- * Request a password reset. Accepts { email } and generates a token.
- * In production you'd send this via email – here we return a success
- * message regardless (to avoid user enumeration) and log the token.
+ * POST /api/auth/resend-verification
+ * Resend a verification email to the user.
+ * Accepts { email } and generates a new verification token.
  */
 export async function POST(request: Request) {
   try {
@@ -25,21 +24,27 @@ export async function POST(request: Request) {
     // Always return success to prevent user enumeration
     if (!user) {
       return NextResponse.json({
-        message: "If an account with that email exists, a reset link has been sent.",
+        message: "If an account with that email exists, a verification link has been sent.",
+      });
+    }
+
+    if (user.emailVerified) {
+      return NextResponse.json({
+        message: "Your email is already verified. You can sign in.",
       });
     }
 
     // Invalidate existing unused tokens for this user
-    await prisma.passwordResetToken.updateMany({
+    await prisma.emailVerificationToken.updateMany({
       where: { userId: user.id, used: false },
       data: { used: true },
     });
 
-    // Generate a secure token
+    // Generate a new secure token
     const token = crypto.randomBytes(32).toString("hex");
-    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    await prisma.passwordResetToken.create({
+    await prisma.emailVerificationToken.create({
       data: {
         token,
         userId: user.id,
@@ -48,13 +53,13 @@ export async function POST(request: Request) {
     });
 
     // In production, send email with link:
-    // `${process.env.NEXTAUTH_URL}/auth/reset-password/confirm?token=${token}`
-    console.log(`[Password Reset] Token for ${email}: ${token}`);
+    // `${process.env.NEXTAUTH_URL}/auth/verify-email?token=${token}`
+    console.log(`[Email Verification Resend] Token for ${email}: ${token}`);
 
     return NextResponse.json({
-      message: "If an account with that email exists, a reset link has been sent.",
+      message: "If an account with that email exists, a verification link has been sent.",
       // Include token in development for testing
-      ...(process.env.NODE_ENV === "development" && { token }),
+      ...(process.env.NODE_ENV === "development" && { verificationToken: token }),
     });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

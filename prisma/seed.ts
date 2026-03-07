@@ -14,39 +14,42 @@ async function main() {
   // Create an admin user
   const admin = await prisma.user.upsert({
     where: { email: "admin@blog.com" },
-    update: {},
+    update: { emailVerified: new Date() },
     create: {
       email: "admin@blog.com",
       name: "Admin",
       role: "ADMIN",
       password: defaultPassword,
       bio: "Blog administrator and content creator.",
+      emailVerified: new Date(),
     },
   });
 
   // Create an author user
   await prisma.user.upsert({
     where: { email: "author@blog.com" },
-    update: {},
+    update: { emailVerified: new Date() },
     create: {
       email: "author@blog.com",
       name: "Author",
       role: "AUTHOR",
       password: defaultPassword,
       bio: "Content author.",
+      emailVerified: new Date(),
     },
   });
 
   // Create a regular reader user
   await prisma.user.upsert({
     where: { email: "reader@blog.com" },
-    update: {},
+    update: { emailVerified: new Date() },
     create: {
       email: "reader@blog.com",
       name: "Reader",
       role: "USER",
       password: defaultPassword,
       bio: "Blog reader and community member.",
+      emailVerified: new Date(),
     },
   });
 

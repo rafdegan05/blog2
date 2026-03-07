@@ -59,6 +59,21 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+model EmailVerificationToken {
+  id      String   @id @default(cuid())
+  token   String   @unique
+  expires DateTime
+  used    Boolean  @default(false)
+
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
 // ─── User ───
 
 model User {
@@ -82,6 +97,7 @@ model User {
   podcasts Podcast[]
   comments Comment[]
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
 }
 
 enum Role {

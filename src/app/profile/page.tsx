@@ -87,6 +87,11 @@ export default function ProfilePage() {
 
     // Include password change if form is shown and fields are filled
     if (showPasswordForm && newPassword) {
+      if (!currentPassword) {
+        setError("Current password is required");
+        setSaving(false);
+        return;
+      }
       if (newPassword !== confirmNewPassword) {
         setError("New passwords do not match");
         setSaving(false);

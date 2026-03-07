@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
 /**
- * POST /api/user/sessions/invalidate
+ * POST /api/user/sessions
  * Invalidate all sessions for the current user (sign out everywhere).
  * Sets tokenInvalidBefore to now, which causes JWT validation to fail
  * for all tokens issued before this timestamp.

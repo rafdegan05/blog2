@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { profileUpdateSchema, formatZodErrors } from "@/lib/validations";
 
 // GET /api/user/profile – Get current user's profile
 export async function GET() {
@@ -56,20 +57,20 @@ export async function PUT(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { name, bio, image, notifyComments, notifyNewPosts, currentPassword, newPassword } = body;
+
+  const parsed = profileUpdateSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
+  }
+
+  const { name, bio, image, notifyComments, notifyNewPosts, currentPassword, newPassword } =
+    parsed.data;
 
   // If changing password, verify current password first
   if (newPassword) {
     if (!currentPassword) {
       return NextResponse.json(
         { error: "Current password is required to set a new password" },
-        { status: 400 }
-      );
-    }
-
-    if (newPassword.length < 8) {
-      return NextResponse.json(
-        { error: "New password must be at least 8 characters" },
         { status: 400 }
       );
     }
