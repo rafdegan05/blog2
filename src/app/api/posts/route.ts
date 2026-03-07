@@ -3,6 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { canCreateContent } from "@/lib/permissions";
 
+function calcReadingTime(content?: string | null): number {
+  if (!content) return 1;
+  const words = content.trim().split(/\s+/).length;
+  return Math.max(1, Math.round(words / 200));
+}
+
 // GET /api/posts - List posts with pagination and search
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -47,7 +53,7 @@ export async function GET(request: NextRequest) {
   ]);
 
   return NextResponse.json({
-    posts,
+    posts: posts.map((p) => ({ ...p, readingTime: calcReadingTime(p.content) })),
     pagination: {
       page,
       limit,

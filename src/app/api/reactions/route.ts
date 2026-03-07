@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 
 const VALID_TYPES = [
   "LIKE",
+  "DISLIKE",
   "LOVE",
   "LAUGH",
   "SURPRISE",

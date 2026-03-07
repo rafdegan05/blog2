@@ -6,6 +6,19 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* View Transition for theme toggle circle animation */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
 /* Prose styles for Markdown content */
 .prose h1 {
   @apply text-3xl font-bold mb-4 mt-6;

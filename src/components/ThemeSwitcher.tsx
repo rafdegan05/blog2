@@ -1,43 +1,8 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 
-const themes = [
-  "light",
-  "dark",
-  "night",
-  "cupcake",
-  "bumblebee",
-  "emerald",
-  "corporate",
-  "synthwave",
-  "retro",
-  "cyberpunk",
-  "valentine",
-  "halloween",
-  "garden",
-  "forest",
-  "aqua",
-  "lofi",
-  "pastel",
-  "fantasy",
-  "wireframe",
-  "black",
-  "luxury",
-  "dracula",
-  "cmyk",
-  "autumn",
-  "business",
-  "acid",
-  "lemonade",
-  "coffee",
-  "winter",
-  "dim",
-  "nord",
-  "sunset",
-];
-
-const DEFAULT_THEME = "night";
+const DEFAULT_THEME = "light";
 
 function subscribeToTheme(callback: () => void) {
   window.addEventListener("storage", callback);
@@ -54,56 +19,91 @@ function getServerSnapshot(): string {
 
 export default function ThemeSwitcher() {
   const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerSnapshot);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const isDark = theme === "dark";
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  const handleChange = (newTheme: string) => {
+  const applyTheme = (newTheme: string) => {
     localStorage.setItem("theme", newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
     window.dispatchEvent(new StorageEvent("storage", { key: "theme" }));
   };
 
+  const toggleTheme = () => {
+    const newTheme = isDark ? "light" : "dark";
+    const btn = btnRef.current;
+
+    // Use View Transitions API for circle expansion animation
+    if (btn && typeof document !== "undefined" && "startViewTransition" in document) {
+      const rect = btn.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+
+      // Max radius to cover entire viewport
+      const maxRadius = Math.hypot(
+        Math.max(x, window.innerWidth - x),
+        Math.max(y, window.innerHeight - y)
+      );
+
+      const transition = document.startViewTransition(() => {
+        applyTheme(newTheme);
+      });
+
+      transition.ready.then(() => {
+        document.documentElement.animate(
+          {
+            clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${maxRadius}px at ${x}px ${y}px)`],
+          },
+          {
+            duration: 500,
+            easing: "ease-in-out",
+            pseudoElement: "::view-transition-new(root)",
+          }
+        );
+      });
+    } else {
+      applyTheme(newTheme);
+    }
+  };
+
   return (
-    <div className="dropdown dropdown-end">
-      <div tabIndex={0} role="button" className="btn btn-ghost btn-sm gap-1">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-          />
-        </svg>
-        <span className="hidden sm:inline text-xs">{theme}</span>
-      </div>
-      <ul
-        tabIndex={0}
-        className="dropdown-content bg-base-200 rounded-box z-50 w-52 p-2 shadow-xl max-h-80 overflow-y-auto menu menu-sm"
+    <button
+      ref={btnRef}
+      className="btn btn-ghost btn-sm btn-circle"
+      onClick={toggleTheme}
+      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+    >
+      {/* Sun icon – visible in dark mode */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className={`h-5 w-5 transition-all duration-300 ${isDark ? "opacity-100 rotate-0 scale-100" : "opacity-0 rotate-90 scale-0 absolute"}`}
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
       >
-        {themes.map((t) => (
-          <li key={t}>
-            <button className={`${t === theme ? "active" : ""}`} onClick={() => handleChange(t)}>
-              <div data-theme={t} className="flex items-center gap-2 w-full">
-                <div className="flex gap-0.5">
-                  <span className="bg-primary w-2 h-4 rounded-sm" />
-                  <span className="bg-secondary w-2 h-4 rounded-sm" />
-                  <span className="bg-accent w-2 h-4 rounded-sm" />
-                  <span className="bg-neutral w-2 h-4 rounded-sm" />
-                </div>
-                <span className="text-base-content text-xs capitalize">{t}</span>
-              </div>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
+        <circle cx="12" cy="12" r="5" />
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+
+      {/* Moon icon – visible in light mode */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className={`h-5 w-5 transition-all duration-300 ${!isDark ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-0 absolute"}`}
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={2}
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
+        />
+      </svg>
+    </button>
   );
 }

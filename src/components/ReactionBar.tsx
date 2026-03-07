@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 
 const REACTIONS = [
   { type: "LIKE", emoji: "👍", label: "Like" },
+  { type: "DISLIKE", emoji: "👎", label: "Dislike" },
   { type: "LOVE", emoji: "❤️", label: "Love" },
   { type: "LAUGH", emoji: "😂", label: "Laugh" },
   { type: "FIRE", emoji: "🔥", label: "Fire" },

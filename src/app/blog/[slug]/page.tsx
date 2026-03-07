@@ -104,6 +104,12 @@ export default async function PostPage({ params }: PostPageProps) {
               day: "numeric",
             })}
           </span>
+          {post.readingTime && (
+            <>
+              <span>·</span>
+              <span>{post.readingTime} min read</span>
+            </>
+          )}
         </div>
 
         {/* Tags and Categories */}

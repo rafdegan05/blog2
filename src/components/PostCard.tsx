@@ -12,6 +12,7 @@ interface PostCardProps {
     categories: { name: string; slug: string }[];
     tags: { name: string; slug: string }[];
     _count?: { comments: number };
+    readingTime?: number;
   };
 }
 
@@ -50,6 +51,12 @@ export default function PostCard({ post }: PostCardProps) {
             <span>{post.author.name || "Anonymous"}</span>
             <span>·</span>
             <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+            {post.readingTime && (
+              <>
+                <span>·</span>
+                <span>{post.readingTime} min read</span>
+              </>
+            )}
             {post._count && (
               <>
                 <span>·</span>
