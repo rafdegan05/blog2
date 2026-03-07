@@ -55,6 +55,9 @@ export default function Navbar() {
               <li>
                 <Link href="/podcasts">Podcast</Link>
               </li>
+              <li>
+                <Link href="/about">About</Link>
+              </li>
               {session && (
                 <>
                   <li>
@@ -116,6 +119,11 @@ export default function Navbar() {
           <li>
             <Link href="/podcasts" className="btn btn-ghost btn-sm">
               Podcast
+            </Link>
+          </li>
+          <li>
+            <Link href="/about" className="btn btn-ghost btn-sm">
+              About
             </Link>
           </li>
           {session && (

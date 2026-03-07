@@ -29,6 +29,9 @@ export default function Footer() {
         <Link href="/" className="link link-hover">
           Home
         </Link>
+        <Link href="/about" className="link link-hover">
+          About
+        </Link>
         <Link href="/sitemap.xml" className="link link-hover">
           Sitemap
         </Link>
