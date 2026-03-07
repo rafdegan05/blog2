@@ -24,7 +24,6 @@ RUN pnpm run build
 
 # ─── Stage 3: Production ───
 FROM node:22-alpine AS runner
-RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -41,8 +40,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated ./src/generated
 
-# Install prisma CLI for db push at startup
-RUN pnpm add --global prisma dotenv
+# Copy prisma CLI from builder (avoids fresh install + version mismatch issues)
+COPY --from=builder /app/node_modules/.pnpm /app/node_modules/.pnpm
+COPY --from=builder /app/node_modules/prisma /app/node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
+COPY --from=builder /app/node_modules/.bin/prisma /app/node_modules/.bin/prisma
+COPY --from=builder /app/node_modules/dotenv /app/node_modules/dotenv
 
 COPY scripts/start.sh ./start.sh
 RUN sed -i 's/\r$//' ./start.sh && chmod +x ./start.sh
