@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import EditButton from "@/components/EditButton";
+import ReactionBar from "@/components/ReactionBar";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -141,6 +142,11 @@ export default async function PodcastPage({ params }: PodcastPageProps) {
               <source src={podcast.audioUrl} type="audio/mpeg" />
               Your browser does not support the audio element.
             </audio>
+          </div>
+
+          {/* Reactions */}
+          <div className="mt-6">
+            <ReactionBar podcastId={podcast.id} />
           </div>
 
           {/* Description */}

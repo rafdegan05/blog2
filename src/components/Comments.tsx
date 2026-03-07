@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import ReactionBar from "@/components/ReactionBar";
 
 interface CommentData {
   id: string;
@@ -84,6 +85,10 @@ function CommentItem({
       </div>
 
       <p className="text-sm mb-2">{comment.content}</p>
+
+      <div className="mb-1">
+        <ReactionBar commentId={comment.id} compact />
+      </div>
 
       <div className="flex gap-2">
         {session && (

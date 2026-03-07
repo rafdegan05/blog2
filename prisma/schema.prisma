@@ -96,6 +96,7 @@ model User {
   posts    Post[]
   podcasts Podcast[]
   comments Comment[]
+  reactions Reaction[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
 }
@@ -134,6 +135,7 @@ model Post {
   categories Category[] @relation("PostCategories")
   tags       Tag[]      @relation("PostTags")
   comments   Comment[]
+  reactions  Reaction[]
 
   @@index([slug])
   @@index([authorId])
@@ -160,6 +162,7 @@ model Podcast {
 
   categories Category[] @relation("PodcastCategories")
   tags       Tag[]      @relation("PodcastTags")
+  reactions  Reaction[]
 
   @@index([slug])
   @@index([authorId])
@@ -202,7 +205,52 @@ model Comment {
   parentId String?
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
   replies  Comment[] @relation("CommentReplies")
+  reactions Reaction[]
 
   @@index([postId])
   @@index([authorId])
+}
+
+// ─── Reaction ───
+
+enum ReactionType {
+  LIKE
+  LOVE
+  LAUGH
+  SURPRISE
+  SAD
+  FIRE
+  CLAP
+  THINK
+  ANGRY
+  ROCKET
+  EYES
+  HUNDRED
+  PRAY
+  SKULL
+  HEART_EYES
+}
+
+model Reaction {
+  id        String       @id @default(cuid())
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId    String?
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  podcastId String?
+  podcast   Podcast? @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, podcastId, commentId])
+  @@index([postId])
+  @@index([podcastId])
+  @@index([commentId])
+  @@index([userId])
 }

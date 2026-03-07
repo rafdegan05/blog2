@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import Comments from "@/components/Comments";
 import EditButton from "@/components/EditButton";
+import ReactionBar from "@/components/ReactionBar";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -127,6 +128,11 @@ export default async function PostPage({ params }: PostPageProps) {
       {/* Post Content */}
       <article className="divider" />
       <MarkdownRenderer content={post.content} />
+
+      {/* Reactions */}
+      <div className="mt-8 mb-4">
+        <ReactionBar postId={post.id} />
+      </div>
 
       {/* Author Bio */}
       {post.author.bio && (
