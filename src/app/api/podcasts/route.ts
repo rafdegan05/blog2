@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
+
+// GET /api/podcasts - List podcasts with pagination and search
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "10");
+  const search = searchParams.get("search") || "";
+
+  const where: Record<string, unknown> = { published: true };
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  const [podcasts, total] = await Promise.all([
+    prisma.podcast.findMany({
+      where,
+      include: {
+        author: { select: { id: true, name: true, image: true } },
+        categories: true,
+        tags: true,
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.podcast.count({ where }),
+  ]);
+
+  return NextResponse.json({
+    podcasts,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
+}
+
+// POST /api/podcasts - Create a new podcast
+export async function POST(request: NextRequest) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const { title, description, audioUrl, coverImage, duration, published, categories, tags } = body;
+
+  if (!title || !audioUrl) {
+    return NextResponse.json({ error: "Title and audio URL are required" }, { status: 400 });
+  }
+
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  const existingPodcast = await prisma.podcast.findUnique({ where: { slug } });
+  const finalSlug = existingPodcast ? `${slug}-${Date.now()}` : slug;
+
+  const podcast = await prisma.podcast.create({
+    data: {
+      title,
+      slug: finalSlug,
+      description,
+      audioUrl,
+      coverImage,
+      duration,
+      published: published || false,
+      authorId: session.user.id,
+      categories: categories?.length
+        ? {
+            connectOrCreate: categories.map((cat: string) => ({
+              where: { slug: cat.toLowerCase().replace(/\s+/g, "-") },
+              create: { name: cat, slug: cat.toLowerCase().replace(/\s+/g, "-") },
+            })),
+          }
+        : undefined,
+      tags: tags?.length
+        ? {
+            connectOrCreate: tags.map((t: string) => ({
+              where: { slug: t.toLowerCase().replace(/\s+/g, "-") },
+              create: { name: t, slug: t.toLowerCase().replace(/\s+/g, "-") },
+            })),
+          }
+        : undefined,
+    },
+    include: {
+      author: { select: { id: true, name: true, image: true } },
+      categories: true,
+      tags: true,
+    },
+  });
+
+  return NextResponse.json(podcast, { status: 201 });
+}

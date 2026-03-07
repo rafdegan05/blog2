@@ -5,9 +5,16 @@ Ecco un piano dettagliato per implementare le funzionalità del blog e podcast u
    - Configurare Tailwind CSS 4 e DaisyUI 5 per lo styling.
    - Configurare ESLint, Prettier, Husky, Lint-staged, Commitlint, Standard-version e Semantic-release per la gestione del codice e dei rilasci.
 2. **Autenticazione con Next-auth**
-   - Configurare Next-auth 4 per l'autenticazione degli utenti.
-   - Implementare il supporto per provider di autenticazione (es. Google, GitHub, Facebook, Twitter, OAuth).
-   - Creare pagine di login e registrazione.
+   - Configurare Next-auth 5 per l'autenticazione degli utenti.
+   - Implementare il supporto per provider di autenticazione Google, GitHub, Keycloak.
+   - Creare pagine di login e registrazione.ù
+   - Implementare la gestione delle sessioni e dei token di autenticazione.
+   - Configurare le autorizzazioni per le diverse funzionalità del blog in base al ruolo dell'utente (es. admin, autore, lettore).
+   - Implementare la funzionalità di reset della password e gestione dell'account utente.
+   - Fornire un'interfaccia per la gestione del profilo utente, inclusa la possibilità di aggiornare le informazioni del profilo e le preferenze di notifica.
+   - Implementare la funzionalità di logout e gestione delle sessioni attive.
+   - Fornire un sistema di gestione degli errori per l'autenticazione, inclusa la visualizzazione di messaggi di errore appropriati agli utenti in caso di problemi durante il login o la registrazione.
+   - Fornire login e registrazione social Google, GitHub, Keycloak per semplificare il processo di autenticazione per gli utenti.
 3. **Gestione dei post e dei podcast con Prisma e PostgreSQL**
    - Configurare Prisma 7 per interagire con il database PostgreSQL.
    - Creare modelli Prisma per i post, i podcast e gli utenti.

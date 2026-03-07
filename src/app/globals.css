@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Prose styles for Markdown content */
+.prose h1 {
+  @apply text-3xl font-bold mb-4 mt-6;
+}
+.prose h2 {
+  @apply text-2xl font-bold mb-3 mt-5;
+}
+.prose h3 {
+  @apply text-xl font-bold mb-2 mt-4;
+}
+.prose p {
+  @apply mb-4 leading-relaxed;
+}
+.prose ul {
+  @apply list-disc pl-6 mb-4;
+}
+.prose ol {
+  @apply list-decimal pl-6 mb-4;
+}
+.prose li {
+  @apply mb-1;
+}
+.prose blockquote {
+  @apply border-l-4 border-primary pl-4 italic my-4;
+}
+.prose pre {
+  @apply bg-base-300 p-4 rounded-lg overflow-x-auto my-4;
+}
+.prose code {
+  @apply bg-base-300 px-1 py-0.5 rounded text-sm;
+}
+.prose pre code {
+  @apply bg-transparent p-0;
+}
+.prose a {
+  @apply text-primary underline hover:opacity-80;
+}
+.prose img {
+  @apply rounded-lg my-4 max-w-full;
+}
+.prose table {
+  @apply table w-full my-4;
+}
+.prose th {
+  @apply font-bold text-left p-2 border-b-2;
+}
+.prose td {
+  @apply p-2 border-b;
+}
