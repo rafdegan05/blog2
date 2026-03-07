@@ -22,6 +22,11 @@ RUN pnpm prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm run build
 
+# ─── Stage 2.5: Prisma CLI (isolated install for runtime migrations) ───
+FROM node:22-alpine AS prisma-cli
+WORKDIR /prisma-cli
+RUN npm install prisma
+
 # ─── Stage 3: Production ───
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -40,12 +45,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated ./src/generated
 
-# Copy prisma CLI from builder (avoids fresh install + version mismatch issues)
-COPY --from=builder /app/node_modules/.pnpm /app/node_modules/.pnpm
-COPY --from=builder /app/node_modules/prisma /app/node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma /app/node_modules/@prisma
-COPY --from=builder /app/node_modules/.bin/prisma /app/node_modules/.bin/prisma
-COPY --from=builder /app/node_modules/dotenv /app/node_modules/dotenv
+# Copy prisma CLI with all deps to isolated directory (pnpm's symlink structure doesn't survive COPY)
+COPY --from=prisma-cli /prisma-cli/node_modules /app/prisma-cli/node_modules
 
 COPY scripts/start.sh ./start.sh
 RUN sed -i 's/\r$//' ./start.sh && chmod +x ./start.sh
