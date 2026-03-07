@@ -62,6 +62,13 @@ export const authConfig: NextAuthConfig = {
       }
       return token;
     },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+        session.user.role = token.role as typeof session.user.role;
+      }
+      return session;
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isAuthPage = nextUrl.pathname.startsWith("/auth/");
