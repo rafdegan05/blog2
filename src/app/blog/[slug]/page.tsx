@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import Comments from "@/components/Comments";
+import EditButton from "@/components/EditButton";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -68,7 +69,10 @@ export default async function PostPage({ params }: PostPageProps) {
 
       {/* Post Header */}
       <header className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4">{post.title}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{post.title}</h1>
+          <EditButton href={`/blog/edit/${post.slug}`} authorId={post.author.id} />
+        </div>
 
         <div className="flex items-center gap-4 text-base-content/60 mb-4">
           <div className="flex items-center gap-2">

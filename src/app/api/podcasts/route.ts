@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "10");
   const search = searchParams.get("search") || "";
 
-  const where: Record<string, unknown> = { published: true };
+  const where: Record<string, unknown> = { published: true, moderation: "APPROVED" };
 
   if (search) {
     where.OR = [

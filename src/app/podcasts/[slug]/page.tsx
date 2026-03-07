@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import EditButton from "@/components/EditButton";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -78,6 +79,7 @@ export default async function PodcastPage({ params }: PodcastPageProps) {
 
             <div className="flex-1">
               <h1 className="text-3xl md:text-4xl font-bold mb-4">{podcast.title}</h1>
+              <EditButton href={`/podcasts/edit/${podcast.slug}`} authorId={podcast.author.id} />
 
               <div className="flex items-center gap-4 text-base-content/60 mb-4">
                 <div className="flex items-center gap-2">

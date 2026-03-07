@@ -10,7 +10,14 @@ export default auth((req) => {
   const role = req.auth?.user?.role;
 
   // Routes that require authentication
-  const authRequired = ["/dashboard", "/blog/new", "/podcasts/new", "/profile"];
+  const authRequired = [
+    "/dashboard",
+    "/blog/new",
+    "/blog/edit",
+    "/podcasts/new",
+    "/podcasts/edit",
+    "/profile",
+  ];
   const needsAuth = authRequired.some((route) => pathname.startsWith(route));
 
   if (needsAuth && !isLoggedIn) {
@@ -20,7 +27,7 @@ export default auth((req) => {
   }
 
   // Routes that require AUTHOR or ADMIN role
-  const authorRoutes = ["/blog/new", "/podcasts/new"];
+  const authorRoutes = ["/blog/new", "/blog/edit", "/podcasts/new", "/podcasts/edit"];
   const needsAuthor = authorRoutes.some((route) => pathname.startsWith(route));
 
   if (needsAuthor && isLoggedIn && role !== "AUTHOR" && role !== "ADMIN") {
@@ -39,5 +46,13 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/blog/new", "/podcasts/new", "/profile/:path*", "/admin/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/blog/new",
+    "/blog/edit/:path*",
+    "/podcasts/new",
+    "/podcasts/edit/:path*",
+    "/profile/:path*",
+    "/admin/:path*",
+  ],
 };

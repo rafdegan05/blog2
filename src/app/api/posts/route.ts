@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get("category") || "";
   const tag = searchParams.get("tag") || "";
 
-  const where: Record<string, unknown> = { published: true };
+  const where: Record<string, unknown> = { published: true, moderation: "APPROVED" };
 
   if (search) {
     where.OR = [

@@ -106,6 +106,13 @@ enum Role {
   ADMIN
 }
 
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
 // ─── Blog Post ───
 
 model Post {
@@ -116,6 +123,8 @@ model Post {
   content     String   @db.Text
   coverImage  String?
   published   Boolean  @default(false)
+  moderation  ModerationStatus @default(APPROVED)
+  flagReason  String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -141,6 +150,8 @@ model Podcast {
   coverImage  String?
   duration    Int?     // duration in seconds
   published   Boolean  @default(false)
+  moderation  ModerationStatus @default(APPROVED)
+  flagReason  String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

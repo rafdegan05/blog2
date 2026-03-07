@@ -11,6 +11,7 @@ interface PostItem {
   title: string;
   slug: string;
   published: boolean;
+  moderation?: string;
   createdAt: string;
   _count?: { comments: number };
 }
@@ -20,6 +21,7 @@ interface PodcastItem {
   title: string;
   slug: string;
   published: boolean;
+  moderation?: string;
   createdAt: string;
 }
 
@@ -34,24 +36,35 @@ function DashboardContent() {
 
   const role = session?.user?.role;
   const canCreate = role === "AUTHOR" || role === "ADMIN";
+  const isAdmin = role === "ADMIN";
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [postsRes, podcastsRes] = await Promise.all([
-        fetch("/api/posts?limit=100"),
-        fetch("/api/podcasts?limit=100"),
-      ]);
-      const postsData = await postsRes.json();
-      const podcastsData = await podcastsRes.json();
-      setPosts(postsData.posts || []);
-      setPodcasts(podcastsData.podcasts || []);
+      // Admins see all content via moderation API, authors/users see public content
+      if (isAdmin) {
+        const res = await fetch("/api/admin/moderation");
+        if (res.ok) {
+          const data = await res.json();
+          setPosts(data.posts || []);
+          setPodcasts(data.podcasts || []);
+        }
+      } else {
+        const [postsRes, podcastsRes] = await Promise.all([
+          fetch("/api/posts?limit=100"),
+          fetch("/api/podcasts?limit=100"),
+        ]);
+        const postsData = await postsRes.json();
+        const podcastsData = await podcastsRes.json();
+        setPosts(postsData.posts || []);
+        setPodcasts(podcastsData.podcasts || []);
+      }
     } catch {
       console.error("Failed to fetch data");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (session) fetchData();
@@ -88,6 +101,21 @@ function DashboardContent() {
       </div>
     );
   }
+
+  const moderationColor = (mod?: string) => {
+    switch (mod) {
+      case "APPROVED":
+        return "badge-success";
+      case "PENDING":
+        return "badge-warning";
+      case "REJECTED":
+        return "badge-error";
+      case "FLAGGED":
+        return "badge-error badge-outline";
+      default:
+        return "badge-ghost";
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -126,43 +154,140 @@ function DashboardContent() {
             {role && <span className="badge badge-primary badge-sm ml-2">{role}</span>}
           </p>
         </div>
-        {canCreate && (
-          <div className="flex gap-2">
-            <Link href="/blog/new" className="btn btn-primary btn-sm">
-              + New Post
+        <div className="flex gap-2 flex-wrap">
+          {canCreate && (
+            <>
+              <Link href="/blog/new" className="btn btn-primary btn-sm gap-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                New Post
+              </Link>
+              <Link href="/podcasts/new" className="btn btn-secondary btn-sm gap-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                New Podcast
+              </Link>
+            </>
+          )}
+          {isAdmin && (
+            <Link href="/admin" className="btn btn-accent btn-sm btn-outline gap-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              Admin Panel
             </Link>
-            <Link href="/podcasts/new" className="btn btn-secondary btn-sm">
-              + New Podcast
-            </Link>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="stats shadow mb-8 w-full">
-        <div className="stat">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="stat bg-base-200 rounded-box shadow">
           <div className="stat-title">Blog Posts</div>
-          <div className="stat-value text-primary">{posts.length}</div>
+          <div className="stat-value text-primary text-2xl">{posts.length}</div>
         </div>
-        <div className="stat">
+        <div className="stat bg-base-200 rounded-box shadow">
           <div className="stat-title">Podcasts</div>
-          <div className="stat-value text-secondary">{podcasts.length}</div>
+          <div className="stat-value text-secondary text-2xl">{podcasts.length}</div>
+        </div>
+        <div className="stat bg-base-200 rounded-box shadow">
+          <div className="stat-title">Published</div>
+          <div className="stat-value text-success text-2xl">
+            {posts.filter((p) => p.published).length + podcasts.filter((p) => p.published).length}
+          </div>
+        </div>
+        <div className="stat bg-base-200 rounded-box shadow">
+          <div className="stat-title">Drafts</div>
+          <div className="stat-value text-warning text-2xl">
+            {posts.filter((p) => !p.published).length + podcasts.filter((p) => !p.published).length}
+          </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="tabs tabs-boxed mb-6">
+      <div role="tablist" className="tabs tabs-boxed mb-6">
         <button
-          className={`tab ${activeTab === "posts" ? "tab-active" : ""}`}
+          role="tab"
+          className={`tab gap-2 ${activeTab === "posts" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("posts")}
         >
-          📝 Posts ({posts.length})
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+            />
+          </svg>
+          Posts ({posts.length})
         </button>
         <button
-          className={`tab ${activeTab === "podcasts" ? "tab-active" : ""}`}
+          role="tab"
+          className={`tab gap-2 ${activeTab === "podcasts" ? "tab-active" : ""}`}
           onClick={() => setActiveTab("podcasts")}
         >
-          🎙️ Podcasts ({podcasts.length})
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+            />
+          </svg>
+          Podcasts ({podcasts.length})
         </button>
       </div>
 
@@ -173,20 +298,37 @@ function DashboardContent() {
       ) : activeTab === "posts" ? (
         <div className="overflow-x-auto">
           {posts.length === 0 ? (
-            <div className="text-center py-10">
+            <div className="text-center py-16">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 mx-auto mb-4 opacity-20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                />
+              </svg>
               <p className="text-base-content/60 mb-4">No posts yet.</p>
-              <Link href="/blog/new" className="btn btn-primary">
-                Create your first post
-              </Link>
+              {canCreate && (
+                <Link href="/blog/new" className="btn btn-primary">
+                  Create your first post
+                </Link>
+              )}
             </div>
           ) : (
-            <table className="table">
+            <table className="table table-zebra">
               <thead>
                 <tr>
                   <th>Title</th>
                   <th>Status</th>
-                  <th>Date</th>
-                  <th>Comments</th>
+                  {isAdmin && <th className="hidden md:table-cell">Moderation</th>}
+                  <th className="hidden md:table-cell">Date</th>
+                  <th className="hidden lg:table-cell">Comments</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -194,26 +336,75 @@ function DashboardContent() {
                 {posts.map((post) => (
                   <tr key={post.id}>
                     <td>
-                      <Link href={`/blog/${post.slug}`} className="link link-primary">
+                      <Link
+                        href={`/blog/${post.slug}`}
+                        className="font-medium hover:text-primary transition-colors"
+                      >
                         {post.title}
                       </Link>
                     </td>
                     <td>
                       <span
-                        className={`badge ${post.published ? "badge-success" : "badge-warning"}`}
+                        className={`badge badge-sm ${post.published ? "badge-success" : "badge-warning"}`}
                       >
                         {post.published ? "Published" : "Draft"}
                       </span>
                     </td>
-                    <td>{new Date(post.createdAt).toLocaleDateString()}</td>
-                    <td>{post._count?.comments || 0}</td>
+                    {isAdmin && (
+                      <td className="hidden md:table-cell">
+                        <span className={`badge badge-sm ${moderationColor(post.moderation)}`}>
+                          {post.moderation || "N/A"}
+                        </span>
+                      </td>
+                    )}
+                    <td className="hidden md:table-cell text-sm text-base-content/60">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="hidden lg:table-cell text-sm">{post._count?.comments || 0}</td>
                     <td>
-                      <button
-                        className="btn btn-error btn-xs"
-                        onClick={() => handleDeletePost(post.slug)}
-                      >
-                        Delete
-                      </button>
+                      <div className="flex gap-1">
+                        <Link
+                          href={`/blog/edit/${post.slug}`}
+                          className="btn btn-ghost btn-xs gap-1"
+                          title="Edit"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                          Edit
+                        </Link>
+                        <button
+                          className="btn btn-error btn-outline btn-xs gap-1"
+                          onClick={() => handleDeletePost(post.slug)}
+                          title="Delete"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -224,19 +415,36 @@ function DashboardContent() {
       ) : (
         <div className="overflow-x-auto">
           {podcasts.length === 0 ? (
-            <div className="text-center py-10">
+            <div className="text-center py-16">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-16 w-16 mx-auto mb-4 opacity-20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
               <p className="text-base-content/60 mb-4">No podcasts yet.</p>
-              <Link href="/podcasts/new" className="btn btn-secondary">
-                Create your first podcast
-              </Link>
+              {canCreate && (
+                <Link href="/podcasts/new" className="btn btn-secondary">
+                  Create your first podcast
+                </Link>
+              )}
             </div>
           ) : (
-            <table className="table">
+            <table className="table table-zebra">
               <thead>
                 <tr>
                   <th>Title</th>
                   <th>Status</th>
-                  <th>Date</th>
+                  {isAdmin && <th className="hidden md:table-cell">Moderation</th>}
+                  <th className="hidden md:table-cell">Date</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -244,25 +452,74 @@ function DashboardContent() {
                 {podcasts.map((podcast) => (
                   <tr key={podcast.id}>
                     <td>
-                      <Link href={`/podcasts/${podcast.slug}`} className="link link-secondary">
+                      <Link
+                        href={`/podcasts/${podcast.slug}`}
+                        className="font-medium hover:text-secondary transition-colors"
+                      >
                         {podcast.title}
                       </Link>
                     </td>
                     <td>
                       <span
-                        className={`badge ${podcast.published ? "badge-success" : "badge-warning"}`}
+                        className={`badge badge-sm ${podcast.published ? "badge-success" : "badge-warning"}`}
                       >
                         {podcast.published ? "Published" : "Draft"}
                       </span>
                     </td>
-                    <td>{new Date(podcast.createdAt).toLocaleDateString()}</td>
+                    {isAdmin && (
+                      <td className="hidden md:table-cell">
+                        <span className={`badge badge-sm ${moderationColor(podcast.moderation)}`}>
+                          {podcast.moderation || "N/A"}
+                        </span>
+                      </td>
+                    )}
+                    <td className="hidden md:table-cell text-sm text-base-content/60">
+                      {new Date(podcast.createdAt).toLocaleDateString()}
+                    </td>
                     <td>
-                      <button
-                        className="btn btn-error btn-xs"
-                        onClick={() => handleDeletePodcast(podcast.slug)}
-                      >
-                        Delete
-                      </button>
+                      <div className="flex gap-1">
+                        <Link
+                          href={`/podcasts/edit/${podcast.slug}`}
+                          className="btn btn-ghost btn-xs gap-1"
+                          title="Edit"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                          Edit
+                        </Link>
+                        <button
+                          className="btn btn-error btn-outline btn-xs gap-1"
+                          onClick={() => handleDeletePodcast(podcast.slug)}
+                          title="Delete"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
