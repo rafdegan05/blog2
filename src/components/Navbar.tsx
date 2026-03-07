@@ -158,10 +158,12 @@ export default function Navbar() {
             <div
               tabIndex={0}
               role="button"
-              className="btn btn-ghost btn-circle avatar"
+              className={`btn btn-ghost btn-circle avatar ${!session.user?.image ? "placeholder" : ""}`}
               aria-label="User menu"
             >
-              <div className="w-10 rounded-full">
+              <div
+                className={`w-10 rounded-full flex items-center justify-center ${!session.user?.image ? "bg-primary text-primary-content" : ""}`}
+              >
                 {session.user?.image ? (
                   <Image
                     alt="avatar"
@@ -171,9 +173,9 @@ export default function Navbar() {
                     className="rounded-full"
                   />
                 ) : (
-                  <div className="bg-primary text-primary-content flex items-center justify-center w-full h-full text-lg font-bold rounded-full">
+                  <span className="text-lg font-bold">
                     {session.user?.name?.charAt(0)?.toUpperCase() || "U"}
-                  </div>
+                  </span>
                 )}
               </div>
             </div>

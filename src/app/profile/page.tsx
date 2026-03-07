@@ -203,8 +203,10 @@ export default function ProfilePage() {
         <div className="space-y-6">
           <div className="card bg-base-200 shadow-xl">
             <div className="card-body items-center text-center">
-              <div className="avatar mb-4">
-                <div className="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+              <div className={`avatar mb-4 ${!profile?.image ? "placeholder" : ""}`}>
+                <div
+                  className={`w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 flex items-center justify-center ${!profile?.image ? "bg-primary text-primary-content" : ""}`}
+                >
                   {profile?.image ? (
                     <Image
                       src={profile.image}
@@ -214,9 +216,9 @@ export default function ProfilePage() {
                       className="rounded-full"
                     />
                   ) : (
-                    <div className="bg-primary text-primary-content flex items-center justify-center w-full h-full text-3xl font-bold rounded-full">
+                    <span className="text-3xl font-bold">
                       {profile?.name?.charAt(0)?.toUpperCase() || "U"}
-                    </div>
+                    </span>
                   )}
                 </div>
               </div>

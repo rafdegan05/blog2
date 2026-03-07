@@ -77,7 +77,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="flex items-center gap-4 text-base-content/60 mb-4">
           <div className="flex items-center gap-2">
             <div className="avatar placeholder">
-              <div className="bg-neutral text-neutral-content w-8 rounded-full">
+              <div className="bg-neutral text-neutral-content w-8 rounded-full flex items-center justify-center">
                 {post.author.image ? (
                   <Image
                     src={post.author.image}
@@ -133,7 +133,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <div className="card bg-base-200 mt-8">
           <div className="card-body flex-row items-center gap-4">
             <div className="avatar placeholder">
-              <div className="bg-neutral text-neutral-content w-16 rounded-full">
+              <div className="bg-neutral text-neutral-content w-16 rounded-full flex items-center justify-center">
                 {post.author.image ? (
                   <Image
                     src={post.author.image}

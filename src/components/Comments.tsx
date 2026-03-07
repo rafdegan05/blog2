@@ -61,7 +61,7 @@ function CommentItem({
     <div className="border-l-2 border-base-300 pl-4 mb-4">
       <div className="flex items-center gap-2 mb-1">
         <div className="avatar placeholder">
-          <div className="bg-neutral text-neutral-content w-8 rounded-full">
+          <div className="bg-neutral text-neutral-content w-8 rounded-full flex items-center justify-center">
             {comment.author.image ? (
               <Image
                 src={comment.author.image}

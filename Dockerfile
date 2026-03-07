@@ -55,6 +55,10 @@ COPY --from=builder /app/src/generated  /app/prisma-cli/src/generated
 COPY scripts/start.sh ./start.sh
 RUN sed -i 's/\r$//' ./start.sh && chmod +x ./start.sh
 
+# Create upload directories with correct ownership before switching user
+RUN mkdir -p /app/public/uploads/images /app/public/uploads/audio \
+    && chown -R nextjs:nodejs /app/public/uploads
+
 USER nextjs
 
 EXPOSE 3000

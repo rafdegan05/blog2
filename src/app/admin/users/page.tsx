@@ -201,7 +201,7 @@ export default function AdminUsersPage() {
                 <td>
                   <div className="flex items-center gap-3">
                     <div className="avatar placeholder">
-                      <div className="w-10 h-10 rounded-full bg-base-300">
+                      <div className="w-10 h-10 rounded-full bg-base-300 flex items-center justify-center">
                         {user.image ? (
                           <img src={user.image} alt={user.name || ""} className="rounded-full" />
                         ) : (

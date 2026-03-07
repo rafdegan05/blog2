@@ -84,7 +84,7 @@ export default async function PodcastPage({ params }: PodcastPageProps) {
               <div className="flex items-center gap-4 text-base-content/60 mb-4">
                 <div className="flex items-center gap-2">
                   <div className="avatar placeholder">
-                    <div className="bg-neutral text-neutral-content w-8 rounded-full">
+                    <div className="bg-neutral text-neutral-content w-8 rounded-full flex items-center justify-center">
                       {podcast.author.image ? (
                         <Image
                           src={podcast.author.image}
@@ -156,7 +156,7 @@ export default async function PodcastPage({ params }: PodcastPageProps) {
             <div className="mt-6 p-4 bg-base-300 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="avatar placeholder">
-                  <div className="bg-neutral text-neutral-content w-12 rounded-full">
+                  <div className="bg-neutral text-neutral-content w-12 rounded-full flex items-center justify-center">
                     {podcast.author.image ? (
                       <Image
                         src={podcast.author.image}

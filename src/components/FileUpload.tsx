@@ -207,7 +207,7 @@ export default function FileUpload({
           <span className="label-text-alt text-base-content/50">Or paste a URL directly</span>
         </label>
         <input
-          type="url"
+          type="text"
           className="input input-bordered input-sm w-full"
           placeholder={
             type === "image" ? "https://example.com/image.jpg" : "https://example.com/audio.mp3"
