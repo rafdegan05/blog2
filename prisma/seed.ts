@@ -1,5 +1,6 @@
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcryptjs";
 import "dotenv/config";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
@@ -7,6 +8,8 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Seeding database...");
+
+  const defaultPassword = await bcrypt.hash("password123", 12);
 
   // Create an admin user
   const admin = await prisma.user.upsert({
@@ -16,7 +19,34 @@ async function main() {
       email: "admin@blog.com",
       name: "Admin",
       role: "ADMIN",
+      password: defaultPassword,
       bio: "Blog administrator and content creator.",
+    },
+  });
+
+  // Create an author user
+  await prisma.user.upsert({
+    where: { email: "author@blog.com" },
+    update: {},
+    create: {
+      email: "author@blog.com",
+      name: "Author",
+      role: "AUTHOR",
+      password: defaultPassword,
+      bio: "Content author.",
+    },
+  });
+
+  // Create a regular reader user
+  await prisma.user.upsert({
+    where: { email: "reader@blog.com" },
+    update: {},
+    create: {
+      email: "reader@blog.com",
+      name: "Reader",
+      role: "USER",
+      password: defaultPassword,
+      bio: "Blog reader and community member.",
     },
   });
 

@@ -2,7 +2,9 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 
 interface PostItem {
   id: string;
@@ -21,12 +23,17 @@ interface PodcastItem {
   createdAt: string;
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [podcasts, setPodcasts] = useState<PodcastItem[]>([]);
   const [activeTab, setActiveTab] = useState<"posts" | "podcasts">("posts");
   const [loading, setLoading] = useState(true);
+
+  const role = session?.user?.role;
+  const canCreate = role === "AUTHOR" || role === "ADMIN";
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -84,21 +91,51 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
+      {error === "insufficient_role" && (
+        <div className="alert alert-warning mb-6">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="stroke-current shrink-0 h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
+          </svg>
+          <span>
+            You need Author or Admin role to create content. Contact an administrator to upgrade
+            your account.
+          </span>
+        </div>
+      )}
+      {error === "admin_required" && (
+        <div className="alert alert-error mb-6">
+          <span>Admin access is required for that page.</span>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-base-content/60 mt-1">
             Welcome, {session.user?.name || session.user?.email}
+            {role && <span className="badge badge-primary badge-sm ml-2">{role}</span>}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/blog/new" className="btn btn-primary btn-sm">
-            + New Post
-          </Link>
-          <Link href="/podcasts/new" className="btn btn-secondary btn-sm">
-            + New Podcast
-          </Link>
-        </div>
+        {canCreate && (
+          <div className="flex gap-2">
+            <Link href="/blog/new" className="btn btn-primary btn-sm">
+              + New Post
+            </Link>
+            <Link href="/podcasts/new" className="btn btn-secondary btn-sm">
+              + New Podcast
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -235,5 +272,19 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <span className="loading loading-spinner loading-lg" />
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }

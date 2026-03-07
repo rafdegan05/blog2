@@ -44,6 +44,21 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  token   String   @unique
+  expires DateTime
+  used    Boolean  @default(false)
+
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
 // ─── User ───
 
 model User {
@@ -52,8 +67,12 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
+  password      String?
   role          Role      @default(USER)
   bio           String?   @db.Text
+  notifyComments  Boolean @default(true)
+  notifyNewPosts  Boolean @default(true)
+  tokenInvalidBefore DateTime? // invalidate all sessions before this date
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -62,6 +81,7 @@ model User {
   posts    Post[]
   podcasts Podcast[]
   comments Comment[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 enum Role {

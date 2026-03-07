@@ -377,7 +377,7 @@ try {
         "seed" {
             Test-DockerRunning
             Write-Step "Esecuzione seed del database..."
-            docker compose -f $ComposeFile exec app npx tsx prisma/seed.ts
+            docker compose -f $ComposeFile exec app sh -c "cd /app/prisma-cli && node node_modules/.bin/tsx prisma/seed.ts"
             Write-Ok "Seed completato."
         }
 

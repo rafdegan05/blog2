@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { canCreateContent } from "@/lib/permissions";
 
 // GET /api/podcasts - List podcasts with pagination and search
 export async function GET(request: NextRequest) {
@@ -50,6 +51,13 @@ export async function POST(request: NextRequest) {
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!canCreateContent(session.user.role)) {
+    return NextResponse.json(
+      { error: "Forbidden – Author or Admin role required to create podcasts" },
+      { status: 403 }
+    );
   }
 
   const body = await request.json();

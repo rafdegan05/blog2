@@ -62,8 +62,20 @@ export const authConfig: NextAuthConfig = {
       }
       return token;
     },
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isAuthPage = nextUrl.pathname.startsWith("/auth/");
+
+      // Redirect logged-in users away from auth pages
+      if (isAuthPage && isLoggedIn) {
+        return Response.redirect(new URL("/dashboard", nextUrl.origin));
+      }
+
+      return true;
+    },
   },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/signin",
   },
 };

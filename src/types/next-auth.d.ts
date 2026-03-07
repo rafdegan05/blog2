@@ -8,10 +8,15 @@ declare module "next-auth" {
       role?: Role;
     } & DefaultSession["user"];
   }
+
+  interface User {
+    role?: Role;
+  }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     role?: Role;
+    invalidated?: boolean;
   }
 }

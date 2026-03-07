@@ -4,10 +4,12 @@ Ecco un piano dettagliato per implementare le funzionalità del blog e podcast u
    - Inizializzare un nuovo progetto Next.js 16 con TypeScript.
    - Configurare Tailwind CSS 4 e DaisyUI 5 per lo styling.
    - Configurare ESLint, Prettier, Husky, Lint-staged, Commitlint, Standard-version e Semantic-release per la gestione del codice e dei rilasci.
+   - Utilizzare dotenv per gestire le variabili d'ambiente in modo sicuro.
+   - Utilizzare pnpm come gestore di pacchetti per una gestione efficiente delle dipendenze.
 2. **Autenticazione con Next-auth**
    - Configurare Next-auth 5 per l'autenticazione degli utenti.
    - Implementare il supporto per provider di autenticazione Google, GitHub, Keycloak.
-   - Creare pagine di login e registrazione.ù
+   - Creare pagine di login e registrazione.
    - Implementare la gestione delle sessioni e dei token di autenticazione.
    - Configurare le autorizzazioni per le diverse funzionalità del blog in base al ruolo dell'utente (es. admin, autore, lettore).
    - Implementare la funzionalità di reset della password e gestione dell'account utente.
@@ -15,6 +17,8 @@ Ecco un piano dettagliato per implementare le funzionalità del blog e podcast u
    - Implementare la funzionalità di logout e gestione delle sessioni attive.
    - Fornire un sistema di gestione degli errori per l'autenticazione, inclusa la visualizzazione di messaggi di errore appropriati agli utenti in caso di problemi durante il login o la registrazione.
    - Fornire login e registrazione social Google, GitHub, Keycloak per semplificare il processo di autenticazione per gli utenti.
+   - Validare i dati di input durante il processo di registrazione e login per garantire la sicurezza e l'integrità dei dati degli utenti.
+   - Implementare la funzionalità di verifica dell'email per garantire che gli utenti registrati abbiano un indirizzo email valido.
 3. **Gestione dei post e dei podcast con Prisma e PostgreSQL**
    - Configurare Prisma 7 per interagire con il database PostgreSQL.
    - Creare modelli Prisma per i post, i podcast e gli utenti.

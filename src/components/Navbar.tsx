@@ -10,6 +10,9 @@ export default function Navbar() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const role = session?.user?.role;
+  const canCreate = role === "AUTHOR" || role === "ADMIN";
+
   return (
     <div className="navbar bg-base-200 shadow-sm sticky top-0 z-50">
       <div className="navbar-start">
@@ -55,12 +58,16 @@ export default function Navbar() {
                   <li>
                     <Link href="/dashboard">Dashboard</Link>
                   </li>
-                  <li>
-                    <Link href="/blog/new">New Post</Link>
-                  </li>
-                  <li>
-                    <Link href="/podcasts/new">New Podcast</Link>
-                  </li>
+                  {canCreate && (
+                    <>
+                      <li>
+                        <Link href="/blog/new">New Post</Link>
+                      </li>
+                      <li>
+                        <Link href="/podcasts/new">New Podcast</Link>
+                      </li>
+                    </>
+                  )}
                 </>
               )}
             </ul>
@@ -95,16 +102,20 @@ export default function Navbar() {
                   Dashboard
                 </Link>
               </li>
-              <li>
-                <Link href="/blog/new" className="btn btn-ghost btn-sm">
-                  New Post
-                </Link>
-              </li>
-              <li>
-                <Link href="/podcasts/new" className="btn btn-ghost btn-sm">
-                  New Podcast
-                </Link>
-              </li>
+              {canCreate && (
+                <>
+                  <li>
+                    <Link href="/blog/new" className="btn btn-ghost btn-sm">
+                      New Post
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/podcasts/new" className="btn btn-ghost btn-sm">
+                      New Podcast
+                    </Link>
+                  </li>
+                </>
+              )}
             </>
           )}
         </ul>
@@ -135,12 +146,21 @@ export default function Navbar() {
               tabIndex={0}
               className="menu menu-sm dropdown-content bg-base-100 rounded-box z-50 mt-3 w-52 p-2 shadow"
             >
-              <li className="menu-title">{session.user?.name || session.user?.email}</li>
+              <li className="menu-title">
+                <span>{session.user?.name || session.user?.email}</span>
+                {role && <span className="badge badge-xs badge-primary ml-2">{role}</span>}
+              </li>
+              <li>
+                <Link href="/profile">Profile Settings</Link>
+              </li>
               <li>
                 <Link href="/dashboard">Dashboard</Link>
               </li>
+              <div className="divider my-1" />
               <li>
-                <button onClick={() => signOut()}>Sign Out</button>
+                <button onClick={() => signOut({ callbackUrl: "/" })} className="text-error">
+                  Sign Out
+                </button>
               </li>
             </ul>
           </div>
