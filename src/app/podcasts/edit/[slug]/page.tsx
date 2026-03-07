@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import FileUpload from "@/components/FileUpload";
 import Link from "next/link";
 
 interface PodcastData {
@@ -284,27 +285,13 @@ export default function EditPodcastPage() {
           />
         </div>
 
-        <div className="form-control">
-          <label className="label" htmlFor="edit-podcast-audio">
-            <span className="label-text font-semibold">Audio URL *</span>
-          </label>
-          <input
-            id="edit-podcast-audio"
-            type="url"
-            className="input input-bordered w-full"
-            placeholder="https://example.com/audio.mp3"
-            value={audioUrl}
-            onChange={(e) => setAudioUrl(e.target.value)}
-            required
-          />
-          {audioUrl && (
-            <div className="mt-2">
-              <audio controls className="w-full" src={audioUrl}>
-                Your browser does not support the audio element.
-              </audio>
-            </div>
-          )}
-        </div>
+        <FileUpload
+          type="audio"
+          label="Audio File *"
+          value={audioUrl}
+          onUpload={setAudioUrl}
+          disabled={submitting}
+        />
 
         <div className="form-control">
           <label className="label" htmlFor="edit-podcast-desc">
@@ -321,29 +308,13 @@ export default function EditPodcastPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control">
-            <label className="label" htmlFor="edit-podcast-cover">
-              <span className="label-text font-semibold">Cover Image URL</span>
-            </label>
-            <input
-              id="edit-podcast-cover"
-              type="url"
-              className="input input-bordered w-full"
-              placeholder="https://example.com/cover.jpg"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-            />
-            {coverImage && (
-              <div className="mt-2">
-                <img
-                  src={coverImage}
-                  alt="Cover preview"
-                  className="max-h-32 rounded-lg object-cover"
-                  onError={(e) => (e.currentTarget.style.display = "none")}
-                />
-              </div>
-            )}
-          </div>
+          <FileUpload
+            type="image"
+            label="Cover Image"
+            value={coverImage}
+            onUpload={setCoverImage}
+            disabled={submitting}
+          />
           <div className="form-control">
             <label className="label" htmlFor="edit-podcast-duration">
               <span className="label-text font-semibold">Duration (seconds)</span>

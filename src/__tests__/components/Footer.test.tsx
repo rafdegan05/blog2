@@ -10,7 +10,7 @@ describe("Footer", () => {
 
   it("renders the podcast link", () => {
     render(<Footer />);
-    expect(screen.getByRole("link", { name: "Podcast" })).toHaveAttribute("href", "/podcasts");
+    expect(screen.getByRole("link", { name: "Podcasts" })).toHaveAttribute("href", "/podcasts");
   });
 
   it("renders the sign in link", () => {

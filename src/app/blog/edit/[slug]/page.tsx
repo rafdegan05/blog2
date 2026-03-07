@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import FileUpload from "@/components/FileUpload";
 import Link from "next/link";
 
 interface PostData {
@@ -336,29 +337,13 @@ export default function EditPostPage() {
             />
           </div>
 
-          <div className="form-control">
-            <label className="label" htmlFor="edit-post-cover">
-              <span className="label-text font-semibold">Cover Image URL</span>
-            </label>
-            <input
-              id="edit-post-cover"
-              type="url"
-              className="input input-bordered w-full"
-              placeholder="https://example.com/image.jpg"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-            />
-            {coverImage && (
-              <div className="mt-2">
-                <img
-                  src={coverImage}
-                  alt="Cover preview"
-                  className="max-h-48 rounded-lg object-cover"
-                  onError={(e) => (e.currentTarget.style.display = "none")}
-                />
-              </div>
-            )}
-          </div>
+          <FileUpload
+            type="image"
+            label="Cover Image"
+            value={coverImage}
+            onUpload={setCoverImage}
+            disabled={submitting}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">

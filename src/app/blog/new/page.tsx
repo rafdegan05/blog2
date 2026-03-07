@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import FileUpload from "@/components/FileUpload";
 import Link from "next/link";
 
 export default function NewPostPage() {
@@ -154,18 +155,13 @@ export default function NewPostPage() {
             />
           </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Cover Image URL</span>
-            </label>
-            <input
-              type="url"
-              className="input input-bordered w-full"
-              placeholder="https://example.com/image.jpg"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-            />
-          </div>
+          <FileUpload
+            type="image"
+            label="Cover Image"
+            value={coverImage}
+            onUpload={setCoverImage}
+            disabled={submitting}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
