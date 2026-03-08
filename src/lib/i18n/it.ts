@@ -510,6 +510,8 @@ export const it: Translations = {
     preview: "Anteprima caricamento",
     remove: "Rimuovi",
     uploading: "Caricamento...",
+    cancel: "Annulla",
+    replace: "Sostituisci",
     clickOrDragReplace: "Clicca o trascina per sostituire",
     clickOrDragUpload: "Clicca o trascina per caricare",
     imageTypes: "JPEG, PNG, GIF, WebP, SVG — max {n} MB",

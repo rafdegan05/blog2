@@ -510,6 +510,8 @@ export const en = {
     preview: "Upload preview",
     remove: "Remove",
     uploading: "Uploading...",
+    cancel: "Cancel",
+    replace: "Replace",
     clickOrDragReplace: "Click or drag to replace",
     clickOrDragUpload: "Click or drag to upload",
     imageTypes: "JPEG, PNG, GIF, WebP, SVG — max {n} MB",
