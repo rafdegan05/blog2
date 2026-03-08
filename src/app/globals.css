@@ -1,6 +1,144 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
+/*
+ * ── "Quiet Morning" — light theme ──
+ * Aged paper, worn clay, dusty sage, honey light.
+ * A kitchen table at 7 a.m., journal open, coffee cooling.
+ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surface hierarchy: warm linen → parchment → oat */
+  --color-base-100: oklch(0.97 0.008 75);
+  --color-base-200: oklch(0.93 0.012 75);
+  --color-base-300: oklch(0.88 0.016 75);
+  --color-base-content: oklch(0.26 0.018 55);
+
+  /* Primary: worn terracotta — earthy, grounding, never flashy */
+  --color-primary: oklch(0.52 0.1 40);
+  --color-primary-content: oklch(0.97 0.006 75);
+
+  /* Secondary: dusty sage — the green of old shutters and dried herbs */
+  --color-secondary: oklch(0.55 0.06 160);
+  --color-secondary-content: oklch(0.97 0.006 160);
+
+  /* Accent: raw honey — warm, candlelit, intimate */
+  --color-accent: oklch(0.62 0.13 70);
+  --color-accent-content: oklch(0.22 0.02 70);
+
+  /* Neutral: warm charcoal with clay undertone */
+  --color-neutral: oklch(0.32 0.02 55);
+  --color-neutral-content: oklch(0.94 0.008 75);
+
+  /* Semantic: soft, non-clinical, organic */
+  --color-info: oklch(0.58 0.09 245);
+  --color-info-content: oklch(0.97 0.006 245);
+  --color-success: oklch(0.56 0.09 155);
+  --color-success-content: oklch(0.97 0.006 155);
+  --color-warning: oklch(0.68 0.12 80);
+  --color-warning-content: oklch(0.24 0.02 80);
+  --color-error: oklch(0.52 0.11 18);
+  --color-error-content: oklch(0.97 0.006 18);
+
+  /* Shape & feel: soft but not childish, grounded */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/*
+ * ── "Late Evening" — dark theme ──
+ * Dark walnut, candlelight gold, weathered sage, parchment.
+ * A reading lamp in a wood-paneled room, rain outside.
+ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surface hierarchy: espresso → dark leather → near-ink */
+  --color-base-100: oklch(0.215 0.014 55);
+  --color-base-200: oklch(0.18 0.012 55);
+  --color-base-300: oklch(0.15 0.01 55);
+  --color-base-content: oklch(0.87 0.013 75);
+
+  /* Primary: candlelight terracotta — warm and glowing on dark */
+  --color-primary: oklch(0.67 0.1 55);
+  --color-primary-content: oklch(0.17 0.012 55);
+
+  /* Secondary: muted sage — quieter, still alive */
+  --color-secondary: oklch(0.6 0.055 160);
+  --color-secondary-content: oklch(0.17 0.01 160);
+
+  /* Accent: golden hour amber — warmth against dark wood */
+  --color-accent: oklch(0.7 0.12 75);
+  --color-accent-content: oklch(0.18 0.015 75);
+
+  /* Neutral: mid-warm gray — visible but restrained */
+  --color-neutral: oklch(0.48 0.015 55);
+  --color-neutral-content: oklch(0.92 0.008 75);
+
+  /* Semantic: same family, lifted for dark readability */
+  --color-info: oklch(0.62 0.08 245);
+  --color-info-content: oklch(0.17 0.01 245);
+  --color-success: oklch(0.6 0.08 155);
+  --color-success-content: oklch(0.17 0.01 155);
+  --color-warning: oklch(0.72 0.11 80);
+  --color-warning-content: oklch(0.2 0.02 80);
+  --color-error: oklch(0.58 0.1 18);
+  --color-error-content: oklch(0.97 0.006 18);
+
+  /* Same shapes carry across */
+  --radius-selector: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.75rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* OS-level dark mode preference (when no data-theme is set) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-base-100: oklch(0.215 0.014 55);
+    --color-base-200: oklch(0.18 0.012 55);
+    --color-base-300: oklch(0.15 0.01 55);
+    --color-base-content: oklch(0.87 0.013 75);
+    --color-primary: oklch(0.67 0.1 55);
+    --color-primary-content: oklch(0.17 0.012 55);
+    --color-secondary: oklch(0.6 0.055 160);
+    --color-secondary-content: oklch(0.17 0.01 160);
+    --color-accent: oklch(0.7 0.12 75);
+    --color-accent-content: oklch(0.18 0.015 75);
+    --color-neutral: oklch(0.48 0.015 55);
+    --color-neutral-content: oklch(0.92 0.008 75);
+    --color-info: oklch(0.62 0.08 245);
+    --color-info-content: oklch(0.17 0.01 245);
+    --color-success: oklch(0.6 0.08 155);
+    --color-success-content: oklch(0.17 0.01 155);
+    --color-warning: oklch(0.72 0.11 80);
+    --color-warning-content: oklch(0.2 0.02 80);
+    --color-error: oklch(0.58 0.1 18);
+    --color-error-content: oklch(0.97 0.006 18);
+    --radius-selector: 0.5rem;
+    --radius-field: 0.375rem;
+    --radius-box: 0.75rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 0;
+  }
+}
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
