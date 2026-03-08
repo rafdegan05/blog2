@@ -99,7 +99,7 @@ export default function HomeContent({
 
       {/* Latest Posts Section */}
       {posts.length > 0 && (
-        <section className="py-16 px-4 bg-base-200">
+        <section className="py-16 px-4 bg-gradient-to-br from-base-200 to-base-300">
           <div className="max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-10">
               <h2 className="text-3xl font-bold">{t.home.latestArticles}</h2>
@@ -214,17 +214,6 @@ export default function HomeContent({
           </div>
         </section>
       )}
-
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-primary/10 to-secondary/10">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.home.ctaTitle}</h2>
-          <p className="text-base-content/70 mb-8 text-lg">{t.home.ctaText}</p>
-          <Link href="/auth/signin" className="btn btn-primary btn-lg">
-            {t.home.getStarted}
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }
