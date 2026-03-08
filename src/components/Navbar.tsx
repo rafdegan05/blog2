@@ -17,6 +17,7 @@ export default function Navbar() {
   const { t } = useTranslation();
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -37,16 +38,16 @@ export default function Navbar() {
     >
       <div className="navbar-start">
         <div className="dropdown">
-          <div
-            tabIndex={0}
-            role="button"
+          <button
             className="btn btn-ghost lg:hidden"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label={t.nav.openMenu}
+            aria-expanded={menuOpen}
           >
+            {/* Hamburger icon */}
             <svg
+              className={`h-5 w-5 transition-all duration-300 ${menuOpen ? "hidden" : "block"}`}
               xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -58,33 +59,67 @@ export default function Navbar() {
                 d="M4 6h16M4 12h8m-8 6h16"
               />
             </svg>
-          </div>
+            {/* Close icon */}
+            <svg
+              className={`h-5 w-5 transition-all duration-300 ${menuOpen ? "block" : "hidden"}`}
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+          {/* Backdrop overlay */}
+          {menuOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/20 lg:hidden"
+              onClick={() => setMenuOpen(false)}
+            />
+          )}
           {menuOpen && (
             <ul
               tabIndex={0}
-              className="menu menu-sm dropdown-content bg-base-100 rounded-box z-50 mt-3 w-52 p-2 shadow"
-              onClick={() => setMenuOpen(false)}
+              className="menu menu-sm dropdown-content bg-base-100 rounded-box z-50 mt-3 w-56 p-2 shadow-xl border border-base-300"
             >
               <li>
-                <Link href="/" className={isActive("/") ? "active font-semibold" : ""}>
+                <Link
+                  href="/"
+                  onClick={closeMenu}
+                  className={isActive("/") ? "active font-semibold" : ""}
+                >
                   {t.common.home}
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className={isActive("/blog") ? "active font-semibold" : ""}>
+                <Link
+                  href="/blog"
+                  onClick={closeMenu}
+                  className={isActive("/blog") ? "active font-semibold" : ""}
+                >
                   {t.nav.blog}
                 </Link>
               </li>
               <li>
                 <Link
                   href="/podcasts"
+                  onClick={closeMenu}
                   className={isActive("/podcasts") ? "active font-semibold" : ""}
                 >
                   {t.nav.podcast}
                 </Link>
               </li>
               <li>
-                <Link href="/about" className={isActive("/about") ? "active font-semibold" : ""}>
+                <Link
+                  href="/about"
+                  onClick={closeMenu}
+                  className={isActive("/about") ? "active font-semibold" : ""}
+                >
                   {t.nav.about}
                 </Link>
               </li>
@@ -93,6 +128,7 @@ export default function Navbar() {
                   <li>
                     <Link
                       href="/dashboard"
+                      onClick={closeMenu}
                       className={isActive("/dashboard") ? "active font-semibold" : ""}
                     >
                       {t.nav.dashboard}
@@ -103,6 +139,7 @@ export default function Navbar() {
                       <li>
                         <Link
                           href="/blog/new"
+                          onClick={closeMenu}
                           className={isActive("/blog/new") ? "active font-semibold" : ""}
                         >
                           {t.nav.newPost}
@@ -111,6 +148,7 @@ export default function Navbar() {
                       <li>
                         <Link
                           href="/podcasts/new"
+                          onClick={closeMenu}
                           className={isActive("/podcasts/new") ? "active font-semibold" : ""}
                         >
                           {t.nav.newPodcast}
@@ -122,6 +160,7 @@ export default function Navbar() {
                     <li>
                       <Link
                         href="/admin"
+                        onClick={closeMenu}
                         className={`text-accent ${isActive("/admin") ? "active font-semibold" : ""}`}
                       >
                         {t.nav.adminPanel}
