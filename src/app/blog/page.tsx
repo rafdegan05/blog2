@@ -1,4 +1,5 @@
 import BlogContent from "@/components/BlogContent";
+import { prisma } from "@/lib/prisma";
 
 interface BlogPageProps {
   searchParams: Promise<{ page?: string; search?: string; category?: string; tag?: string }>;
@@ -25,9 +26,36 @@ async function getPosts(params: {
   }
 }
 
+async function getFilters() {
+  const [categories, tags] = await Promise.all([
+    prisma.category.findMany({
+      where: { posts: { some: { published: true } } },
+      select: { name: true, slug: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.tag.findMany({
+      where: { posts: { some: { published: true } } },
+      select: { name: true, slug: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+  return { categories, tags };
+}
+
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const params = await searchParams;
-  const { posts, pagination } = await getPosts(params);
+  const [{ posts, pagination }, { categories, tags }] = await Promise.all([
+    getPosts(params),
+    getFilters(),
+  ]);
 
-  return <BlogContent posts={posts} pagination={pagination} search={params.search} />;
+  return (
+    <BlogContent
+      posts={posts}
+      pagination={pagination}
+      search={params.search}
+      categories={categories}
+      tags={tags}
+    />
+  );
 }

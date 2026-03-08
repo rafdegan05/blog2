@@ -46,6 +46,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        // Block sign-in if user is banned
+        if (user.banned) {
+          return null;
+        }
+
         return {
           id: user.id,
           name: user.name,
@@ -65,10 +70,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.sub) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true, tokenInvalidBefore: true },
+          select: { role: true, banned: true, tokenInvalidBefore: true },
         });
         if (dbUser) {
           token.role = dbUser.role;
+
+          // Block banned users
+          if (dbUser.banned) {
+            return { ...token, invalidated: true };
+          }
 
           // Check if token was issued before invalidation date
           if (dbUser.tokenInvalidBefore && token.iat) {

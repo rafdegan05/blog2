@@ -84,6 +84,7 @@ model User {
   image         String?
   password      String?
   role          Role      @default(USER)
+  banned        Boolean   @default(false)
   bio           String?   @db.Text
   notifyComments  Boolean @default(true)
   notifyNewPosts  Boolean @default(true)

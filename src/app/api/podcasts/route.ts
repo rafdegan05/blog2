@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "10");
   const search = searchParams.get("search") || "";
+  const category = searchParams.get("category") || "";
+  const tag = searchParams.get("tag") || "";
 
   const where: Record<string, unknown> = { published: true, moderation: "APPROVED" };
 
@@ -17,6 +19,14 @@ export async function GET(request: NextRequest) {
       { title: { contains: search, mode: "insensitive" } },
       { description: { contains: search, mode: "insensitive" } },
     ];
+  }
+
+  if (category) {
+    where.categories = { some: { slug: category } };
+  }
+
+  if (tag) {
+    where.tags = { some: { slug: tag } };
   }
 
   const [podcasts, total] = await Promise.all([

@@ -23,6 +23,7 @@ export async function GET() {
       email: true,
       image: true,
       role: true,
+      banned: true,
       createdAt: true,
       _count: { select: { posts: true, podcasts: true, comments: true } },
     },

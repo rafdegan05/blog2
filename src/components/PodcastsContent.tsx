@@ -2,6 +2,7 @@
 
 import PodcastCard from "@/components/PodcastCard";
 import SearchBar from "@/components/SearchBar";
+import FilterBar from "@/components/FilterBar";
 import Pagination from "@/components/Pagination";
 import { useTranslation } from "@/components/LanguageProvider";
 
@@ -9,14 +10,22 @@ interface PodcastsContentProps {
   podcasts: Record<string, unknown>[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
   search?: string;
+  categories: { name: string; slug: string }[];
+  tags: { name: string; slug: string }[];
 }
 
-export default function PodcastsContent({ podcasts, pagination, search }: PodcastsContentProps) {
+export default function PodcastsContent({
+  podcasts,
+  pagination,
+  search,
+  categories,
+  tags,
+}: PodcastsContentProps) {
   const { t } = useTranslation();
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-4xl font-bold">{t.podcasts.title}</h1>
           <p className="text-base-content/60 mt-2">
@@ -26,6 +35,22 @@ export default function PodcastsContent({ podcasts, pagination, search }: Podcas
           </p>
         </div>
         <SearchBar basePath="/podcasts" placeholder={t.podcasts.searchPlaceholder} />
+      </div>
+
+      <div className="mb-8">
+        <FilterBar
+          basePath="/podcasts"
+          categories={categories}
+          tags={tags}
+          labels={{
+            filterByCategory: t.podcasts.filterByCategory,
+            filterByTag: t.podcasts.filterByTag,
+            allCategories: t.podcasts.allCategories,
+            allTags: t.podcasts.allTags,
+            activeFilters: t.podcasts.activeFilters,
+            clearFilters: t.podcasts.clearFilters,
+          }}
+        />
       </div>
 
       {podcasts.length === 0 ? (

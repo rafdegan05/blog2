@@ -11,6 +11,7 @@ interface User {
   email: string | null;
   image: string | null;
   role: string;
+  banned: boolean;
   createdAt: string;
   _count: { posts: number; podcasts: number; comments: number };
 }
@@ -20,6 +21,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [banning, setBanning] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,6 +74,37 @@ export default function AdminUsersPage() {
       setError("An error occurred");
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleBan = async (userId: string, banned: boolean) => {
+    const msg = banned ? t.admin.banConfirm : t.admin.unbanConfirm;
+    if (!confirm(msg)) return;
+
+    setBanning(userId);
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch("/api/user/ban", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, banned }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || t.admin.banFailed);
+        return;
+      }
+
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, banned } : u)));
+      setSuccess(banned ? t.admin.banSuccess : t.admin.unbanSuccess);
+      setTimeout(() => setSuccess(""), 3000);
+    } catch {
+      setError(t.admin.banFailed);
+    } finally {
+      setBanning(null);
     }
   };
 
@@ -222,7 +255,12 @@ export default function AdminUsersPage() {
                   </div>
                 </td>
                 <td>
-                  <span className={`badge ${roleColor(user.role)} badge-sm`}>{user.role}</span>
+                  <div className="flex items-center gap-1">
+                    <span className={`badge ${roleColor(user.role)} badge-sm`}>{user.role}</span>
+                    {user.banned && (
+                      <span className="badge badge-warning badge-sm">{t.admin.banned}</span>
+                    )}
+                  </div>
                 </td>
                 <td className="hidden md:table-cell">
                   <div className="flex gap-2 text-xs">
@@ -241,16 +279,33 @@ export default function AdminUsersPage() {
                   {user.id === session.user?.id ? (
                     <span className="text-xs text-base-content/40">{t.admin.you}</span>
                   ) : (
-                    <select
-                      className="select select-bordered select-sm w-28"
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                      disabled={updating === user.id}
-                    >
-                      <option value="USER">USER</option>
-                      <option value="AUTHOR">AUTHOR</option>
-                      <option value="ADMIN">ADMIN</option>
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <select
+                        className="select select-bordered select-sm w-28"
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        disabled={updating === user.id || user.banned}
+                      >
+                        <option value="USER">USER</option>
+                        <option value="AUTHOR">AUTHOR</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                      {user.role !== "ADMIN" && (
+                        <button
+                          className={`btn btn-sm ${user.banned ? "btn-success" : "btn-warning"}`}
+                          onClick={() => handleBan(user.id, !user.banned)}
+                          disabled={banning === user.id}
+                        >
+                          {banning === user.id ? (
+                            <span className="loading loading-spinner loading-xs" />
+                          ) : user.banned ? (
+                            t.admin.unbanUser
+                          ) : (
+                            t.admin.banUser
+                          )}
+                        </button>
+                      )}
+                    </div>
                   )}
                   {updating === user.id && (
                     <span className="loading loading-spinner loading-xs ml-2" />

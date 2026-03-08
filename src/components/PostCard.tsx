@@ -39,14 +39,22 @@ export default function PostCard({ post }: PostCardProps) {
 
         <div className="flex flex-wrap gap-1 mt-2">
           {post.categories.map((cat) => (
-            <span key={cat.slug} className="badge badge-primary badge-sm">
+            <Link
+              key={cat.slug}
+              href={`/blog?category=${cat.slug}`}
+              className="badge badge-primary badge-sm hover:brightness-110 transition-all"
+            >
               {cat.name}
-            </span>
+            </Link>
           ))}
           {post.tags.map((tag) => (
-            <span key={tag.slug} className="badge badge-outline badge-sm">
+            <Link
+              key={tag.slug}
+              href={`/blog?tag=${tag.slug}`}
+              className="badge badge-outline badge-sm hover:badge-primary transition-all"
+            >
               {tag.name}
-            </span>
+            </Link>
           ))}
         </div>
 
