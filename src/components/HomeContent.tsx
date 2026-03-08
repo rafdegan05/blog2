@@ -32,7 +32,7 @@ export default function HomeContent({
   return (
     <div>
       {/* Hero Section */}
-      <section className="hero min-h-[70vh] bg-gradient-to-br from-base-200 to-base-300 relative overflow-hidden">
+      <section className="hero min-h-[70vh] bg-gradient-to-br from-base-200 to-base-300 relative overflow-hidden -mt-16 pt-16">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">

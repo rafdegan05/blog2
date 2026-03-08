@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useTranslation } from "@/components/LanguageProvider";
@@ -11,14 +11,26 @@ import { useTranslation } from "@/components/LanguageProvider";
 export default function Navbar() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll(); // check initial position
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const role = session?.user?.role;
   const canCreate = role === "AUTHOR" || role === "ADMIN";
   const isAdmin = role === "ADMIN";
 
   return (
-    <div className="navbar bg-base-200 shadow-sm sticky top-0 z-50">
+    <div
+      className={`navbar fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "bg-base-200/95 backdrop-blur-md shadow-lg" : "bg-transparent"
+      }`}
+    >
       <div className="navbar-start">
         <div className="dropdown">
           <div
@@ -89,21 +101,14 @@ export default function Navbar() {
           )}
         </div>
         <Link href="/" className="btn btn-ghost text-xl font-bold gap-2">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-primary"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-            />
-          </svg>
-          <span className="hidden sm:inline">{t.common.brandName}</span>
+          <Image
+            src="/text-logo.png"
+            alt="Logo"
+            width={128}
+            height={32}
+            className="text-primary"
+            priority
+          />
         </Link>
       </div>
 
