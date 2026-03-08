@@ -57,8 +57,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         categories: {
           set: [],
           connectOrCreate: categories.map((cat: string) => ({
-            where: { slug: cat.toLowerCase().replace(/\s+/g, "-") },
-            create: { name: cat, slug: cat.toLowerCase().replace(/\s+/g, "-") },
+            where: { name: cat },
+            create: {
+              name: cat,
+              slug: cat
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, ""),
+            },
           })),
         },
       }),
@@ -66,8 +72,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         tags: {
           set: [],
           connectOrCreate: tags.map((t: string) => ({
-            where: { slug: t.toLowerCase().replace(/\s+/g, "-") },
-            create: { name: t, slug: t.toLowerCase().replace(/\s+/g, "-") },
+            where: { name: t },
+            create: {
+              name: t,
+              slug: t
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, ""),
+            },
           })),
         },
       }),

@@ -106,16 +106,28 @@ export async function POST(request: NextRequest) {
       categories: categories?.length
         ? {
             connectOrCreate: categories.map((cat: string) => ({
-              where: { slug: cat.toLowerCase().replace(/\s+/g, "-") },
-              create: { name: cat, slug: cat.toLowerCase().replace(/\s+/g, "-") },
+              where: { name: cat },
+              create: {
+                name: cat,
+                slug: cat
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/^-|-$/g, ""),
+              },
             })),
           }
         : undefined,
       tags: tags?.length
         ? {
             connectOrCreate: tags.map((t: string) => ({
-              where: { slug: t.toLowerCase().replace(/\s+/g, "-") },
-              create: { name: t, slug: t.toLowerCase().replace(/\s+/g, "-") },
+              where: { name: t },
+              create: {
+                name: t,
+                slug: t
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]+/g, "-")
+                  .replace(/^-|-$/g, ""),
+              },
             })),
           }
         : undefined,

@@ -237,7 +237,7 @@ describe("POST /api/posts", () => {
           categories: expect.objectContaining({
             connectOrCreate: expect.arrayContaining([
               expect.objectContaining({
-                where: { slug: "tech" },
+                where: { name: "Tech" },
                 create: { name: "Tech", slug: "tech" },
               }),
             ]),
@@ -245,7 +245,7 @@ describe("POST /api/posts", () => {
           tags: expect.objectContaining({
             connectOrCreate: expect.arrayContaining([
               expect.objectContaining({
-                where: { slug: "react" },
+                where: { name: "react" },
               }),
             ]),
           }),
