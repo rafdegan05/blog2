@@ -2,6 +2,7 @@
 
 import EditButton from "@/components/EditButton";
 import ReactionBar from "@/components/ReactionBar";
+import ShareButtons from "@/components/ShareButtons";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
@@ -138,9 +139,16 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
             </audio>
           </div>
 
-          {/* Reactions */}
-          <div className="mt-6">
+          {/* Reactions & Share */}
+          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <ReactionBar podcastId={podcast.id} />
+            <ShareButtons
+              title={podcast.title}
+              url={
+                typeof window !== "undefined" ? window.location.href : `/podcasts/${podcast.slug}`
+              }
+              description={podcast.description}
+            />
           </div>
 
           {/* Description */}

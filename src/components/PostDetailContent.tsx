@@ -6,6 +6,7 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import Comments from "@/components/Comments";
 import EditButton from "@/components/EditButton";
 import ReactionBar from "@/components/ReactionBar";
+import ShareButtons from "@/components/ShareButtons";
 import { useTranslation } from "@/components/LanguageProvider";
 
 interface PostDetailContentProps {
@@ -128,9 +129,14 @@ export default function PostDetailContent({ post }: PostDetailContentProps) {
       <article className="divider" />
       <MarkdownRenderer content={post.content} />
 
-      {/* Reactions */}
-      <div className="mt-8 mb-4">
+      {/* Reactions & Share */}
+      <div className="mt-8 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <ReactionBar postId={post.id} />
+        <ShareButtons
+          title={post.title}
+          url={typeof window !== "undefined" ? window.location.href : `/blog/${post.slug}`}
+          description={post.excerpt}
+        />
       </div>
 
       {/* Author Bio */}

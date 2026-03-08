@@ -482,6 +482,20 @@ export const en = {
   search: {
     defaultPlaceholder: "Search...",
   },
+
+  // ─── Share ───
+  share: {
+    title: "Share",
+    copyLink: "Copy Link",
+    copied: "Copied!",
+    shareOn: "Share on {platform}",
+    twitter: "X (Twitter)",
+    facebook: "Facebook",
+    linkedin: "LinkedIn",
+    whatsapp: "WhatsApp",
+    telegram: "Telegram",
+    email: "Email",
+  },
 } as const;
 
 // Deep-map all string literals to `string` so translations can use different text

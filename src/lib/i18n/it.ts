@@ -480,4 +480,18 @@ export const it: Translations = {
   search: {
     defaultPlaceholder: "Cerca...",
   },
+
+  // ─── Share ───
+  share: {
+    title: "Condividi",
+    copyLink: "Copia Link",
+    copied: "Copiato!",
+    shareOn: "Condividi su {platform}",
+    twitter: "X (Twitter)",
+    facebook: "Facebook",
+    linkedin: "LinkedIn",
+    whatsapp: "WhatsApp",
+    telegram: "Telegram",
+    email: "Email",
+  },
 };
