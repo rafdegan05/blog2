@@ -520,6 +520,25 @@ export const en = {
     audioNotSupported: "Your browser does not support the audio element.",
   },
 
+  // ─── Markdown Editor ───
+  markdown: {
+    bold: "Bold (Ctrl+B)",
+    italic: "Italic (Ctrl+I)",
+    strikethrough: "Strikethrough",
+    heading2: "Heading 2",
+    heading3: "Heading 3",
+    code: "Inline code (Ctrl+E)",
+    codeBlock: "Code block",
+    quote: "Blockquote",
+    bulletList: "Bullet list",
+    numberedList: "Numbered list",
+    link: "Link (Ctrl+K)",
+    image: "Image",
+    horizontalRule: "Horizontal rule",
+    preview: "Preview",
+    emptyPreview: "Nothing to preview yet...",
+  },
+
   // ─── Theme ───
   theme: {
     switchToLight: "Switch to light mode",

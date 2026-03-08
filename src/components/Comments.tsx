@@ -5,6 +5,8 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ReactionBar from "@/components/ReactionBar";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
+import MarkdownEditor from "@/components/MarkdownEditor";
 import { useTranslation } from "@/components/LanguageProvider";
 
 interface CommentData {
@@ -86,7 +88,9 @@ function CommentItem({
         </span>
       </div>
 
-      <p className="text-sm mb-2">{comment.content}</p>
+      <div className="text-sm mb-2">
+        <MarkdownRenderer content={comment.content} />
+      </div>
 
       <div className="mb-1">
         <ReactionBar commentId={comment.id} compact />
@@ -106,18 +110,23 @@ function CommentItem({
       </div>
 
       {showReply && (
-        <div className="mt-2 flex gap-2">
-          <input
-            type="text"
-            className="input input-bordered input-sm flex-1"
-            placeholder={t.comments.writeReply}
+        <div className="mt-2 space-y-2">
+          <MarkdownEditor
             value={replyContent}
-            onChange={(e) => setReplyContent(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleReply()}
+            onChange={setReplyContent}
+            placeholder={t.comments.writeReply}
+            rows={3}
+            compact
           />
-          <button className="btn btn-primary btn-sm" onClick={handleReply} disabled={submitting}>
-            {submitting ? <span className="loading loading-spinner loading-xs" /> : t.comments.send}
-          </button>
+          <div className="flex justify-end">
+            <button className="btn btn-primary btn-sm" onClick={handleReply} disabled={submitting}>
+              {submitting ? (
+                <span className="loading loading-spinner loading-xs" />
+              ) : (
+                t.comments.send
+              )}
+            </button>
+          </div>
         </div>
       )}
 
@@ -174,22 +183,23 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
       </h3>
 
       {session ? (
-        <div className="mb-6 flex gap-2">
-          <input
-            type="text"
-            className="input input-bordered flex-1"
-            placeholder={t.comments.writeComment}
+        <div className="mb-6 space-y-2">
+          <MarkdownEditor
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            onChange={setNewComment}
+            placeholder={t.comments.writeComment}
+            rows={4}
+            compact
           />
-          <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? (
-              <span className="loading loading-spinner loading-sm" />
-            ) : (
-              t.comments.comment
-            )}
-          </button>
+          <div className="flex justify-end">
+            <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
+              {submitting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                t.comments.comment
+              )}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="alert mb-6">

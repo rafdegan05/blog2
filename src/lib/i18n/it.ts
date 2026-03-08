@@ -520,6 +520,25 @@ export const it: Translations = {
     audioNotSupported: "Il tuo browser non supporta l'elemento audio.",
   },
 
+  // ─── Markdown Editor ───
+  markdown: {
+    bold: "Grassetto (Ctrl+B)",
+    italic: "Corsivo (Ctrl+I)",
+    strikethrough: "Barrato",
+    heading2: "Titolo 2",
+    heading3: "Titolo 3",
+    code: "Codice inline (Ctrl+E)",
+    codeBlock: "Blocco di codice",
+    quote: "Citazione",
+    bulletList: "Elenco puntato",
+    numberedList: "Elenco numerato",
+    link: "Link (Ctrl+K)",
+    image: "Immagine",
+    horizontalRule: "Linea orizzontale",
+    preview: "Anteprima",
+    emptyPreview: "Niente da visualizzare ancora...",
+  },
+
   // ─── Theme ───
   theme: {
     switchToLight: "Passa al tema chiaro",

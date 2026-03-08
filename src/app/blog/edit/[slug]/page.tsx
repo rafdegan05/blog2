@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
+import MarkdownEditor from "@/components/MarkdownEditor";
 import FileUpload from "@/components/FileUpload";
 import Link from "next/link";
 import { useTranslation } from "@/components/LanguageProvider";
@@ -328,12 +329,11 @@ export default function EditPostPage() {
             <label className="label" htmlFor="edit-post-content">
               <span className="label-text font-semibold">{t.blog.contentLabel}</span>
             </label>
-            <textarea
+            <MarkdownEditor
               id="edit-post-content"
-              className="textarea textarea-bordered w-full font-mono"
-              placeholder={t.blog.contentPlaceholder}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={setContent}
+              placeholder={t.blog.contentPlaceholder}
               rows={15}
               required
             />
