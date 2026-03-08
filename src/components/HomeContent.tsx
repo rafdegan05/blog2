@@ -32,14 +32,24 @@ export default function HomeContent({
   return (
     <div>
       {/* Hero Section */}
-      <section className="hero min-h-[70vh] bg-gradient-to-br from-base-200 to-base-300">
-        <div className="hero-content text-center py-20">
+      <section className="hero min-h-[70vh] bg-gradient-to-br from-base-200 to-base-300 relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-[0.04] pointer-events-none">
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="hero-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#hero-grid)" />
+          </svg>
+        </div>
+        {/* Decorative blurred circles */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="hero-content text-center py-20 relative z-10">
           <div className="max-w-3xl">
-            <div className="mb-6">
-              <span className="badge badge-primary badge-lg gap-2 mb-4">{t.home.badge}</span>
-            </div>
             <h1 className="text-5xl md:text-6xl font-extrabold leading-tight">
-              {t.home.heroTitle}
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 {t.home.heroHighlight}
               </span>
@@ -82,150 +92,6 @@ export default function HomeContent({
                 </svg>
                 {t.home.listenPodcasts}
               </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">{t.home.featuresTitle}</h2>
-            <p className="text-base-content/60 max-w-2xl mx-auto">{t.home.featuresText}</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="card bg-base-200 hover:shadow-xl transition-shadow">
-              <div className="card-body items-center text-center">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-7 w-7 text-primary"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="card-title">{t.home.featureBlog}</h3>
-                <p className="text-base-content/70">{t.home.featureBlogDesc}</p>
-              </div>
-            </div>
-            <div className="card bg-base-200 hover:shadow-xl transition-shadow">
-              <div className="card-body items-center text-center">
-                <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center mb-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-7 w-7 text-secondary"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="card-title">{t.home.featurePodcast}</h3>
-                <p className="text-base-content/70">{t.home.featurePodcastDesc}</p>
-              </div>
-            </div>
-            <div className="card bg-base-200 hover:shadow-xl transition-shadow">
-              <div className="card-body items-center text-center">
-                <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-7 w-7 text-accent"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="card-title">{t.home.featureComments}</h3>
-                <p className="text-base-content/70">{t.home.featureCommentsDesc}</p>
-              </div>
-            </div>
-            <div className="card bg-base-200 hover:shadow-xl transition-shadow">
-              <div className="card-body items-center text-center">
-                <div className="w-14 h-14 rounded-2xl bg-info/10 flex items-center justify-center mb-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-7 w-7 text-info"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="card-title">{t.home.featureRoles}</h3>
-                <p className="text-base-content/70">{t.home.featureRolesDesc}</p>
-              </div>
-            </div>
-            <div className="card bg-base-200 hover:shadow-xl transition-shadow">
-              <div className="card-body items-center text-center">
-                <div className="w-14 h-14 rounded-2xl bg-warning/10 flex items-center justify-center mb-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-7 w-7 text-warning"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-                    />
-                  </svg>
-                </div>
-                <h3 className="card-title">{t.home.featureThemes}</h3>
-                <p className="text-base-content/70">{t.home.featureThemesDesc}</p>
-              </div>
-            </div>
-            <div className="card bg-base-200 hover:shadow-xl transition-shadow">
-              <div className="card-body items-center text-center">
-                <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center mb-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-7 w-7 text-success"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="card-title">{t.home.featureResponsive}</h3>
-                <p className="text-base-content/70">{t.home.featureResponsiveDesc}</p>
-              </div>
             </div>
           </div>
         </div>
