@@ -173,14 +173,9 @@ export default function Navbar() {
           )}
         </div>
         <Link href="/" className="btn btn-ghost text-xl font-bold gap-2">
-          <Image
-            src="/text-logo.png"
-            alt="Logo"
-            width={128}
-            height={32}
-            className="text-primary"
-            priority
-          />
+          <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent tracking-tight">
+            Slice of Life
+          </span>
         </Link>
       </div>
 

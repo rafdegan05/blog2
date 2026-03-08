@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
 
 export default function Footer() {
@@ -13,7 +12,9 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
         {/* Brand column */}
         <div>
-          <Image src="/text-logo.png" alt="Logo" width={128} height={32} className="mb-3" />
+          <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent tracking-tight mb-3 inline-block">
+            Slice of Life
+          </span>
           <p className="text-sm text-base-content/60 max-w-xs">{t.home.heroText}</p>
         </div>
         {/* Content links */}

@@ -1,9 +1,9 @@
 import AboutContent from "@/components/AboutContent";
 
 export const metadata = {
-  title: "About – Blog & Podcast",
+  title: "About – Slice of Life",
   description:
-    "Learn more about Blog & Podcast, the open-source platform for sharing ideas through articles and audio content.",
+    "A personal space for reflection, documentation, and growth — where ideas take shape through writing and conversation.",
 };
 
 export default function AboutPage() {

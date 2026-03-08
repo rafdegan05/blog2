@@ -3,7 +3,7 @@ import type { Translations } from "./en";
 export const it: Translations = {
   // ─── Common ───
   common: {
-    brandName: "Blog & Podcast",
+    brandName: "Slice of Life",
     anonymous: "Anonimo",
     signIn: "Accedi",
     signOut: "Esci",
@@ -49,18 +49,19 @@ export const it: Translations = {
     register: "Registrati",
     platform: "Piattaforma",
     sitemap: "Mappa del sito",
-    copyright: "© {year} Blog & Podcast — Costruito con Next.js, DaisyUI & Prisma",
+    copyright: "© {year} Slice of Life — Uno spazio personale per pensare, costruire e crescere.",
   },
 
   // ─── Homepage ───
   home: {
-    badge: "Piattaforma Open Source",
-    heroTitle: "Condividi Idee Attraverso ",
-    heroHighlight: "Blog & Podcast",
+    badge: "Spazio Personale",
+    heroTitle: "Pensa. Costruisci. ",
+    heroHighlight: "Cresci.",
     heroText:
-      "Scopri articoli approfonditi e podcast coinvolgenti su tecnologia, sviluppo e molto altro. Condividi i tuoi pensieri e connettiti con la community.",
-    readBlog: "Leggi il Blog",
-    listenPodcasts: "Ascolta i Podcast",
+      "Uno spazio personale per la riflessione, la documentazione e la crescita. Dove le idee prendono forma attraverso la scrittura e la conversazione.",
+    heroSubtext: "Scrivere per capire. Costruire per imparare.",
+    readBlog: "Leggi il Diario",
+    listenPodcasts: "Ascolta gli Episodi",
     featuresTitle: "Tutto Ciò di Cui Hai Bisogno",
     featuresText: "Una piattaforma completa per creare, condividere e scoprire contenuti.",
     featureBlog: "Articoli del Blog",
@@ -68,7 +69,8 @@ export const it: Translations = {
     featurePodcast: "Podcast",
     featurePodcastDesc: "Ospita e condividi episodi podcast con un lettore audio integrato.",
     featureComments: "Commenti",
-    featureCommentsDesc: "Interagisci con la community attraverso commenti e discussioni.",
+    featureCommentsDesc:
+      "Condividi pensieri e avvia conversazioni attraverso commenti e discussioni.",
     featureRoles: "Accesso Basato sui Ruoli",
     featureRolesDesc:
       "Ruoli Admin, Autore e Lettore con permessi granulari e strumenti di moderazione.",
@@ -76,49 +78,73 @@ export const it: Translations = {
     featureThemesDesc: "Scegli tra oltre 30 bellissimi temi DaisyUI con un solo clic.",
     featureResponsive: "Completamente Responsivo",
     featureResponsiveDesc: "Ottimizzato per ogni dispositivo — desktop, tablet e mobile.",
-    latestArticles: "Ultimi Articoli",
+    pillarsTitle: "Di Cosa Parla Questo Spazio",
+    pillarReflection: "Riflessione",
+    pillarReflectionDesc:
+      "Rallentare per pensare con chiarezza. Ogni articolo è un esercizio di comprensione — trasformare pensieri sparsi in idee strutturate.",
+    pillarDocumentation: "Documentazione",
+    pillarDocumentationDesc:
+      "Catturare ciò che imparo lungo il percorso. Un archivio vivo di processi, decisioni e lezioni che plasmano il mio modo di lavorare.",
+    pillarGrowth: "Crescita",
+    pillarGrowthDesc:
+      "Tracciare l'evoluzione di competenze e mentalità nel tempo. Ogni post segna un passo avanti nel percorso.",
+    latestArticles: "Ultime Riflessioni",
     latestEpisodes: "Ultimi Episodi",
     viewAll: "Vedi tutti",
-    ctaTitle: "Pronto per iniziare?",
-    ctaText: "Accedi per creare i tuoi articoli e podcast e unisciti alla conversazione.",
-    getStarted: "Inizia Ora",
+    ctaTitle: "Questo è un quaderno aperto.",
+    ctaText:
+      "Se qualcosa ti colpisce, unisciti alla conversazione. Ogni prospettiva arricchisce il pensiero.",
+    getStarted: "Inizia a Esplorare",
   },
 
   // ─── About ───
   about: {
-    metaTitle: "Chi Siamo – Blog & Podcast",
+    metaTitle: "Info – Slice of Life",
     metaDesc:
-      "Scopri di più su Blog & Podcast, la piattaforma open source per condividere idee attraverso articoli e contenuti audio.",
-    badge: "Chi Siamo",
-    title: "La Piattaforma Dietro le ",
-    titleHighlight: "Idee",
+      "Uno spazio personale per la riflessione, la documentazione e la crescita — dove le idee prendono forma attraverso la scrittura e la conversazione.",
+    badge: "Su Questo Spazio",
+    title: "Una Finestra Su Come ",
+    titleHighlight: "Penso e Lavoro",
     intro:
-      "Blog & Podcast è una piattaforma di contenuti open source creata per scrittori, podcaster e menti curiose che vogliono condividere la conoscenza con il mondo.",
-    missionTitle: "La Nostra Missione",
+      "Questo non è un blog tradizionale. È un laboratorio personale — un luogo dove penso ad alta voce, documento ciò che imparo e traccio come evolve il mio approccio al costruire.",
+    missionTitle: "Perché Esiste",
     missionText:
-      "Crediamo che ognuno abbia una storia che vale la pena raccontare. La nostra missione è fornire una piattaforma semplice, moderna e accessibile dove i creatori possano pubblicare articoli e episodi podcast senza barriere. Che tu sia uno sviluppatore esperto che condivide approfondimenti tecnici o un hobbista che registra il suo primo episodio, questa piattaforma è costruita per te.",
-    offerTitle: "Cosa Offriamo",
-    offerBlog: "Articoli del Blog",
+      "Ho creato questo spazio perché credo che scrivere sia il miglior strumento per pensare con chiarezza. Ogni articolo è un tentativo di capire qualcosa meglio — un concetto, una decisione, un processo. Gli episodi podcast sono conversazioni che estendono quelle riflessioni in dialogo. Questo è il mio modo di imparare in pubblico: condividere il lavoro in corso, non solo il risultato finale.",
+    valuesTitle: "Cosa Guida Questo Spazio",
+    valueCuriosity: "Curiosità",
+    valueCuriosityDesc:
+      "Seguire le domande ovunque portino. Le intuizioni migliori arrivano esplorando territorio sconosciuto con genuino interesse.",
+    valueClarity: "Chiarezza",
+    valueClarityDesc:
+      "Cercare la semplicità nei temi complessi. Se non riesco a spiegarlo chiaramente, non l'ho capito abbastanza bene.",
+    valueHonesty: "Onestà",
+    valueHonestyDesc:
+      "Documentare fallimenti e deviazioni insieme ai successi. Il vero apprendimento avviene nelle parti disordinate.",
+    valueConsistency: "Costanza",
+    valueConsistencyDesc:
+      "Presentarsi regolarmente, anche quando le idee non sono perfette. La crescita viene dalla pratica, non solo dal risultato.",
+    offerTitle: "Cosa Troverai Qui",
+    offerBlog: "Riflessioni Scritte",
     offerBlogDesc:
-      "Scrivi e pubblica articoli Markdown ricchi con immagini di copertina, categorie e tag.",
-    offerPodcast: "Episodi Podcast",
+      "Articoli di approfondimento in cui analizzo idee, documento decisioni ed esploro temi in profondità.",
+    offerPodcast: "Conversazioni Audio",
     offerPodcastDesc:
-      "Carica e condividi episodi audio con lettore integrato, copertina e descrizioni.",
-    offerCommunity: "Community",
+      "Episodi dove le idee vengono messe alla prova attraverso il dialogo — pensare ad alta voce con sfumature e contesto.",
+    offerCommunity: "Dialogo Aperto",
     offerCommunityDesc:
-      "Commenta gli articoli, interagisci con gli autori e fai parte di una community in crescita.",
+      "Uno spazio per commenti e reazioni. La tua prospettiva sfida il mio pensiero e lo rende più forte.",
     builtWith: "Realizzato Con",
-    ctaTitle: "Pronto per Iniziare?",
+    ctaTitle: "Leggi, Ascolta, Rifletti.",
     ctaText:
-      "Unisciti alla nostra piattaforma e inizia a condividere le tue storie, tutorial e episodi con il mondo.",
-    createAccount: "Crea un Account",
-    exploreBlog: "Esplora il Blog",
+      "Questo spazio è aperto. Esplora gli articoli, ascolta gli episodi, e se qualcosa accende un pensiero — condividilo.",
+    createAccount: "Unisciti alla Conversazione",
+    exploreBlog: "Inizia a Leggere",
   },
 
   // ─── Auth ───
   auth: {
     signInTitle: "Accedi",
-    signInSubtitle: "Accedi per creare articoli, podcast e interagire con la community.",
+    signInSubtitle: "Accedi per condividere i tuoi pensieri, leggere e unirti alla conversazione.",
     signUpWith: "Registrati con",
     signInWith: "Accedi con",
     email: "Email",
@@ -130,7 +156,8 @@ export const it: Translations = {
     hasAccount: "Hai già un account? ",
     register: "Registrati",
     createAccountTitle: "Crea Account",
-    createAccountSubtitle: "Unisciti alla community per creare articoli, podcast e altro.",
+    createAccountSubtitle:
+      "Crea un account per contribuire, commentare e far parte della conversazione.",
     name: "Nome",
     namePlaceholder: "Il tuo nome",
     confirmPassword: "Conferma Password",

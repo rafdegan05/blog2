@@ -18,25 +18,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Blog & Podcast",
-    template: "%s | Blog & Podcast",
+    default: "Slice of Life",
+    template: "%s | Slice of Life",
   },
-  description: "A modern blog and podcast platform built with Next.js, DaisyUI, and Prisma",
-  keywords: ["blog", "podcast", "nextjs", "typescript", "react"],
-  authors: [{ name: "Blog & Podcast Team" }],
+  description:
+    "A personal space for reflection, documentation, and growth — where ideas take shape through writing and conversation.",
+  keywords: ["blog", "podcast", "personal", "reflection", "growth", "journal"],
+  authors: [{ name: "Slice of Life" }],
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "Blog & Podcast",
-    title: "Blog & Podcast",
+    siteName: "Slice of Life",
+    title: "Slice of Life",
     description:
-      "Discover insightful articles and engaging podcasts on technology, development, and more.",
+      "A personal space for thinking out loud, documenting what I learn, and tracking growth over time.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Blog & Podcast",
+    title: "Slice of Life",
     description:
-      "Discover insightful articles and engaging podcasts on technology, development, and more.",
+      "A personal space for thinking out loud, documenting what I learn, and tracking growth over time.",
   },
   robots: {
     index: true,

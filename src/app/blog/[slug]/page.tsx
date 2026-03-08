@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   const post = await getPost(slug);
   if (!post) return { title: "Post Not Found" };
   return {
-    title: `${post.title} | Blog & Podcast`,
+    title: `${post.title} | Slice of Life`,
     description: post.excerpt || post.content?.substring(0, 160),
   };
 }

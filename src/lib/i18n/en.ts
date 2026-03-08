@@ -1,7 +1,7 @@
 export const en = {
   // ─── Common ───
   common: {
-    brandName: "Blog & Podcast",
+    brandName: "Slice of Life",
     anonymous: "Anonymous",
     signIn: "Sign In",
     signOut: "Sign Out",
@@ -47,18 +47,19 @@ export const en = {
     register: "Register",
     platform: "Platform",
     sitemap: "Sitemap",
-    copyright: "© {year} Blog & Podcast — Built with Next.js, DaisyUI & Prisma",
+    copyright: "© {year} Slice of Life — A personal space for thinking, building, and growing.",
   },
 
   // ─── Homepage ───
   home: {
-    badge: "Open Source Platform",
-    heroTitle: "Share Ideas Through ",
-    heroHighlight: "Blog & Podcast",
+    badge: "Personal Space",
+    heroTitle: "Think. Build. ",
+    heroHighlight: "Grow.",
     heroText:
-      "Discover insightful articles and engaging podcasts on technology, development, and more. Share your thoughts and connect with the community.",
-    readBlog: "Read Blog",
-    listenPodcasts: "Listen Podcasts",
+      "A personal space for reflection, documentation, and growth. Where ideas take shape through writing and conversation.",
+    heroSubtext: "Writing to understand. Building to learn.",
+    readBlog: "Read the Journal",
+    listenPodcasts: "Listen to Episodes",
     featuresTitle: "Everything You Need",
     featuresText: "A full-featured platform for creating, sharing, and discovering content.",
     featureBlog: "Blog Posts",
@@ -66,7 +67,7 @@ export const en = {
     featurePodcast: "Podcasts",
     featurePodcastDesc: "Host and share podcast episodes with an integrated audio player.",
     featureComments: "Comments",
-    featureCommentsDesc: "Engage with the community through threaded comments and discussions.",
+    featureCommentsDesc: "Share thoughts and start conversations through comments and discussions.",
     featureRoles: "Role-Based Access",
     featureRolesDesc:
       "Admin, Author, and Reader roles with granular permissions and moderation tools.",
@@ -74,49 +75,73 @@ export const en = {
     featureThemesDesc: "Switch between over 30 beautiful DaisyUI themes with a single click.",
     featureResponsive: "Fully Responsive",
     featureResponsiveDesc: "Optimized for every device — desktop, tablet, and mobile.",
-    latestArticles: "Latest Articles",
+    pillarsTitle: "What This Space Is About",
+    pillarReflection: "Reflection",
+    pillarReflectionDesc:
+      "Slowing down to think clearly. Every article is an exercise in understanding — turning scattered thoughts into structured ideas.",
+    pillarDocumentation: "Documentation",
+    pillarDocumentationDesc:
+      "Capturing what I learn along the way. A living archive of processes, decisions, and lessons that shape the way I work.",
+    pillarGrowth: "Growth",
+    pillarGrowthDesc:
+      "Tracking the evolution of skills and mindset over time. Each post marks a step forward in the journey.",
+    latestArticles: "Latest Reflections",
     latestEpisodes: "Latest Episodes",
     viewAll: "View all",
-    ctaTitle: "Ready to get started?",
-    ctaText: "Sign in to create your own posts and podcasts, and join the conversation.",
-    getStarted: "Get Started",
+    ctaTitle: "This is an open notebook.",
+    ctaText:
+      "If something resonates, join the conversation. Every perspective makes the thinking richer.",
+    getStarted: "Start Exploring",
   },
 
   // ─── About ───
   about: {
-    metaTitle: "About – Blog & Podcast",
+    metaTitle: "About – Slice of Life",
     metaDesc:
-      "Learn more about Blog & Podcast, the open-source platform for sharing ideas through articles and audio content.",
-    badge: "About Us",
-    title: "The Platform Behind the ",
-    titleHighlight: "Ideas",
+      "A personal space for reflection, documentation, and growth — where ideas take shape through writing and conversation.",
+    badge: "About This Space",
+    title: "A Window Into How I ",
+    titleHighlight: "Think & Work",
     intro:
-      "Blog & Podcast is an open-source content platform built for writers, podcasters, and curious minds who want to share knowledge with the world.",
-    missionTitle: "Our Mission",
+      "This isn't a traditional blog. It's a personal workshop — a place where I think out loud, document what I learn, and track how my approach to building things evolves over time.",
+    missionTitle: "Why This Exists",
     missionText:
-      "We believe that everyone has a story worth telling. Our mission is to provide a simple, modern, and accessible platform where creators can publish articles and podcast episodes without barriers. Whether you're a seasoned developer sharing technical deep-dives or a hobbyist recording your first episode, this platform is built for you.",
-    offerTitle: "What We Offer",
-    offerBlog: "Blog Articles",
+      "I started this space because I believe that writing is the best tool for thinking clearly. Every article is an attempt to understand something better — a concept, a decision, a process. The podcast episodes are conversations that extend those reflections into dialogue. This is my way of learning in public: sharing the work-in-progress, not just the polished result.",
+    valuesTitle: "What Drives This Space",
+    valueCuriosity: "Curiosity",
+    valueCuriosityDesc:
+      "Following questions wherever they lead. The best insights come from exploring unfamiliar territory with genuine interest.",
+    valueClarity: "Clarity",
+    valueClarityDesc:
+      "Pursuing simplicity in complex topics. If I can't explain it clearly, I haven't understood it well enough.",
+    valueHonesty: "Honesty",
+    valueHonestyDesc:
+      "Documenting failures and detours alongside successes. The real learning happens in the messy parts.",
+    valueConsistency: "Consistency",
+    valueConsistencyDesc:
+      "Showing up regularly, even when the ideas aren't perfect. Growth comes from the practice, not just the output.",
+    offerTitle: "What You'll Find Here",
+    offerBlog: "Written Reflections",
     offerBlogDesc:
-      "Write and publish rich Markdown articles with cover images, categories, and tags.",
-    offerPodcast: "Podcast Episodes",
+      "Long-form articles where I break down ideas, document decisions, and explore topics in depth.",
+    offerPodcast: "Audio Conversations",
     offerPodcastDesc:
-      "Upload and share audio episodes with built-in player, cover art, and episode descriptions.",
-    offerCommunity: "Community",
+      "Episodes where ideas get tested through dialogue — thinking out loud with nuance and context.",
+    offerCommunity: "Open Dialogue",
     offerCommunityDesc:
-      "Comment on posts, interact with authors, and be part of a growing community of creators.",
+      "A space for comments and reactions. Your perspective challenges my thinking and makes it stronger.",
     builtWith: "Built With",
-    ctaTitle: "Ready to Start?",
+    ctaTitle: "Read, Listen, Reflect.",
     ctaText:
-      "Join our platform and start sharing your stories, tutorials, and episodes with the world.",
-    createAccount: "Create an Account",
-    exploreBlog: "Explore the Blog",
+      "This space is open. Explore the articles, listen to the episodes, and if something sparks a thought — share it.",
+    createAccount: "Join the Conversation",
+    exploreBlog: "Start Reading",
   },
 
   // ─── Auth ───
   auth: {
     signInTitle: "Sign In",
-    signInSubtitle: "Sign in to create posts, podcasts, and engage with the community.",
+    signInSubtitle: "Sign in to share your thoughts, read, and join the conversation.",
     signUpWith: "Sign up with",
     signInWith: "Sign in with",
     email: "Email",
@@ -128,7 +153,8 @@ export const en = {
     hasAccount: "Already have an account? ",
     register: "Register",
     createAccountTitle: "Create Account",
-    createAccountSubtitle: "Join the community to create posts, podcasts, and more.",
+    createAccountSubtitle:
+      "Create an account to contribute, comment, and be part of the conversation.",
     name: "Name",
     namePlaceholder: "Your name",
     confirmPassword: "Confirm Password",

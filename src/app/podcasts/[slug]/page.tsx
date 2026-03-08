@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PodcastPageProps): Promise<Me
   const podcast = await getPodcast(slug);
   if (!podcast) return { title: "Podcast Not Found" };
   return {
-    title: `${podcast.title} | Blog & Podcast`,
+    title: `${podcast.title} | Slice of Life`,
     description: podcast.description || `Listen to ${podcast.title}`,
   };
 }
