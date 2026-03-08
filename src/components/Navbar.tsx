@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
@@ -10,9 +11,12 @@ import { useTranslation } from "@/components/LanguageProvider";
 
 export default function Navbar() {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { t } = useTranslation();
+
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -62,35 +66,64 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
             >
               <li>
-                <Link href="/">{t.common.home}</Link>
+                <Link href="/" className={isActive("/") ? "active font-semibold" : ""}>
+                  {t.common.home}
+                </Link>
               </li>
               <li>
-                <Link href="/blog">{t.nav.blog}</Link>
+                <Link href="/blog" className={isActive("/blog") ? "active font-semibold" : ""}>
+                  {t.nav.blog}
+                </Link>
               </li>
               <li>
-                <Link href="/podcasts">{t.nav.podcast}</Link>
+                <Link
+                  href="/podcasts"
+                  className={isActive("/podcasts") ? "active font-semibold" : ""}
+                >
+                  {t.nav.podcast}
+                </Link>
               </li>
               <li>
-                <Link href="/about">{t.nav.about}</Link>
+                <Link href="/about" className={isActive("/about") ? "active font-semibold" : ""}>
+                  {t.nav.about}
+                </Link>
               </li>
               {session && (
                 <>
                   <li>
-                    <Link href="/dashboard">{t.nav.dashboard}</Link>
+                    <Link
+                      href="/dashboard"
+                      className={isActive("/dashboard") ? "active font-semibold" : ""}
+                    >
+                      {t.nav.dashboard}
+                    </Link>
                   </li>
                   {canCreate && (
                     <>
                       <li>
-                        <Link href="/blog/new">{t.nav.newPost}</Link>
+                        <Link
+                          href="/blog/new"
+                          className={isActive("/blog/new") ? "active font-semibold" : ""}
+                        >
+                          {t.nav.newPost}
+                        </Link>
                       </li>
                       <li>
-                        <Link href="/podcasts/new">{t.nav.newPodcast}</Link>
+                        <Link
+                          href="/podcasts/new"
+                          className={isActive("/podcasts/new") ? "active font-semibold" : ""}
+                        >
+                          {t.nav.newPodcast}
+                        </Link>
                       </li>
                     </>
                   )}
                   {isAdmin && (
                     <li>
-                      <Link href="/admin" className="text-accent">
+                      <Link
+                        href="/admin"
+                        className={`text-accent ${isActive("/admin") ? "active font-semibold" : ""}`}
+                      >
                         {t.nav.adminPanel}
                       </Link>
                     </li>
@@ -115,41 +148,62 @@ export default function Navbar() {
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal px-1 gap-1">
           <li>
-            <Link href="/" className="btn btn-ghost btn-sm">
+            <Link
+              href="/"
+              className={`btn btn-ghost btn-sm ${isActive("/") ? "btn-active text-primary" : ""}`}
+            >
               {t.common.home}
             </Link>
           </li>
           <li>
-            <Link href="/blog" className="btn btn-ghost btn-sm">
+            <Link
+              href="/blog"
+              className={`btn btn-ghost btn-sm ${isActive("/blog") ? "btn-active text-primary" : ""}`}
+            >
               {t.nav.blog}
             </Link>
           </li>
           <li>
-            <Link href="/podcasts" className="btn btn-ghost btn-sm">
+            <Link
+              href="/podcasts"
+              className={`btn btn-ghost btn-sm ${isActive("/podcasts") ? "btn-active text-primary" : ""}`}
+            >
               {t.nav.podcast}
             </Link>
           </li>
           <li>
-            <Link href="/about" className="btn btn-ghost btn-sm">
+            <Link
+              href="/about"
+              className={`btn btn-ghost btn-sm ${isActive("/about") ? "btn-active text-primary" : ""}`}
+            >
               {t.nav.about}
             </Link>
           </li>
           {session && (
             <>
               <li>
-                <Link href="/dashboard" className="btn btn-ghost btn-sm">
+                <Link
+                  href="/dashboard"
+                  className={`btn btn-ghost btn-sm ${isActive("/dashboard") ? "btn-active text-primary" : ""}`}
+                >
                   {t.nav.dashboard}
                 </Link>
               </li>
               {canCreate && (
                 <>
                   <li>
-                    <Link href="/blog/new" className="btn btn-ghost btn-sm">
+                    <Link
+                      href="/blog/new"
+                      className={`btn btn-ghost btn-sm ${isActive("/blog/new") ? "btn-active text-primary" : ""}`}
+                    >
                       {t.nav.newPost}
                     </Link>
                   </li>
                   <li>
-                    <Link href="/podcasts/new" className="btn btn-ghost btn-sm">
+                    <Link
+                      href="/podcasts/new"
+                      className={`btn btn-ghost btn-sm ${isActive("/podcasts/new") ? "btn-active text-primary" : ""}`}
+                    >
                       {t.nav.newPodcast}
                     </Link>
                   </li>
@@ -157,7 +211,10 @@ export default function Navbar() {
               )}
               {isAdmin && (
                 <li>
-                  <Link href="/admin" className="btn btn-ghost btn-sm text-accent">
+                  <Link
+                    href="/admin"
+                    className={`btn btn-ghost btn-sm ${isActive("/admin") ? "btn-active text-accent" : "text-accent"}`}
+                  >
                     {t.nav.admin}
                   </Link>
                 </li>
