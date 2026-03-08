@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTranslation } from "@/components/LanguageProvider";
 
 const REACTIONS = [
   { type: "LIKE", emoji: "👍", label: "Like" },
@@ -37,6 +38,7 @@ export default function ReactionBar({
   compact = false,
 }: ReactionBarProps) {
   const { data: session } = useSession();
+  const { t } = useTranslation();
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [userReaction, setUserReaction] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -146,7 +148,7 @@ export default function ReactionBar({
             onClick={() => session && setShowPicker(!showPicker)}
             disabled={!session || loading}
             className="btn btn-ghost btn-xs btn-circle"
-            title={session ? "Add reaction" : "Sign in to react"}
+            title={session ? t.reactions.addReaction : t.reactions.signInToReact}
           >
             {loading ? (
               <span className="loading loading-spinner loading-xs" />
@@ -211,7 +213,7 @@ export default function ReactionBar({
                   ? "btn-ghost border border-base-300"
                   : "btn-ghost opacity-60 hover:opacity-100"
             }`}
-            title={session ? r.label : "Sign in to react"}
+            title={session ? r.label : t.reactions.signInToReact}
           >
             <span className="text-base">{r.emoji}</span>
             {count > 0 && <span className="text-xs font-semibold">{count}</span>}
@@ -221,7 +223,10 @@ export default function ReactionBar({
 
       {totalReactions > 0 && (
         <span className="text-sm text-base-content/50 ml-1">
-          {totalReactions} {totalReactions === 1 ? "reaction" : "reactions"}
+          {totalReactions}{" "}
+          {totalReactions === 1
+            ? t.reactions.reactionSingular.replace("{n}", "")
+            : t.reactions.reactionPlural.replace("{n}", "")}
         </span>
       )}
     </div>

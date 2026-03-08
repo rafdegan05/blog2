@@ -5,10 +5,13 @@ import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { useState } from "react";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useTranslation } from "@/components/LanguageProvider";
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   const role = session?.user?.role;
   const canCreate = role === "AUTHOR" || role === "ADMIN";
@@ -23,7 +26,7 @@ export default function Navbar() {
             role="button"
             className="btn btn-ghost lg:hidden"
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Open menu"
+            aria-label={t.nav.openMenu}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -47,36 +50,36 @@ export default function Navbar() {
               onClick={() => setMenuOpen(false)}
             >
               <li>
-                <Link href="/">Home</Link>
+                <Link href="/">{t.common.home}</Link>
               </li>
               <li>
-                <Link href="/blog">Blog</Link>
+                <Link href="/blog">{t.nav.blog}</Link>
               </li>
               <li>
-                <Link href="/podcasts">Podcast</Link>
+                <Link href="/podcasts">{t.nav.podcast}</Link>
               </li>
               <li>
-                <Link href="/about">About</Link>
+                <Link href="/about">{t.nav.about}</Link>
               </li>
               {session && (
                 <>
                   <li>
-                    <Link href="/dashboard">Dashboard</Link>
+                    <Link href="/dashboard">{t.nav.dashboard}</Link>
                   </li>
                   {canCreate && (
                     <>
                       <li>
-                        <Link href="/blog/new">New Post</Link>
+                        <Link href="/blog/new">{t.nav.newPost}</Link>
                       </li>
                       <li>
-                        <Link href="/podcasts/new">New Podcast</Link>
+                        <Link href="/podcasts/new">{t.nav.newPodcast}</Link>
                       </li>
                     </>
                   )}
                   {isAdmin && (
                     <li>
                       <Link href="/admin" className="text-accent">
-                        Admin Panel
+                        {t.nav.adminPanel}
                       </Link>
                     </li>
                   )}
@@ -100,7 +103,7 @@ export default function Navbar() {
               d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
             />
           </svg>
-          <span className="hidden sm:inline">Blog & Podcast</span>
+          <span className="hidden sm:inline">{t.common.brandName}</span>
         </Link>
       </div>
 
@@ -108,41 +111,41 @@ export default function Navbar() {
         <ul className="menu menu-horizontal px-1 gap-1">
           <li>
             <Link href="/" className="btn btn-ghost btn-sm">
-              Home
+              {t.common.home}
             </Link>
           </li>
           <li>
             <Link href="/blog" className="btn btn-ghost btn-sm">
-              Blog
+              {t.nav.blog}
             </Link>
           </li>
           <li>
             <Link href="/podcasts" className="btn btn-ghost btn-sm">
-              Podcast
+              {t.nav.podcast}
             </Link>
           </li>
           <li>
             <Link href="/about" className="btn btn-ghost btn-sm">
-              About
+              {t.nav.about}
             </Link>
           </li>
           {session && (
             <>
               <li>
                 <Link href="/dashboard" className="btn btn-ghost btn-sm">
-                  Dashboard
+                  {t.nav.dashboard}
                 </Link>
               </li>
               {canCreate && (
                 <>
                   <li>
                     <Link href="/blog/new" className="btn btn-ghost btn-sm">
-                      New Post
+                      {t.nav.newPost}
                     </Link>
                   </li>
                   <li>
                     <Link href="/podcasts/new" className="btn btn-ghost btn-sm">
-                      New Podcast
+                      {t.nav.newPodcast}
                     </Link>
                   </li>
                 </>
@@ -150,7 +153,7 @@ export default function Navbar() {
               {isAdmin && (
                 <li>
                   <Link href="/admin" className="btn btn-ghost btn-sm text-accent">
-                    Admin
+                    {t.nav.admin}
                   </Link>
                 </li>
               )}
@@ -160,6 +163,7 @@ export default function Navbar() {
       </div>
 
       <div className="navbar-end gap-2">
+        <LanguageSwitcher />
         <ThemeSwitcher />
         {session ? (
           <div className="dropdown dropdown-end">
@@ -167,7 +171,7 @@ export default function Navbar() {
               tabIndex={0}
               role="button"
               className={`btn btn-ghost btn-circle avatar ${!session.user?.image ? "placeholder" : ""}`}
-              aria-label="User menu"
+              aria-label={t.nav.userMenu}
             >
               <div
                 className={`w-10 rounded-full flex items-center justify-center ${!session.user?.image ? "bg-primary text-primary-content" : ""}`}
@@ -196,38 +200,38 @@ export default function Navbar() {
                 {role && <span className="badge badge-xs badge-primary ml-2">{role}</span>}
               </li>
               <li>
-                <Link href="/profile">Profile Settings</Link>
+                <Link href="/profile">{t.nav.profileSettings}</Link>
               </li>
               <li>
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/dashboard">{t.nav.dashboard}</Link>
               </li>
               {isAdmin && (
                 <>
                   <div className="divider my-1" />
                   <li>
                     <Link href="/admin" className="text-accent">
-                      Admin Panel
+                      {t.nav.adminPanel}
                     </Link>
                   </li>
                   <li>
-                    <Link href="/admin/users">Manage Users</Link>
+                    <Link href="/admin/users">{t.nav.manageUsers}</Link>
                   </li>
                   <li>
-                    <Link href="/admin/moderation">Moderation</Link>
+                    <Link href="/admin/moderation">{t.nav.moderation}</Link>
                   </li>
                 </>
               )}
               <div className="divider my-1" />
               <li>
                 <button onClick={() => signOut({ callbackUrl: "/" })} className="text-error">
-                  Sign Out
+                  {t.common.signOut}
                 </button>
               </li>
             </ul>
           </div>
         ) : (
           <Link href="/auth/signin" className="btn btn-primary btn-sm">
-            Sign In
+            {t.common.signIn}
           </Link>
         )}
       </div>

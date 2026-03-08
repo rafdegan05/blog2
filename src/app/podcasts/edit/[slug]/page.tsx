@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import Link from "next/link";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface PodcastData {
   title: string;
@@ -23,6 +24,7 @@ export default function EditPodcastPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
+  const { t } = useTranslation();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -45,14 +47,14 @@ export default function EditPodcastPage() {
       try {
         const res = await fetch(`/api/podcasts/${slug}`);
         if (!res.ok) {
-          setError("Podcast not found");
+          setError(t.podcasts.podcastNotFoundError);
           setLoading(false);
           return;
         }
         const podcast: PodcastData = await res.json();
 
         if (podcast.authorId !== session.user?.id && session.user?.role !== "ADMIN") {
-          setError("You don't have permission to edit this podcast");
+          setError(t.podcasts.noPermissionEdit);
           setLoading(false);
           return;
         }
@@ -66,7 +68,7 @@ export default function EditPodcastPage() {
         setCategories(podcast.categories.map((c) => c.name).join(", "));
         setTags(podcast.tags.map((t) => t.name).join(", "));
       } catch {
-        setError("Failed to load podcast");
+        setError(t.podcasts.loadFailed);
       } finally {
         setLoading(false);
       }
@@ -86,10 +88,10 @@ export default function EditPodcastPage() {
   if (!session) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4">Sign in required</h1>
-        <p className="mb-4">You need to sign in to edit a podcast.</p>
+        <h1 className="text-3xl font-bold mb-4">{t.auth.signInRequired}</h1>
+        <p className="mb-4">{t.podcasts.signInToEdit}</p>
         <Link href="/auth/signin" className="btn btn-primary">
-          Sign In
+          {t.common.signIn}
         </Link>
       </div>
     );
@@ -115,7 +117,7 @@ export default function EditPodcastPage() {
           <span>{error}</span>
         </div>
         <Link href="/dashboard" className="btn btn-ghost">
-          Back to Dashboard
+          {t.podcasts.backToDashboard}
         </Link>
       </div>
     );
@@ -155,24 +157,24 @@ export default function EditPodcastPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to update podcast");
+        setError(data.error || t.podcasts.updateFailed);
         return;
       }
 
       const updated = await res.json();
-      setSuccess("Podcast updated successfully!");
+      setSuccess(t.podcasts.updateSuccess);
       setTimeout(() => {
         router.push(`/podcasts/${updated.slug}`);
       }, 1000);
     } catch {
-      setError("An error occurred while updating the podcast");
+      setError(t.podcasts.updateError);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this podcast? This action cannot be undone.")) {
+    if (!confirm(t.podcasts.deleteConfirm)) {
       return;
     }
 
@@ -180,12 +182,12 @@ export default function EditPodcastPage() {
       const res = await fetch(`/api/podcasts/${slug}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to delete podcast");
+        setError(data.error || t.podcasts.deleteFailed);
         return;
       }
       router.push("/dashboard");
     } catch {
-      setError("An error occurred while deleting the podcast");
+      setError(t.podcasts.deleteError);
     }
   };
 
@@ -210,7 +212,7 @@ export default function EditPodcastPage() {
             </svg>
             Back
           </Link>
-          <h1 className="text-3xl font-bold">Edit Podcast</h1>
+          <h1 className="text-3xl font-bold">{t.podcasts.editPodcast}</h1>
         </div>
         <button onClick={handleDelete} className="btn btn-error btn-outline btn-sm gap-1">
           <svg
@@ -272,13 +274,13 @@ export default function EditPodcastPage() {
 
         <div className="form-control">
           <label className="label" htmlFor="edit-podcast-title">
-            <span className="label-text font-semibold">Title *</span>
+            <span className="label-text font-semibold">{t.podcasts.podcastTitleLabel}</span>
           </label>
           <input
             id="edit-podcast-title"
             type="text"
             className="input input-bordered w-full"
-            placeholder="Podcast episode title"
+            placeholder={t.podcasts.podcastTitlePlaceholder}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -287,7 +289,7 @@ export default function EditPodcastPage() {
 
         <FileUpload
           type="audio"
-          label="Audio File *"
+          label={t.podcasts.audioFileLabel}
           value={audioUrl}
           onUpload={setAudioUrl}
           disabled={submitting}
@@ -295,12 +297,12 @@ export default function EditPodcastPage() {
 
         <div className="form-control">
           <label className="label" htmlFor="edit-podcast-desc">
-            <span className="label-text font-semibold">Description</span>
+            <span className="label-text font-semibold">{t.podcasts.descriptionLabel}</span>
           </label>
           <textarea
             id="edit-podcast-desc"
             className="textarea textarea-bordered w-full"
-            placeholder="Episode description..."
+            placeholder={t.podcasts.descriptionPlaceholder}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={5}
@@ -310,20 +312,20 @@ export default function EditPodcastPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FileUpload
             type="image"
-            label="Cover Image"
+            label={t.podcasts.coverImage}
             value={coverImage}
             onUpload={setCoverImage}
             disabled={submitting}
           />
           <div className="form-control">
             <label className="label" htmlFor="edit-podcast-duration">
-              <span className="label-text font-semibold">Duration (seconds)</span>
+              <span className="label-text font-semibold">{t.podcasts.durationLabel}</span>
             </label>
             <input
               id="edit-podcast-duration"
               type="number"
               className="input input-bordered w-full"
-              placeholder="3600"
+              placeholder={t.podcasts.durationPlaceholder}
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
             />
@@ -333,26 +335,26 @@ export default function EditPodcastPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-control">
             <label className="label" htmlFor="edit-podcast-categories">
-              <span className="label-text font-semibold">Categories (comma-separated)</span>
+              <span className="label-text font-semibold">{t.podcasts.categoriesLabel}</span>
             </label>
             <input
               id="edit-podcast-categories"
               type="text"
               className="input input-bordered w-full"
-              placeholder="Tech, Interviews"
+              placeholder={t.podcasts.categoriesPlaceholder}
               value={categories}
               onChange={(e) => setCategories(e.target.value)}
             />
           </div>
           <div className="form-control">
             <label className="label" htmlFor="edit-podcast-tags">
-              <span className="label-text font-semibold">Tags (comma-separated)</span>
+              <span className="label-text font-semibold">{t.podcasts.tagsLabel}</span>
             </label>
             <input
               id="edit-podcast-tags"
               type="text"
               className="input input-bordered w-full"
-              placeholder="javascript, web-dev"
+              placeholder={t.podcasts.tagsPlaceholder}
               value={tags}
               onChange={(e) => setTags(e.target.value)}
             />
@@ -367,7 +369,7 @@ export default function EditPodcastPage() {
               checked={published}
               onChange={(e) => setPublished(e.target.checked)}
             />
-            <span className="label-text font-semibold">Published</span>
+            <span className="label-text font-semibold">{t.podcasts.publishedCheckbox}</span>
           </label>
         </div>
 
@@ -398,7 +400,7 @@ export default function EditPodcastPage() {
             )}
           </button>
           <Link href={`/podcasts/${slug}`} className="btn btn-ghost">
-            Cancel
+            {t.common.cancel}
           </Link>
         </div>
       </form>

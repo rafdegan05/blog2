@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useTranslation } from "@/components/LanguageProvider";
 
 const DEFAULT_THEME = "light";
 
@@ -21,6 +22,7 @@ export default function ThemeSwitcher() {
   const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerSnapshot);
   const btnRef = useRef<HTMLButtonElement>(null);
   const isDark = theme === "dark";
+  const { t } = useTranslation();
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -74,7 +76,7 @@ export default function ThemeSwitcher() {
       ref={btnRef}
       className="btn btn-ghost btn-sm btn-circle"
       onClick={toggleTheme}
-      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+      aria-label={isDark ? t.theme.switchToLight : t.theme.switchToDark}
     >
       {/* Sun icon – visible in dark mode */}
       <svg

@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface Stats {
   totalUsers: number;
@@ -15,6 +16,7 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (status === "loading") return;
@@ -74,10 +76,10 @@ export default function AdminPage() {
   if (!session || session.user?.role !== "ADMIN") {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-        <p className="text-base-content/70 mb-4">You need admin privileges to access this page.</p>
+        <h1 className="text-3xl font-bold mb-4">{t.admin.accessDenied}</h1>
+        <p className="text-base-content/70 mb-4">{t.admin.adminRequired}</p>
         <Link href="/" className="btn btn-primary">
-          Go Home
+          {t.admin.goHome}
         </Link>
       </div>
     );
@@ -86,8 +88,8 @@ export default function AdminPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-        <p className="text-base-content/60">Manage users, content, and moderation.</p>
+        <h1 className="text-3xl font-bold mb-2">{t.admin.adminDashboard}</h1>
+        <p className="text-base-content/60">{t.admin.adminDashboardDesc}</p>
       </div>
 
       {/* Stats Grid */}
@@ -109,7 +111,7 @@ export default function AdminPage() {
               />
             </svg>
           </div>
-          <div className="stat-title">Total Users</div>
+          <div className="stat-title">{t.admin.totalUsersStat}</div>
           <div className="stat-value text-primary">{stats?.totalUsers || 0}</div>
         </div>
         <div className="stat bg-base-200 rounded-box shadow">
@@ -129,7 +131,7 @@ export default function AdminPage() {
               />
             </svg>
           </div>
-          <div className="stat-title">Total Posts</div>
+          <div className="stat-title">{t.admin.totalPostsStat}</div>
           <div className="stat-value text-secondary">{stats?.totalPosts || 0}</div>
         </div>
         <div className="stat bg-base-200 rounded-box shadow">
@@ -149,7 +151,7 @@ export default function AdminPage() {
               />
             </svg>
           </div>
-          <div className="stat-title">Total Podcasts</div>
+          <div className="stat-title">{t.admin.totalPodcastsStat}</div>
           <div className="stat-value text-accent">{stats?.totalPodcasts || 0}</div>
         </div>
         <div className="stat bg-base-200 rounded-box shadow">
@@ -169,13 +171,13 @@ export default function AdminPage() {
               />
             </svg>
           </div>
-          <div className="stat-title">Pending Review</div>
+          <div className="stat-title">{t.admin.pendingReview}</div>
           <div className="stat-value text-warning">{stats?.pendingModeration || 0}</div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+      <h2 className="text-xl font-bold mb-4">{t.admin.quickActions}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link
           href="/admin/users"
@@ -199,8 +201,8 @@ export default function AdminPage() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold">Manage Users</h3>
-              <p className="text-sm text-base-content/60">View and update user roles</p>
+              <h3 className="font-bold">{t.admin.manageUsers}</h3>
+              <p className="text-sm text-base-content/60">{t.admin.manageUsersDesc}</p>
             </div>
           </div>
         </Link>
@@ -226,8 +228,8 @@ export default function AdminPage() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold">Content Moderation</h3>
-              <p className="text-sm text-base-content/60">Review and manage content</p>
+              <h3 className="font-bold">{t.admin.contentModerationAction}</h3>
+              <p className="text-sm text-base-content/60">{t.admin.contentModerationDesc}</p>
             </div>
           </div>
         </Link>
@@ -253,8 +255,8 @@ export default function AdminPage() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold">Dashboard</h3>
-              <p className="text-sm text-base-content/60">Your personal dashboard</p>
+              <h3 className="font-bold">{t.admin.dashboardAction}</h3>
+              <p className="text-sm text-base-content/60">{t.admin.dashboardDesc}</p>
             </div>
           </div>
         </Link>

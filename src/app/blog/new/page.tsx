@@ -6,8 +6,10 @@ import { useState } from "react";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import FileUpload from "@/components/FileUpload";
 import Link from "next/link";
+import { useTranslation } from "@/components/LanguageProvider";
 
 export default function NewPostPage() {
+  const { t } = useTranslation();
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -33,10 +35,10 @@ export default function NewPostPage() {
   if (!session) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4">Sign in required</h1>
-        <p className="mb-4">You need to sign in to create a post.</p>
+        <h1 className="text-3xl font-bold mb-4">{t.auth.signInRequired}</h1>
+        <p className="mb-4">{t.blog.signInToCreate}</p>
         <Link href="/auth/signin" className="btn btn-primary">
-          Sign In
+          {t.common.signIn}
         </Link>
       </div>
     );
@@ -74,14 +76,14 @@ export default function NewPostPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to create post");
+        setError(data.error || t.blog.createPostFailed);
         return;
       }
 
       const post = await res.json();
       router.push(`/blog/${post.slug}`);
     } catch {
-      setError("An error occurred while creating the post");
+      setError(t.blog.createPostError);
     } finally {
       setSubmitting(false);
     }
@@ -89,22 +91,22 @@ export default function NewPostPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Create New Post</h1>
+      <h1 className="text-3xl font-bold mb-6">{t.blog.createPost}</h1>
 
       <div className="tabs tabs-boxed mb-6">
         <button className={`tab ${!preview ? "tab-active" : ""}`} onClick={() => setPreview(false)}>
-          ✏️ Editor
+          ✏️ {t.blog.editor}
         </button>
         <button className={`tab ${preview ? "tab-active" : ""}`} onClick={() => setPreview(true)}>
-          👁️ Preview
+          👁️ {t.blog.preview}
         </button>
       </div>
 
       {preview ? (
         <div className="card bg-base-200 p-6">
-          <h1 className="text-4xl font-bold mb-4">{title || "Untitled"}</h1>
+          <h1 className="text-4xl font-bold mb-4">{title || t.blog.untitled}</h1>
           {excerpt && <p className="text-base-content/60 mb-4 italic">{excerpt}</p>}
-          <MarkdownRenderer content={content || "*No content yet...*"} />
+          <MarkdownRenderer content={content || t.blog.noContentYet} />
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -116,12 +118,12 @@ export default function NewPostPage() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Title *</span>
+              <span className="label-text">{t.blog.titleLabel}</span>
             </label>
             <input
               type="text"
               className="input input-bordered w-full"
-              placeholder="Post title"
+              placeholder={t.blog.titlePlaceholder}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -130,11 +132,11 @@ export default function NewPostPage() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Excerpt</span>
+              <span className="label-text">{t.blog.excerptLabel}</span>
             </label>
             <textarea
               className="textarea textarea-bordered w-full"
-              placeholder="Brief description of the post"
+              placeholder={t.blog.excerptPlaceholder}
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
               rows={2}
@@ -143,11 +145,11 @@ export default function NewPostPage() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Content * (Markdown supported)</span>
+              <span className="label-text">{t.blog.contentLabel}</span>
             </label>
             <textarea
               className="textarea textarea-bordered w-full font-mono"
-              placeholder="Write your post content in Markdown..."
+              placeholder={t.blog.contentPlaceholder}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={15}
@@ -157,7 +159,7 @@ export default function NewPostPage() {
 
           <FileUpload
             type="image"
-            label="Cover Image"
+            label={t.blog.coverImage}
             value={coverImage}
             onUpload={setCoverImage}
             disabled={submitting}
@@ -166,24 +168,24 @@ export default function NewPostPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Categories (comma-separated)</span>
+                <span className="label-text">{t.blog.categoriesLabel}</span>
               </label>
               <input
                 type="text"
                 className="input input-bordered w-full"
-                placeholder="Tech, Programming"
+                placeholder={t.blog.categoriesPlaceholder}
                 value={categories}
                 onChange={(e) => setCategories(e.target.value)}
               />
             </div>
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Tags (comma-separated)</span>
+                <span className="label-text">{t.blog.tagsLabel}</span>
               </label>
               <input
                 type="text"
                 className="input input-bordered w-full"
-                placeholder="nextjs, react, typescript"
+                placeholder={t.blog.tagsPlaceholder}
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
               />
@@ -198,16 +200,20 @@ export default function NewPostPage() {
                 checked={published}
                 onChange={(e) => setPublished(e.target.checked)}
               />
-              <span className="label-text">Publish immediately</span>
+              <span className="label-text">{t.blog.publishImmediately}</span>
             </label>
           </div>
 
           <div className="flex gap-4">
             <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? <span className="loading loading-spinner loading-sm" /> : "Create Post"}
+              {submitting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                t.blog.createPostBtn
+              )}
             </button>
             <Link href="/blog" className="btn btn-ghost">
-              Cancel
+              {t.common.cancel}
             </Link>
           </div>
         </form>

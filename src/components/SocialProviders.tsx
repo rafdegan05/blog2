@@ -2,6 +2,7 @@
 
 import React from "react";
 import { signIn } from "next-auth/react";
+import { useTranslation } from "@/components/LanguageProvider";
 
 type SocialProvidersProps = {
   callbackUrl: string;
@@ -62,7 +63,8 @@ export default function SocialProviders({
   mode,
   availableProviderIds,
 }: SocialProvidersProps) {
-  const label = mode === "signin" ? "Sign in with" : "Sign up with";
+  const { t } = useTranslation();
+  const label = mode === "signin" ? t.auth.signInWith : t.auth.signUpWith;
 
   const availableProviders = SUPPORTED_PROVIDERS.filter((p) => availableProviderIds.includes(p.id));
 
@@ -82,7 +84,7 @@ export default function SocialProviders({
           </button>
         ))}
       </div>
-      <div className="divider">OR</div>
+      <div className="divider">{t.common.or}</div>
     </>
   );
 }

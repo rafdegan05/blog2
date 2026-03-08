@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface PodcastCardProps {
   podcast: {
@@ -23,6 +26,7 @@ function formatDuration(seconds: number): string {
 }
 
 export default function PodcastCard({ podcast }: PodcastCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="card bg-base-100 shadow-md hover:shadow-xl transition-shadow duration-300">
       {podcast.coverImage && (
@@ -58,13 +62,13 @@ export default function PodcastCard({ podcast }: PodcastCardProps) {
         <div className="mt-3">
           <audio controls className="w-full" preload="metadata">
             <source src={podcast.audioUrl} type="audio/mpeg" />
-            Your browser does not support the audio element.
+            {t.podcasts.audioNotSupported}
           </audio>
         </div>
 
         <div className="card-actions justify-between items-center mt-2">
           <div className="flex items-center gap-2 text-sm text-base-content/60">
-            <span>{podcast.author.name || "Anonymous"}</span>
+            <span>{podcast.author.name || t.common.anonymous}</span>
             <span>·</span>
             <span>{new Date(podcast.createdAt).toLocaleDateString()}</span>
             {podcast.duration && (
@@ -75,7 +79,7 @@ export default function PodcastCard({ podcast }: PodcastCardProps) {
             )}
           </div>
           <Link href={`/podcasts/${podcast.slug}`} className="btn btn-secondary btn-sm">
-            Listen
+            {t.podcasts.listen}
           </Link>
         </div>
       </div>

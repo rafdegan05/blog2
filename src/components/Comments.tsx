@@ -5,6 +5,7 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ReactionBar from "@/components/ReactionBar";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface CommentData {
   id: string;
@@ -34,6 +35,7 @@ function CommentItem({
   const [showReply, setShowReply] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { t } = useTranslation();
 
   const handleReply = async () => {
     if (!replyContent.trim()) return;
@@ -53,7 +55,7 @@ function CommentItem({
   };
 
   const handleDelete = async () => {
-    if (!confirm("Delete this comment?")) return;
+    if (!confirm(t.comments.deleteConfirm)) return;
     await fetch(`/api/comments/${comment.id}`, { method: "DELETE" });
     onDeleted();
   };
@@ -78,7 +80,7 @@ function CommentItem({
             )}
           </div>
         </div>
-        <span className="font-semibold text-sm">{comment.author.name || "Anonymous"}</span>
+        <span className="font-semibold text-sm">{comment.author.name || t.common.anonymous}</span>
         <span className="text-xs text-base-content/50">
           {new Date(comment.createdAt).toLocaleDateString()}
         </span>
@@ -93,12 +95,12 @@ function CommentItem({
       <div className="flex gap-2">
         {session && (
           <button className="btn btn-ghost btn-xs" onClick={() => setShowReply(!showReply)}>
-            Reply
+            {t.comments.reply}
           </button>
         )}
         {session?.user?.id === comment.author.id && (
           <button className="btn btn-ghost btn-xs text-error" onClick={handleDelete}>
-            Delete
+            {t.common.delete}
           </button>
         )}
       </div>
@@ -108,13 +110,13 @@ function CommentItem({
           <input
             type="text"
             className="input input-bordered input-sm flex-1"
-            placeholder="Write a reply..."
+            placeholder={t.comments.writeReply}
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleReply()}
           />
           <button className="btn btn-primary btn-sm" onClick={handleReply} disabled={submitting}>
-            {submitting ? <span className="loading loading-spinner loading-xs" /> : "Send"}
+            {submitting ? <span className="loading loading-spinner loading-xs" /> : t.comments.send}
           </button>
         </div>
       )}
@@ -138,6 +140,7 @@ function CommentItem({
 
 export default function Comments({ postId, initialComments }: CommentsProps) {
   const { data: session } = useSession();
+  const { t } = useTranslation();
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -166,36 +169,42 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
 
   return (
     <div className="mt-8">
-      <h3 className="text-xl font-bold mb-4">Comments ({comments.length})</h3>
+      <h3 className="text-xl font-bold mb-4">
+        {t.comments.title.replace("{n}", String(comments.length))}
+      </h3>
 
       {session ? (
         <div className="mb-6 flex gap-2">
           <input
             type="text"
             className="input input-bordered flex-1"
-            placeholder="Write a comment..."
+            placeholder={t.comments.writeComment}
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           />
           <button className="btn btn-primary" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? <span className="loading loading-spinner loading-sm" /> : "Comment"}
+            {submitting ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              t.comments.comment
+            )}
           </button>
         </div>
       ) : (
         <div className="alert mb-6">
           <span>
             <Link href="/auth/signin" className="link link-primary">
-              Sign in
+              {t.common.signIn}
             </Link>{" "}
-            to leave a comment.
+            {t.comments.signInPrompt}
           </span>
         </div>
       )}
 
       <div>
         {comments.length === 0 ? (
-          <p className="text-base-content/50">No comments yet. Be the first!</p>
+          <p className="text-base-content/50">{t.comments.noComments}</p>
         ) : (
           comments.map((comment) => (
             <CommentItem

@@ -3,8 +3,10 @@
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "@/components/LanguageProvider";
 
 function ConfirmResetForm() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
 
@@ -19,17 +21,17 @@ function ConfirmResetForm() {
     setError("");
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError(t.auth.passwordMinLength);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t.auth.passwordsNoMatch);
       return;
     }
 
     if (!token) {
-      setError("Invalid reset token. Please request a new reset link.");
+      setError(t.auth.invalidResetToken);
       return;
     }
 
@@ -45,13 +47,13 @@ function ConfirmResetForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Something went wrong");
+        setError(data.error || t.auth.somethingWentWrong);
         return;
       }
 
       setSuccess(true);
     } catch {
-      setError("An unexpected error occurred");
+      setError(t.common.unexpectedError);
     } finally {
       setLoading(false);
     }
@@ -62,12 +64,12 @@ function ConfirmResetForm() {
       <div className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="card bg-base-200 w-full max-w-md shadow-xl">
           <div className="card-body text-center">
-            <h1 className="card-title text-2xl justify-center mb-2">Password Reset!</h1>
-            <p className="text-base-content/60 mb-4">
-              Your password has been reset successfully. You can now sign in with your new password.
-            </p>
+            <h1 className="card-title text-2xl justify-center mb-2">
+              {t.auth.passwordResetSuccess}
+            </h1>
+            <p className="text-base-content/60 mb-4">{t.auth.passwordResetSuccessText}</p>
             <Link href="/auth/signin" className="btn btn-primary">
-              Sign In
+              {t.common.signIn}
             </Link>
           </div>
         </div>
@@ -79,8 +81,8 @@ function ConfirmResetForm() {
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="card bg-base-200 w-full max-w-md shadow-xl">
         <div className="card-body">
-          <h1 className="card-title text-2xl justify-center mb-2">Set New Password</h1>
-          <p className="text-center text-base-content/60 mb-6">Enter your new password below.</p>
+          <h1 className="card-title text-2xl justify-center mb-2">{t.auth.setNewPassword}</h1>
+          <p className="text-center text-base-content/60 mb-6">{t.auth.setNewPasswordSubtitle}</p>
 
           {error && (
             <div className="alert alert-error mb-4">
@@ -91,12 +93,12 @@ function ConfirmResetForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text">New Password</span>
+                <span className="label-text">{t.auth.newPassword}</span>
               </label>
               <input
                 type="password"
                 className="input input-bordered w-full"
-                placeholder="••••••••"
+                placeholder={t.auth.passwordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -105,12 +107,12 @@ function ConfirmResetForm() {
             </div>
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Confirm Password</span>
+                <span className="label-text">{t.auth.confirmPassword}</span>
               </label>
               <input
                 type="password"
                 className="input input-bordered w-full"
-                placeholder="••••••••"
+                placeholder={t.auth.passwordPlaceholder}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -118,13 +120,17 @@ function ConfirmResetForm() {
               />
             </div>
             <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-              {loading ? <span className="loading loading-spinner loading-sm" /> : "Reset Password"}
+              {loading ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                t.auth.resetPasswordBtn
+              )}
             </button>
           </form>
 
           <p className="text-center text-sm mt-4">
             <Link href="/auth/reset-password" className="link link-primary">
-              Request a new reset link
+              {t.auth.requestNewResetLink}
             </Link>
           </p>
         </div>

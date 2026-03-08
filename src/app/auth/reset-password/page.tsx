@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslation } from "@/components/LanguageProvider";
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -25,7 +27,7 @@ export default function ResetPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Something went wrong");
+        setError(data.error || t.auth.somethingWentWrong);
         return;
       }
 
@@ -35,7 +37,7 @@ export default function ResetPasswordPage() {
         setDevToken(data.token);
       }
     } catch {
-      setError("An unexpected error occurred");
+      setError(t.common.unexpectedError);
     } finally {
       setLoading(false);
     }
@@ -46,16 +48,13 @@ export default function ResetPasswordPage() {
       <div className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="card bg-base-200 w-full max-w-md shadow-xl">
           <div className="card-body text-center">
-            <h1 className="card-title text-2xl justify-center mb-2">Check Your Email</h1>
-            <p className="text-base-content/60 mb-4">
-              If an account with that email exists, we&apos;ve sent a password reset link. Please
-              check your inbox and spam folder.
-            </p>
+            <h1 className="card-title text-2xl justify-center mb-2">{t.auth.checkEmail}</h1>
+            <p className="text-base-content/60 mb-4">{t.auth.checkEmailReset}</p>
 
             {devToken && (
               <div className="alert alert-info text-left text-sm mb-4">
                 <div>
-                  <p className="font-bold">Dev Mode – Reset Link:</p>
+                  <p className="font-bold">{t.auth.devResetLink}</p>
                   <Link
                     href={`/auth/reset-password/confirm?token=${devToken}`}
                     className="link link-primary break-all"
@@ -67,7 +66,7 @@ export default function ResetPasswordPage() {
             )}
 
             <Link href="/auth/signin" className="btn btn-primary">
-              Back to Sign In
+              {t.auth.backToSignIn}
             </Link>
           </div>
         </div>
@@ -79,10 +78,8 @@ export default function ResetPasswordPage() {
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="card bg-base-200 w-full max-w-md shadow-xl">
         <div className="card-body">
-          <h1 className="card-title text-2xl justify-center mb-2">Reset Password</h1>
-          <p className="text-center text-base-content/60 mb-6">
-            Enter your email address and we&apos;ll send you a link to reset your password.
-          </p>
+          <h1 className="card-title text-2xl justify-center mb-2">{t.auth.resetPasswordTitle}</h1>
+          <p className="text-center text-base-content/60 mb-6">{t.auth.resetPasswordSubtitle}</p>
 
           {error && (
             <div className="alert alert-error mb-4">
@@ -93,12 +90,12 @@ export default function ResetPasswordPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Email</span>
+                <span className="label-text">{t.auth.email}</span>
               </label>
               <input
                 type="email"
                 className="input input-bordered w-full"
-                placeholder="your@email.com"
+                placeholder={t.auth.emailPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -108,15 +105,15 @@ export default function ResetPasswordPage() {
               {loading ? (
                 <span className="loading loading-spinner loading-sm" />
               ) : (
-                "Send Reset Link"
+                t.auth.sendResetLink
               )}
             </button>
           </form>
 
           <p className="text-center text-sm mt-4">
-            Remember your password?{" "}
+            {t.auth.rememberPassword}
             <Link href="/auth/signin" className="link link-primary">
-              Sign In
+              {t.common.signIn}
             </Link>
           </p>
         </div>

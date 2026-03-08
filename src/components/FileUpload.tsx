@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface FileUploadProps {
   /** "image" or "audio" */
@@ -26,6 +27,7 @@ export default function FileUpload({
   const [error, setError] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   const acceptTypes =
     type === "image"
@@ -42,7 +44,7 @@ export default function FileUpload({
       try {
         // Client-side size check
         if (file.size > maxSizeMB * 1024 * 1024) {
-          setError(`File too large. Maximum: ${maxSizeMB} MB`);
+          setError(t.upload.fileTooLarge.replace("{n}", String(maxSizeMB)));
           return;
         }
 
@@ -57,14 +59,14 @@ export default function FileUpload({
 
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error || "Upload failed");
+          setError(data.error || t.upload.uploadFailed);
           return;
         }
 
         const data = await res.json();
         onUpload(data.url);
       } catch {
-        setError("Upload failed. Please try again.");
+        setError(t.upload.uploadFailed);
       } finally {
         setUploading(false);
       }
@@ -116,7 +118,7 @@ export default function FileUpload({
         <div className="relative mb-2 inline-block">
           <img
             src={value}
-            alt="Upload preview"
+            alt={t.upload.preview}
             className="max-h-48 rounded-lg object-cover"
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
@@ -124,7 +126,7 @@ export default function FileUpload({
             type="button"
             onClick={handleRemove}
             className="btn btn-circle btn-error btn-xs absolute top-1 right-1"
-            title="Remove"
+            title={t.upload.remove}
           >
             ✕
           </button>
@@ -134,13 +136,13 @@ export default function FileUpload({
       {value && type === "audio" && (
         <div className="mb-2 flex items-center gap-2">
           <audio controls className="flex-1" src={value}>
-            Your browser does not support the audio element.
+            {t.upload.audioNotSupported}
           </audio>
           <button
             type="button"
             onClick={handleRemove}
             className="btn btn-circle btn-error btn-xs"
-            title="Remove"
+            title={t.upload.remove}
           >
             ✕
           </button>
@@ -171,7 +173,7 @@ export default function FileUpload({
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
             <span className="loading loading-spinner loading-md" />
-            <span className="text-sm text-base-content/60">Uploading...</span>
+            <span className="text-sm text-base-content/60">{t.upload.uploading}</span>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
@@ -190,12 +192,12 @@ export default function FileUpload({
               />
             </svg>
             <span className="text-sm text-base-content/60">
-              {value ? "Click or drag to replace" : "Click or drag to upload"}
+              {value ? t.upload.clickOrDragReplace : t.upload.clickOrDragUpload}
             </span>
             <span className="text-xs text-base-content/40">
               {type === "image"
-                ? `JPEG, PNG, GIF, WebP, SVG — max ${maxSizeMB} MB`
-                : `MP3, WAV, OGG, AAC, M4A — max ${maxSizeMB} MB`}
+                ? t.upload.imageTypes.replace("{n}", String(maxSizeMB))
+                : t.upload.audioTypes.replace("{n}", String(maxSizeMB))}
             </span>
           </div>
         )}
@@ -204,14 +206,12 @@ export default function FileUpload({
       {/* URL input fallback */}
       <div className="mt-2">
         <label className="label">
-          <span className="label-text-alt text-base-content/50">Or paste a URL directly</span>
+          <span className="label-text-alt text-base-content/50">{t.upload.pasteUrl}</span>
         </label>
         <input
           type="text"
           className="input input-bordered input-sm w-full"
-          placeholder={
-            type === "image" ? "https://example.com/image.jpg" : "https://example.com/audio.mp3"
-          }
+          placeholder={type === "image" ? t.upload.imagePlaceholder : t.upload.audioPlaceholder}
           value={value || ""}
           onChange={(e) => onUpload(e.target.value)}
           disabled={disabled || uploading}

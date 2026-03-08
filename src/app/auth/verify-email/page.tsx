@@ -3,8 +3,10 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslation } from "@/components/LanguageProvider";
 
 function VerifyEmailContent() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -51,9 +53,9 @@ function VerifyEmailContent() {
         body: JSON.stringify({ email: resendEmail }),
       });
       const data = await res.json();
-      setResendMessage(data.message || "Verification email sent.");
+      setResendMessage(data.message || t.auth.verificationSent);
     } catch {
-      setResendMessage("An error occurred. Please try again.");
+      setResendMessage(t.auth.resendError);
     } finally {
       setResendLoading(false);
     }
@@ -65,9 +67,9 @@ function VerifyEmailContent() {
         <div className="card-body text-center">
           {status === "loading" && (
             <>
-              <h1 className="card-title text-2xl justify-center mb-2">Verifying Email...</h1>
+              <h1 className="card-title text-2xl justify-center mb-2">{t.auth.verifyingEmail}</h1>
               <span className="loading loading-spinner loading-lg mx-auto" />
-              <p className="text-base-content/60 mt-2">Please wait while we verify your email.</p>
+              <p className="text-base-content/60 mt-2">{t.auth.verifyingEmailText}</p>
             </>
           )}
 
@@ -89,10 +91,10 @@ function VerifyEmailContent() {
                   />
                 </svg>
               </div>
-              <h1 className="card-title text-2xl justify-center mb-2">Email Verified!</h1>
+              <h1 className="card-title text-2xl justify-center mb-2">{t.auth.emailVerified}</h1>
               <p className="text-base-content/60 mb-4">{message}</p>
               <Link href="/auth/signin" className="btn btn-primary">
-                Sign In
+                {t.common.signIn}
               </Link>
             </>
           )}
@@ -115,16 +117,18 @@ function VerifyEmailContent() {
                   />
                 </svg>
               </div>
-              <h1 className="card-title text-2xl justify-center mb-2">Verification Failed</h1>
+              <h1 className="card-title text-2xl justify-center mb-2">
+                {t.auth.verificationFailed}
+              </h1>
               <p className="text-base-content/60 mb-4">{message}</p>
 
               {/* Resend form */}
-              <div className="divider">Resend verification</div>
+              <div className="divider">{t.auth.resendVerificationDivider}</div>
               <form onSubmit={handleResend} className="space-y-3">
                 <input
                   type="email"
                   className="input input-bordered w-full"
-                  placeholder="your@email.com"
+                  placeholder={t.auth.emailPlaceholder}
                   value={resendEmail}
                   onChange={(e) => setResendEmail(e.target.value)}
                   required
@@ -137,30 +141,28 @@ function VerifyEmailContent() {
                   {resendLoading ? (
                     <span className="loading loading-spinner loading-sm" />
                   ) : (
-                    "Resend Verification Email"
+                    t.auth.resendVerification
                   )}
                 </button>
               </form>
               {resendMessage && <p className="text-sm text-info mt-2">{resendMessage}</p>}
 
               <Link href="/auth/signin" className="link link-primary text-sm mt-4">
-                Back to Sign In
+                {t.auth.backToSignIn}
               </Link>
             </>
           )}
 
           {status === "no-token" && (
             <>
-              <h1 className="card-title text-2xl justify-center mb-2">Verify Your Email</h1>
-              <p className="text-base-content/60 mb-4">
-                Enter your email below to receive a new verification link.
-              </p>
+              <h1 className="card-title text-2xl justify-center mb-2">{t.auth.verifyYourEmail}</h1>
+              <p className="text-base-content/60 mb-4">{t.auth.verifyYourEmailText}</p>
 
               <form onSubmit={handleResend} className="space-y-3">
                 <input
                   type="email"
                   className="input input-bordered w-full"
-                  placeholder="your@email.com"
+                  placeholder={t.auth.emailPlaceholder}
                   value={resendEmail}
                   onChange={(e) => setResendEmail(e.target.value)}
                   required
@@ -169,14 +171,14 @@ function VerifyEmailContent() {
                   {resendLoading ? (
                     <span className="loading loading-spinner loading-sm" />
                   ) : (
-                    "Send Verification Email"
+                    t.auth.sendVerificationEmail
                   )}
                 </button>
               </form>
               {resendMessage && <p className="text-sm text-info mt-2">{resendMessage}</p>}
 
               <Link href="/auth/signin" className="link link-primary text-sm mt-4">
-                Back to Sign In
+                {t.auth.backToSignIn}
               </Link>
             </>
           )}

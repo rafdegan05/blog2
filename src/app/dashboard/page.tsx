@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface PostItem {
   id: string;
@@ -33,6 +34,7 @@ function DashboardContent() {
   const [podcasts, setPodcasts] = useState<PodcastItem[]>([]);
   const [activeTab, setActiveTab] = useState<"posts" | "podcasts">("posts");
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   const role = session?.user?.role;
   const canCreate = role === "AUTHOR" || role === "ADMIN";
@@ -71,13 +73,13 @@ function DashboardContent() {
   }, [session, fetchData]);
 
   const handleDeletePost = async (slug: string) => {
-    if (!confirm("Are you sure you want to delete this post?")) return;
+    if (!confirm(t.dashboard.deletePostConfirm)) return;
     await fetch(`/api/posts/${slug}`, { method: "DELETE" });
     fetchData();
   };
 
   const handleDeletePodcast = async (slug: string) => {
-    if (!confirm("Are you sure you want to delete this podcast?")) return;
+    if (!confirm(t.dashboard.deletePodcastConfirm)) return;
     await fetch(`/api/podcasts/${slug}`, { method: "DELETE" });
     fetchData();
   };
@@ -93,10 +95,10 @@ function DashboardContent() {
   if (!session) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
-        <p className="mb-4">Sign in to access the dashboard.</p>
+        <h1 className="text-3xl font-bold mb-4">{t.dashboard.title}</h1>
+        <p className="mb-4">{t.dashboard.signInText}</p>
         <Link href="/auth/signin" className="btn btn-primary">
-          Sign In
+          {t.common.signIn}
         </Link>
       </div>
     );
@@ -134,23 +136,21 @@ function DashboardContent() {
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
             />
           </svg>
-          <span>
-            You need Author or Admin role to create content. Contact an administrator to upgrade
-            your account.
-          </span>
+          <span>{t.dashboard.roleWarning}</span>
         </div>
       )}
       {error === "admin_required" && (
         <div className="alert alert-error mb-6">
-          <span>Admin access is required for that page.</span>
+          <span>{t.dashboard.adminRequired}</span>
         </div>
       )}
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl font-bold">{t.dashboard.title}</h1>
           <p className="text-base-content/60 mt-1">
-            Welcome, {session.user?.name || session.user?.email}
+            {t.dashboard.welcome}
+            {session.user?.name || session.user?.email}
             {role && <span className="badge badge-primary badge-sm ml-2">{role}</span>}
           </p>
         </div>
@@ -224,21 +224,21 @@ function DashboardContent() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="stat bg-base-200 rounded-box shadow">
-          <div className="stat-title">Blog Posts</div>
+          <div className="stat-title">{t.dashboard.blogPosts}</div>
           <div className="stat-value text-primary text-2xl">{posts.length}</div>
         </div>
         <div className="stat bg-base-200 rounded-box shadow">
-          <div className="stat-title">Podcasts</div>
+          <div className="stat-title">{t.dashboard.podcastsStat}</div>
           <div className="stat-value text-secondary text-2xl">{podcasts.length}</div>
         </div>
         <div className="stat bg-base-200 rounded-box shadow">
-          <div className="stat-title">Published</div>
+          <div className="stat-title">{t.dashboard.publishedStat}</div>
           <div className="stat-value text-success text-2xl">
             {posts.filter((p) => p.published).length + podcasts.filter((p) => p.published).length}
           </div>
         </div>
         <div className="stat bg-base-200 rounded-box shadow">
-          <div className="stat-title">Drafts</div>
+          <div className="stat-title">{t.dashboard.draftsStat}</div>
           <div className="stat-value text-warning text-2xl">
             {posts.filter((p) => !p.published).length + podcasts.filter((p) => !p.published).length}
           </div>
@@ -266,7 +266,7 @@ function DashboardContent() {
               d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
             />
           </svg>
-          Posts ({posts.length})
+          {t.dashboard.postsTab.replace("{n}", String(posts.length))}
         </button>
         <button
           role="tab"
@@ -287,7 +287,7 @@ function DashboardContent() {
               d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
             />
           </svg>
-          Podcasts ({podcasts.length})
+          {t.dashboard.podcastsTab.replace("{n}", String(podcasts.length))}
         </button>
       </div>
 
@@ -313,10 +313,10 @@ function DashboardContent() {
                   d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
                 />
               </svg>
-              <p className="text-base-content/60 mb-4">No posts yet.</p>
+              <p className="text-base-content/60 mb-4">{t.dashboard.noPostsYet}</p>
               {canCreate && (
                 <Link href="/blog/new" className="btn btn-primary">
-                  Create your first post
+                  {t.dashboard.createFirstPost}
                 </Link>
               )}
             </div>
@@ -324,12 +324,14 @@ function DashboardContent() {
             <table className="table table-zebra">
               <thead>
                 <tr>
-                  <th>Title</th>
-                  <th>Status</th>
-                  {isAdmin && <th className="hidden md:table-cell">Moderation</th>}
-                  <th className="hidden md:table-cell">Date</th>
-                  <th className="hidden lg:table-cell">Comments</th>
-                  <th>Actions</th>
+                  <th>{t.dashboard.tableTitle}</th>
+                  <th>{t.dashboard.tableStatus}</th>
+                  {isAdmin && (
+                    <th className="hidden md:table-cell">{t.dashboard.tableModeration}</th>
+                  )}
+                  <th className="hidden md:table-cell">{t.dashboard.tableDate}</th>
+                  <th className="hidden lg:table-cell">{t.dashboard.tableComments}</th>
+                  <th>{t.dashboard.tableActions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -347,13 +349,13 @@ function DashboardContent() {
                       <span
                         className={`badge badge-sm ${post.published ? "badge-success" : "badge-warning"}`}
                       >
-                        {post.published ? "Published" : "Draft"}
+                        {post.published ? t.common.published : t.common.draft}
                       </span>
                     </td>
                     {isAdmin && (
                       <td className="hidden md:table-cell">
                         <span className={`badge badge-sm ${moderationColor(post.moderation)}`}>
-                          {post.moderation || "N/A"}
+                          {post.moderation || t.dashboard.na}
                         </span>
                       </td>
                     )}
@@ -387,7 +389,7 @@ function DashboardContent() {
                         <button
                           className="btn btn-error btn-outline btn-xs gap-1"
                           onClick={() => handleDeletePost(post.slug)}
-                          title="Delete"
+                          title={t.common.delete}
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -430,10 +432,10 @@ function DashboardContent() {
                   d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
                 />
               </svg>
-              <p className="text-base-content/60 mb-4">No podcasts yet.</p>
+              <p className="text-base-content/60 mb-4">{t.dashboard.noPodcastsYet}</p>
               {canCreate && (
                 <Link href="/podcasts/new" className="btn btn-secondary">
-                  Create your first podcast
+                  {t.dashboard.createFirstPodcast}
                 </Link>
               )}
             </div>
@@ -441,11 +443,13 @@ function DashboardContent() {
             <table className="table table-zebra">
               <thead>
                 <tr>
-                  <th>Title</th>
-                  <th>Status</th>
-                  {isAdmin && <th className="hidden md:table-cell">Moderation</th>}
-                  <th className="hidden md:table-cell">Date</th>
-                  <th>Actions</th>
+                  <th>{t.dashboard.tableTitle}</th>
+                  <th>{t.dashboard.tableStatus}</th>
+                  {isAdmin && (
+                    <th className="hidden md:table-cell">{t.dashboard.tableModeration}</th>
+                  )}
+                  <th className="hidden md:table-cell">{t.dashboard.tableDate}</th>
+                  <th>{t.dashboard.tableActions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -463,13 +467,13 @@ function DashboardContent() {
                       <span
                         className={`badge badge-sm ${podcast.published ? "badge-success" : "badge-warning"}`}
                       >
-                        {podcast.published ? "Published" : "Draft"}
+                        {podcast.published ? t.common.published : t.common.draft}
                       </span>
                     </td>
                     {isAdmin && (
                       <td className="hidden md:table-cell">
                         <span className={`badge badge-sm ${moderationColor(podcast.moderation)}`}>
-                          {podcast.moderation || "N/A"}
+                          {podcast.moderation || t.dashboard.na}
                         </span>
                       </td>
                     )}
@@ -502,7 +506,7 @@ function DashboardContent() {
                         <button
                           className="btn btn-error btn-outline btn-xs gap-1"
                           onClick={() => handleDeletePodcast(podcast.slug)}
-                          title="Delete"
+                          title={t.common.delete}
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

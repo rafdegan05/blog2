@@ -6,8 +6,10 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import SocialProviders from "@/components/SocialProviders";
 import { loginSchema, formatZodFieldErrors } from "@/lib/validations";
+import { useTranslation } from "@/components/LanguageProvider";
 
 function SignInForm() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const error = searchParams.get("error");
@@ -31,17 +33,15 @@ function SignInForm() {
 
   const getErrorMessage = (errorCode: string): string => {
     const errorMessages: Record<string, string> = {
-      OAuthSignin:
-        "Could not start the sign-in process with the selected provider. Please try again.",
-      OAuthCallback: "An error occurred during the authentication callback. Please try again.",
-      OAuthCreateAccount: "Could not create an account with the selected provider.",
-      EmailCreateAccount: "Could not create an account with the provided email.",
-      Callback: "An error occurred during the authentication process.",
-      OAuthAccountNotLinked:
-        "This email is already associated with another sign-in method. Please use the original method.",
-      CredentialsSignin: "Invalid email or password. Please check your credentials and try again.",
-      SessionRequired: "You need to be signed in to access this page.",
-      Default: "An unexpected error occurred during sign in. Please try again.",
+      OAuthSignin: t.auth.errorOAuthSignin,
+      OAuthCallback: t.auth.errorOAuthCallback,
+      OAuthCreateAccount: t.auth.errorOAuthCreateAccount,
+      EmailCreateAccount: t.auth.errorEmailCreateAccount,
+      Callback: t.auth.errorCallback,
+      OAuthAccountNotLinked: t.auth.errorOAuthAccountNotLinked,
+      CredentialsSignin: t.auth.errorCredentialsSignin,
+      SessionRequired: t.auth.errorSessionRequired,
+      Default: t.auth.errorDefault,
     };
     return errorMessages[errorCode] || errorMessages.Default;
   };
@@ -56,9 +56,9 @@ function SignInForm() {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      setResendMessage(data.message || "Verification email sent.");
+      setResendMessage(data.message || t.auth.verificationSent);
     } catch {
-      setResendMessage("An error occurred. Please try again.");
+      setResendMessage(t.auth.resendError);
     } finally {
       setResendLoading(false);
     }
@@ -98,21 +98,19 @@ function SignInForm() {
           });
           const checkData = await checkRes.json();
           if (checkData.needsVerification) {
-            setFormError(
-              "Your email address has not been verified. Please check your inbox for the verification link."
-            );
+            setFormError(t.auth.errorEmailNotVerified);
             setShowResendVerification(true);
           } else {
-            setFormError("Invalid email or password. Please check your credentials and try again.");
+            setFormError(t.auth.errorCredentialsSignin);
           }
         } catch {
-          setFormError("Invalid email or password. Please check your credentials and try again.");
+          setFormError(t.auth.errorCredentialsSignin);
         }
       } else if (result?.url) {
         window.location.href = result.url;
       }
     } catch {
-      setFormError("An unexpected error occurred. Please try again.");
+      setFormError(t.auth.errorDefault);
     } finally {
       setLoading(false);
     }
@@ -122,10 +120,8 @@ function SignInForm() {
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="card bg-base-200 w-full max-w-md shadow-xl">
         <div className="card-body">
-          <h1 className="card-title text-2xl justify-center mb-2">Sign In</h1>
-          <p className="text-center text-base-content/60 mb-6">
-            Sign in to create posts, podcasts, and engage with the community.
-          </p>
+          <h1 className="card-title text-2xl justify-center mb-2">{t.auth.signInTitle}</h1>
+          <p className="text-center text-base-content/60 mb-6">{t.auth.signInSubtitle}</p>
 
           {(error || formError) && (
             <div
@@ -158,7 +154,7 @@ function SignInForm() {
                 {resendLoading ? (
                   <span className="loading loading-spinner loading-xs" />
                 ) : (
-                  "Resend Verification Email"
+                  t.auth.resendVerification
                 )}
               </button>
               {resendMessage && <p className="text-sm text-info">{resendMessage}</p>}
@@ -176,12 +172,12 @@ function SignInForm() {
           <form onSubmit={handleCredentialSignIn} className="space-y-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Email</span>
+                <span className="label-text">{t.auth.email}</span>
               </label>
               <input
                 type="email"
                 className={`input input-bordered w-full ${fieldErrors.email ? "input-error" : ""}`}
-                placeholder="your@email.com"
+                placeholder={t.auth.emailPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -194,12 +190,12 @@ function SignInForm() {
             </div>
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Password</span>
+                <span className="label-text">{t.auth.password}</span>
               </label>
               <input
                 type="password"
                 className={`input input-bordered w-full ${fieldErrors.password ? "input-error" : ""}`}
-                placeholder="••••••••"
+                placeholder={t.auth.passwordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -210,19 +206,19 @@ function SignInForm() {
               )}
               <label className="label">
                 <Link href="/auth/reset-password" className="label-text-alt link link-primary">
-                  Forgot password?
+                  {t.auth.forgotPassword}
                 </Link>
               </label>
             </div>
             <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-              {loading ? <span className="loading loading-spinner loading-sm" /> : "Sign In"}
+              {loading ? <span className="loading loading-spinner loading-sm" /> : t.common.signIn}
             </button>
           </form>
 
           <p className="text-center text-sm mt-4">
-            Don&apos;t have an account?{" "}
+            {t.auth.noAccount}
             <Link href="/auth/register" className="link link-primary">
-              Register
+              {t.auth.register}
             </Link>
           </p>
         </div>

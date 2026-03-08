@@ -1,45 +1,49 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "@/components/LanguageProvider";
 
 export default function Footer() {
+  const { t } = useTranslation();
+  const year = new Date().getFullYear();
+
   return (
     <footer className="footer bg-base-200 text-base-content p-10 mt-auto">
       <nav>
-        <h6 className="footer-title">Content</h6>
+        <h6 className="footer-title">{t.footer.content}</h6>
         <Link href="/blog" className="link link-hover">
-          Blog
+          {t.footer.blog}
         </Link>
         <Link href="/podcasts" className="link link-hover">
-          Podcasts
+          {t.footer.podcasts}
         </Link>
       </nav>
       <nav>
-        <h6 className="footer-title">Account</h6>
+        <h6 className="footer-title">{t.footer.account}</h6>
         <Link href="/auth/signin" className="link link-hover">
-          Sign In
+          {t.common.signIn}
         </Link>
         <Link href="/auth/register" className="link link-hover">
-          Register
+          {t.footer.register}
         </Link>
         <Link href="/dashboard" className="link link-hover">
-          Dashboard
+          {t.nav.dashboard}
         </Link>
       </nav>
       <nav>
-        <h6 className="footer-title">Platform</h6>
+        <h6 className="footer-title">{t.footer.platform}</h6>
         <Link href="/" className="link link-hover">
-          Home
+          {t.common.home}
         </Link>
         <Link href="/about" className="link link-hover">
-          About
+          {t.nav.about}
         </Link>
         <Link href="/sitemap.xml" className="link link-hover">
-          Sitemap
+          {t.footer.sitemap}
         </Link>
       </nav>
       <aside className="col-span-full text-center">
-        <p className="text-base-content/60">
-          © {new Date().getFullYear()} Blog & Podcast — Built with Next.js, DaisyUI & Prisma
-        </p>
+        <p className="text-base-content/60">{t.footer.copyright.replace("{year}", String(year))}</p>
       </aside>
     </footer>
   );

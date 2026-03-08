@@ -5,8 +5,10 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import SocialProviders from "@/components/SocialProviders";
 import { registerSchema, formatZodFieldErrors } from "@/lib/validations";
+import { useTranslation } from "@/components/LanguageProvider";
 
 function RegisterForm() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
@@ -56,14 +58,14 @@ function RegisterForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Registration failed.");
+        setError(data.error || t.auth.registrationFailed);
         setLoading(false);
         return;
       }
 
       setSuccess(true);
     } catch {
-      setError("An unexpected error occurred.");
+      setError(t.common.unexpectedError);
     } finally {
       setLoading(false);
     }
@@ -90,20 +92,19 @@ function RegisterForm() {
                 />
               </svg>
             </div>
-            <h1 className="card-title text-2xl justify-center mb-2">Check Your Email</h1>
+            <h1 className="card-title text-2xl justify-center mb-2">{t.auth.checkEmail}</h1>
             <p className="text-base-content/60 mb-4">
-              We&apos;ve sent a verification link to <strong>{email}</strong>. Please check your
-              inbox and click the link to verify your account.
+              {t.auth.checkEmailText.replace("{email}", email)}
             </p>
             <p className="text-base-content/40 text-sm mb-4">
-              Didn&apos;t receive the email? Check your spam folder or{" "}
+              {t.auth.checkEmailSpam}
               <Link href="/auth/verify-email" className="link link-primary">
-                request a new verification link
+                {t.auth.requestNewLink}
               </Link>
               .
             </p>
             <Link href="/auth/signin" className="btn btn-outline btn-primary">
-              Go to Sign In
+              {t.auth.goToSignIn}
             </Link>
           </div>
         </div>
@@ -115,10 +116,8 @@ function RegisterForm() {
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="card bg-base-200 w-full max-w-md shadow-xl">
         <div className="card-body">
-          <h1 className="card-title text-2xl justify-center mb-2">Create Account</h1>
-          <p className="text-center text-base-content/60 mb-6">
-            Join the community to create posts, podcasts, and more.
-          </p>
+          <h1 className="card-title text-2xl justify-center mb-2">{t.auth.createAccountTitle}</h1>
+          <p className="text-center text-base-content/60 mb-6">{t.auth.createAccountSubtitle}</p>
 
           {error && (
             <div className="alert alert-error mb-4">
@@ -150,12 +149,12 @@ function RegisterForm() {
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Name</span>
+                <span className="label-text">{t.auth.name}</span>
               </label>
               <input
                 type="text"
                 className={`input input-bordered w-full ${fieldErrors.name ? "input-error" : ""}`}
-                placeholder="Your name"
+                placeholder={t.auth.namePlaceholder}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -167,12 +166,12 @@ function RegisterForm() {
             </div>
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Email</span>
+                <span className="label-text">{t.auth.email}</span>
               </label>
               <input
                 type="email"
                 className={`input input-bordered w-full ${fieldErrors.email ? "input-error" : ""}`}
-                placeholder="your@email.com"
+                placeholder={t.auth.emailPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -185,12 +184,12 @@ function RegisterForm() {
             </div>
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Password</span>
+                <span className="label-text">{t.auth.password}</span>
               </label>
               <input
                 type="password"
                 className={`input input-bordered w-full ${fieldErrors.password ? "input-error" : ""}`}
-                placeholder="••••••••"
+                placeholder={t.auth.passwordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -200,19 +199,17 @@ function RegisterForm() {
                 </label>
               )}
               <label className="label">
-                <span className="label-text-alt text-base-content/50">
-                  Min 8 chars, with uppercase, lowercase and number
-                </span>
+                <span className="label-text-alt text-base-content/50">{t.auth.passwordHint}</span>
               </label>
             </div>
             <div className="form-control">
               <label className="label">
-                <span className="label-text">Confirm Password</span>
+                <span className="label-text">{t.auth.confirmPassword}</span>
               </label>
               <input
                 type="password"
                 className={`input input-bordered w-full ${fieldErrors.confirmPassword ? "input-error" : ""}`}
-                placeholder="••••••••"
+                placeholder={t.auth.passwordPlaceholder}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -223,14 +220,18 @@ function RegisterForm() {
               )}
             </div>
             <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-              {loading ? <span className="loading loading-spinner loading-sm" /> : "Create Account"}
+              {loading ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                t.auth.createAccountBtn
+              )}
             </button>
           </form>
 
           <p className="text-center text-sm mt-4">
-            Already have an account?{" "}
+            {t.auth.hasAccount}
             <Link href="/auth/signin" className="link link-primary">
-              Sign In
+              {t.common.signIn}
             </Link>
           </p>
         </div>

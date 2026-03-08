@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface UserProfile {
   id: string;
@@ -26,6 +27,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,7 +63,7 @@ export default function ProfilePage() {
         setNotifyNewPosts(data.notifyNewPosts);
       }
     } catch {
-      setError("Failed to load profile");
+      setError(t.profile.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -88,17 +90,17 @@ export default function ProfilePage() {
     // Include password change if form is shown and fields are filled
     if (showPasswordForm && newPassword) {
       if (!currentPassword) {
-        setError("Current password is required");
+        setError(t.profile.currentPasswordRequired);
         setSaving(false);
         return;
       }
       if (newPassword !== confirmNewPassword) {
-        setError("New passwords do not match");
+        setError(t.profile.newPasswordsNoMatch);
         setSaving(false);
         return;
       }
       if (newPassword.length < 8) {
-        setError("New password must be at least 8 characters");
+        setError(t.profile.newPasswordMinLength);
         setSaving(false);
         return;
       }
@@ -116,18 +118,18 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to update profile");
+        setError(data.error || t.profile.updateFailed);
         return;
       }
 
-      setSuccess("Profile updated successfully");
+      setSuccess(t.profile.updateSuccess);
       setShowPasswordForm(false);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
       fetchProfile();
     } catch {
-      setError("An unexpected error occurred");
+      setError(t.common.unexpectedError);
     } finally {
       setSaving(false);
     }
@@ -140,7 +142,7 @@ export default function ProfilePage() {
         signOut({ callbackUrl: "/auth/signin" });
       }
     } catch {
-      setError("Failed to invalidate sessions");
+      setError(t.profile.sessionsFailed);
     }
   };
 
@@ -150,10 +152,10 @@ export default function ProfilePage() {
       if (res.ok) {
         signOut({ callbackUrl: "/" });
       } else {
-        setError("Failed to delete account");
+        setError(t.profile.deleteFailed);
       }
     } catch {
-      setError("An unexpected error occurred");
+      setError(t.common.unexpectedError);
     }
   };
 
@@ -168,10 +170,10 @@ export default function ProfilePage() {
   if (!session) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4">Profile</h1>
-        <p className="mb-4">Sign in to manage your profile.</p>
+        <h1 className="text-3xl font-bold mb-4">{t.profile.title}</h1>
+        <p className="mb-4">{t.profile.signInText}</p>
         <Link href="/auth/signin" className="btn btn-primary">
-          Sign In
+          {t.common.signIn}
         </Link>
       </div>
     );
@@ -179,7 +181,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Profile Settings</h1>
+      <h1 className="text-3xl font-bold mb-8">{t.profile.settingsTitle}</h1>
 
       {error && (
         <div className="alert alert-error mb-6">
@@ -226,7 +228,7 @@ export default function ProfilePage() {
               <p className="text-base-content/60">{profile?.email}</p>
               <div className="badge badge-primary">{profile?.role}</div>
               <p className="text-xs text-base-content/50 mt-2">
-                Member since{" "}
+                {t.profile.memberSince}
                 {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "—"}
               </p>
             </div>
@@ -235,22 +237,22 @@ export default function ProfilePage() {
           {/* Stats */}
           <div className="card bg-base-200 shadow-xl">
             <div className="card-body">
-              <h3 className="card-title text-lg">Activity</h3>
+              <h3 className="card-title text-lg">{t.profile.activity}</h3>
               <div className="stats stats-vertical shadow">
                 <div className="stat">
-                  <div className="stat-title">Posts</div>
+                  <div className="stat-title">{t.profile.posts}</div>
                   <div className="stat-value text-primary text-2xl">
                     {profile?._count.posts || 0}
                   </div>
                 </div>
                 <div className="stat">
-                  <div className="stat-title">Podcasts</div>
+                  <div className="stat-title">{t.profile.podcasts}</div>
                   <div className="stat-value text-secondary text-2xl">
                     {profile?._count.podcasts || 0}
                   </div>
                 </div>
                 <div className="stat">
-                  <div className="stat-title">Comments</div>
+                  <div className="stat-title">{t.profile.comments}</div>
                   <div className="stat-value text-accent text-2xl">
                     {profile?._count.comments || 0}
                   </div>
@@ -263,12 +265,12 @@ export default function ProfilePage() {
           {profile?.accounts && profile.accounts.length > 0 && (
             <div className="card bg-base-200 shadow-xl">
               <div className="card-body">
-                <h3 className="card-title text-lg">Connected Accounts</h3>
+                <h3 className="card-title text-lg">{t.profile.connectedAccounts}</h3>
                 <div className="space-y-2">
                   {profile.accounts.map((account) => (
                     <div key={account.provider} className="flex items-center gap-2">
                       <span className="badge badge-outline capitalize">{account.provider}</span>
-                      <span className="text-xs text-base-content/50">Connected</span>
+                      <span className="text-xs text-base-content/50">{t.profile.connected}</span>
                     </div>
                   ))}
                 </div>
@@ -283,38 +285,38 @@ export default function ProfilePage() {
             {/* Basic Info */}
             <div className="card bg-base-200 shadow-xl mb-6">
               <div className="card-body">
-                <h3 className="card-title text-lg mb-4">Basic Information</h3>
+                <h3 className="card-title text-lg mb-4">{t.profile.basicInfo}</h3>
                 <div className="form-control mb-4">
                   <label className="label">
-                    <span className="label-text">Name</span>
+                    <span className="label-text">{t.profile.nameLabel}</span>
                   </label>
                   <input
                     type="text"
                     className="input input-bordered w-full"
-                    placeholder="Your name"
+                    placeholder={t.profile.namePlaceholder}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div className="form-control mb-4">
                   <label className="label">
-                    <span className="label-text">Bio</span>
+                    <span className="label-text">{t.profile.bioLabel}</span>
                   </label>
                   <textarea
                     className="textarea textarea-bordered w-full h-24"
-                    placeholder="Tell us about yourself..."
+                    placeholder={t.profile.bioPlaceholder}
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                   />
                 </div>
                 <div className="form-control mb-4">
                   <label className="label">
-                    <span className="label-text">Profile Image URL</span>
+                    <span className="label-text">{t.profile.imageLabel}</span>
                   </label>
                   <input
                     type="url"
                     className="input input-bordered w-full"
-                    placeholder="https://example.com/avatar.jpg"
+                    placeholder={t.profile.imagePlaceholder}
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
                   />
@@ -325,7 +327,7 @@ export default function ProfilePage() {
             {/* Notification Preferences */}
             <div className="card bg-base-200 shadow-xl mb-6">
               <div className="card-body">
-                <h3 className="card-title text-lg mb-4">Notification Preferences</h3>
+                <h3 className="card-title text-lg mb-4">{t.profile.notifications}</h3>
                 <div className="form-control">
                   <label className="label cursor-pointer justify-start gap-4">
                     <input
@@ -335,10 +337,8 @@ export default function ProfilePage() {
                       onChange={(e) => setNotifyComments(e.target.checked)}
                     />
                     <div>
-                      <span className="label-text font-medium">Comment notifications</span>
-                      <p className="text-xs text-base-content/50">
-                        Get notified when someone comments on your posts
-                      </p>
+                      <span className="label-text font-medium">{t.profile.commentNotif}</span>
+                      <p className="text-xs text-base-content/50">{t.profile.commentNotifDesc}</p>
                     </div>
                   </label>
                 </div>
@@ -351,10 +351,8 @@ export default function ProfilePage() {
                       onChange={(e) => setNotifyNewPosts(e.target.checked)}
                     />
                     <div>
-                      <span className="label-text font-medium">New post notifications</span>
-                      <p className="text-xs text-base-content/50">
-                        Get notified about new blog posts and podcasts
-                      </p>
+                      <span className="label-text font-medium">{t.profile.postNotif}</span>
+                      <p className="text-xs text-base-content/50">{t.profile.postNotifDesc}</p>
                     </div>
                   </label>
                 </div>
@@ -365,20 +363,20 @@ export default function ProfilePage() {
             <div className="card bg-base-200 shadow-xl mb-6">
               <div className="card-body">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="card-title text-lg">Password</h3>
+                  <h3 className="card-title text-lg">{t.profile.passwordTitle}</h3>
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
                     onClick={() => setShowPasswordForm(!showPasswordForm)}
                   >
-                    {showPasswordForm ? "Cancel" : "Change Password"}
+                    {showPasswordForm ? t.common.cancel : t.profile.changePassword}
                   </button>
                 </div>
                 {showPasswordForm && (
                   <div className="space-y-4">
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">Current Password</span>
+                        <span className="label-text">{t.profile.currentPassword}</span>
                       </label>
                       <input
                         type="password"
@@ -390,7 +388,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">New Password</span>
+                        <span className="label-text">{t.profile.newPassword}</span>
                       </label>
                       <input
                         type="password"
@@ -403,7 +401,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="form-control">
                       <label className="label">
-                        <span className="label-text">Confirm New Password</span>
+                        <span className="label-text">{t.profile.confirmNewPassword}</span>
                       </label>
                       <input
                         type="password"
@@ -420,23 +418,22 @@ export default function ProfilePage() {
             </div>
 
             <button type="submit" className="btn btn-primary w-full" disabled={saving}>
-              {saving ? <span className="loading loading-spinner loading-sm" /> : "Save Changes"}
+              {saving ? <span className="loading loading-spinner loading-sm" /> : t.common.save}
             </button>
           </form>
 
           {/* Session Management */}
           <div className="card bg-base-200 shadow-xl">
             <div className="card-body">
-              <h3 className="card-title text-lg text-warning mb-2">Session Management</h3>
-              <p className="text-sm text-base-content/60 mb-4">
-                Sign out from all devices. This will invalidate all active sessions and require you
-                to sign in again on every device.
-              </p>
+              <h3 className="card-title text-lg text-warning mb-2">
+                {t.profile.sessionManagement}
+              </h3>
+              <p className="text-sm text-base-content/60 mb-4">{t.profile.sessionDesc}</p>
               <button
                 className="btn btn-warning btn-outline w-full"
                 onClick={handleInvalidateSessions}
               >
-                Sign Out Everywhere
+                {t.profile.signOutEverywhere}
               </button>
             </div>
           </div>
@@ -444,32 +441,27 @@ export default function ProfilePage() {
           {/* Danger Zone */}
           <div className="card bg-base-200 shadow-xl border border-error/30">
             <div className="card-body">
-              <h3 className="card-title text-lg text-error mb-2">Danger Zone</h3>
-              <p className="text-sm text-base-content/60 mb-4">
-                Once you delete your account, there is no going back. All of your posts, podcasts,
-                and comments will be permanently deleted.
-              </p>
+              <h3 className="card-title text-lg text-error mb-2">{t.profile.dangerZone}</h3>
+              <p className="text-sm text-base-content/60 mb-4">{t.profile.dangerDesc}</p>
               {!showDeleteConfirm ? (
                 <button
                   className="btn btn-error btn-outline w-full"
                   onClick={() => setShowDeleteConfirm(true)}
                 >
-                  Delete Account
+                  {t.profile.deleteAccount}
                 </button>
               ) : (
                 <div className="space-y-2">
-                  <p className="text-sm font-bold text-error">
-                    Are you sure? This action cannot be undone!
-                  </p>
+                  <p className="text-sm font-bold text-error">{t.profile.deleteConfirm}</p>
                   <div className="flex gap-2">
                     <button className="btn btn-error flex-1" onClick={handleDeleteAccount}>
-                      Yes, Delete My Account
+                      {t.profile.confirmDeleteBtn}
                     </button>
                     <button
                       className="btn btn-ghost flex-1"
                       onClick={() => setShowDeleteConfirm(false)}
                     >
-                      Cancel
+                      {t.common.cancel}
                     </button>
                   </div>
                 </div>

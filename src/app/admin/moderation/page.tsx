@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface ContentItem {
   id: string;
@@ -33,6 +34,7 @@ export default function AdminModerationPage() {
   const [success, setSuccess] = useState("");
   const [flagModal, setFlagModal] = useState<{ id: string; type: "post" | "podcast" } | null>(null);
   const [flagReason, setFlagReason] = useState("");
+  const { t } = useTranslation();
 
   const fetchContent = async () => {
     try {
@@ -47,7 +49,7 @@ export default function AdminModerationPage() {
         setPodcasts(data.podcasts || []);
       }
     } catch {
-      setError("Failed to load content");
+      setError(t.admin.loadFailed);
     } finally {
       setLoading(false);
     }
@@ -84,11 +86,11 @@ export default function AdminModerationPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to update status");
+        setError(data.error || t.admin.updateFailed);
         return;
       }
 
-      setSuccess(`Content ${newStatus.toLowerCase()} successfully`);
+      setSuccess(t.admin.contentStatusSuccess.replace("{status}", newStatus.toLowerCase()));
       setTimeout(() => setSuccess(""), 3000);
 
       // Update local state
@@ -119,10 +121,10 @@ export default function AdminModerationPage() {
   if (!session || session.user?.role !== "ADMIN") {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-        <p className="text-base-content/70 mb-4">You need admin privileges to access this page.</p>
+        <h1 className="text-3xl font-bold mb-4">{t.admin.accessDenied}</h1>
+        <p className="text-base-content/70 mb-4">{t.admin.adminRequired}</p>
         <Link href="/" className="btn btn-primary">
-          Go Home
+          {t.admin.goHome}
         </Link>
       </div>
     );
@@ -168,8 +170,10 @@ export default function AdminModerationPage() {
           </svg>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Content Moderation</h1>
-          <p className="text-base-content/60">{allContent.length} items</p>
+          <h1 className="text-3xl font-bold">{t.admin.moderationTitle}</h1>
+          <p className="text-base-content/60">
+            {t.admin.items.replace("{n}", String(allContent.length))}
+          </p>
         </div>
       </div>
 
@@ -213,20 +217,26 @@ export default function AdminModerationPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex gap-1">
-          <span className="text-sm font-semibold text-base-content/60 self-center mr-2">Type:</span>
-          {(["all", "posts", "podcasts"] as ContentType[]).map((t) => (
+          <span className="text-sm font-semibold text-base-content/60 self-center mr-2">
+            {t.admin.typeFilter}
+          </span>
+          {(["all", "posts", "podcasts"] as ContentType[]).map((tp) => (
             <button
-              key={t}
-              className={`btn btn-sm ${activeType === t ? "btn-primary" : "btn-ghost"}`}
-              onClick={() => setActiveType(t)}
+              key={tp}
+              className={`btn btn-sm ${activeType === tp ? "btn-primary" : "btn-ghost"}`}
+              onClick={() => setActiveType(tp)}
             >
-              {t === "all" ? "All" : t === "posts" ? "Posts" : "Podcasts"}
+              {tp === "all"
+                ? t.admin.all
+                : tp === "posts"
+                  ? t.admin.postsFilter
+                  : t.admin.podcastsFilter}
             </button>
           ))}
         </div>
         <div className="flex gap-1">
           <span className="text-sm font-semibold text-base-content/60 self-center mr-2">
-            Status:
+            {t.admin.statusFilter}
           </span>
           {(["all", "PENDING", "APPROVED", "REJECTED", "FLAGGED"] as StatusFilter[]).map((s) => (
             <button
@@ -234,7 +244,15 @@ export default function AdminModerationPage() {
               className={`btn btn-sm ${activeStatus === s ? "btn-primary" : "btn-ghost"}`}
               onClick={() => setActiveStatus(s)}
             >
-              {s === "all" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
+              {s === "all"
+                ? t.admin.all
+                : s === "PENDING"
+                  ? t.admin.pending
+                  : s === "APPROVED"
+                    ? t.admin.approved
+                    : s === "REJECTED"
+                      ? t.admin.rejected
+                      : t.admin.flagged}
             </button>
           ))}
         </div>
@@ -252,12 +270,14 @@ export default function AdminModerationPage() {
                     <span
                       className={`badge badge-sm ${item.contentType === "post" ? "badge-secondary" : "badge-accent"}`}
                     >
-                      {item.contentType === "post" ? "Post" : "Podcast"}
+                      {item.contentType === "post" ? t.admin.postBadge : t.admin.podcastBadge}
                     </span>
                     <span className={`badge badge-sm ${statusColor(item.moderation)}`}>
                       {item.moderation}
                     </span>
-                    {!item.published && <span className="badge badge-sm badge-outline">Draft</span>}
+                    {!item.published && (
+                      <span className="badge badge-sm badge-outline">{t.admin.draftBadge}</span>
+                    )}
                   </div>
                   <Link
                     href={
@@ -268,19 +288,24 @@ export default function AdminModerationPage() {
                     {item.title}
                   </Link>
                   <div className="flex items-center gap-2 text-sm text-base-content/60 mt-1">
-                    <span>by {item.author.name || item.author.email || "Unknown"}</span>
+                    <span>
+                      {t.admin.by}
+                      {item.author.name || item.author.email || "Unknown"}
+                    </span>
                     <span>·</span>
                     <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                     {item._count?.comments !== undefined && (
                       <>
                         <span>·</span>
-                        <span>{item._count.comments} comments</span>
+                        <span>
+                          {t.common.comments.replace("{n}", String(item._count.comments))}
+                        </span>
                       </>
                     )}
                   </div>
                   {item.flagReason && (
                     <div className="mt-2 text-sm text-error bg-error/10 rounded-lg px-3 py-1.5">
-                      <strong>Flag reason:</strong> {item.flagReason}
+                      <strong>{t.admin.flagReason}</strong> {item.flagReason}
                     </div>
                   )}
                 </div>
@@ -311,7 +336,7 @@ export default function AdminModerationPage() {
                           />
                         </svg>
                       )}
-                      <span>Approve</span>
+                      <span>{t.admin.approve}</span>
                     </button>
                   )}
                   {item.moderation !== "REJECTED" && (
@@ -334,7 +359,7 @@ export default function AdminModerationPage() {
                           d="M6 18L18 6M6 6l12 12"
                         />
                       </svg>
-                      Reject
+                      {t.admin.reject}
                     </button>
                   )}
                   {item.moderation !== "FLAGGED" && (
@@ -357,7 +382,7 @@ export default function AdminModerationPage() {
                           d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
                         />
                       </svg>
-                      Flag
+                      {t.admin.flag}
                     </button>
                   )}
                 </div>
@@ -383,7 +408,7 @@ export default function AdminModerationPage() {
               d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <p className="text-lg">No content found matching your filters.</p>
+          <p className="text-lg">{t.admin.noContentFound}</p>
         </div>
       )}
 
@@ -391,14 +416,12 @@ export default function AdminModerationPage() {
       {flagModal && (
         <div className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg">Flag Content</h3>
-            <p className="py-2 text-base-content/70">
-              Provide a reason for flagging this content. Flagged content will be unpublished.
-            </p>
+            <h3 className="font-bold text-lg">{t.admin.flagModalTitle}</h3>
+            <p className="py-2 text-base-content/70">{t.admin.flagModalText}</p>
             <div className="form-control">
               <textarea
                 className="textarea textarea-bordered w-full"
-                placeholder="Reason for flagging..."
+                placeholder={t.admin.flagReasonPlaceholder}
                 value={flagReason}
                 onChange={(e) => setFlagReason(e.target.value)}
                 rows={3}
@@ -412,7 +435,7 @@ export default function AdminModerationPage() {
                   setFlagReason("");
                 }}
               >
-                Cancel
+                {t.common.cancel}
               </button>
               <button
                 className="btn btn-warning"
@@ -421,7 +444,7 @@ export default function AdminModerationPage() {
                 }
                 disabled={!flagReason.trim()}
               >
-                Flag Content
+                {t.admin.flagContentBtn}
               </button>
             </div>
           </div>

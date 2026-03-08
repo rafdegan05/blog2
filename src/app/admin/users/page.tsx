@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface User {
   id: string;
@@ -22,6 +23,7 @@ export default function AdminUsersPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (status === "loading") return;
@@ -35,7 +37,7 @@ export default function AdminUsersPage() {
           setUsers(data);
         }
       } catch {
-        setError("Failed to load users");
+        setError(t.admin.usersLoadFailed);
       } finally {
         setLoading(false);
       }
@@ -58,7 +60,7 @@ export default function AdminUsersPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to update role");
+        setError(data.error || t.admin.roleUpdateFailed);
         return;
       }
 
@@ -84,10 +86,10 @@ export default function AdminUsersPage() {
   if (!session || session.user?.role !== "ADMIN") {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4">Access Denied</h1>
-        <p className="text-base-content/70 mb-4">You need admin privileges to access this page.</p>
+        <h1 className="text-3xl font-bold mb-4">{t.admin.accessDenied}</h1>
+        <p className="text-base-content/70 mb-4">{t.admin.adminRequired}</p>
         <Link href="/" className="btn btn-primary">
-          Go Home
+          {t.admin.goHome}
         </Link>
       </div>
     );
@@ -130,8 +132,10 @@ export default function AdminUsersPage() {
           </svg>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-base-content/60">{users.length} total users</p>
+          <h1 className="text-3xl font-bold">{t.admin.usersTitle}</h1>
+          <p className="text-base-content/60">
+            {t.admin.totalUsers.replace("{n}", String(users.length))}
+          </p>
         </div>
       </div>
 
@@ -177,7 +181,7 @@ export default function AdminUsersPage() {
         <input
           type="text"
           className="input input-bordered w-full max-w-md"
-          placeholder="Search users by name or email..."
+          placeholder={t.admin.searchUsersPlaceholder}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -188,11 +192,11 @@ export default function AdminUsersPage() {
         <table className="table table-zebra w-full">
           <thead>
             <tr>
-              <th>User</th>
-              <th>Role</th>
-              <th className="hidden md:table-cell">Content</th>
-              <th className="hidden lg:table-cell">Joined</th>
-              <th>Actions</th>
+              <th>{t.admin.userCol}</th>
+              <th>{t.admin.roleCol}</th>
+              <th className="hidden md:table-cell">{t.admin.contentCol}</th>
+              <th className="hidden lg:table-cell">{t.admin.joinedCol}</th>
+              <th>{t.admin.actionsCol}</th>
             </tr>
           </thead>
           <tbody>
@@ -212,7 +216,7 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="font-bold text-sm">{user.name || "No name"}</div>
+                      <div className="font-bold text-sm">{user.name || t.admin.noName}</div>
                       <div className="text-xs text-base-content/60">{user.email}</div>
                     </div>
                   </div>
@@ -222,9 +226,11 @@ export default function AdminUsersPage() {
                 </td>
                 <td className="hidden md:table-cell">
                   <div className="flex gap-2 text-xs">
-                    <span className="badge badge-outline badge-sm">{user._count.posts} posts</span>
                     <span className="badge badge-outline badge-sm">
-                      {user._count.podcasts} podcasts
+                      {t.admin.postsCount.replace("{n}", String(user._count.posts))}
+                    </span>
+                    <span className="badge badge-outline badge-sm">
+                      {t.admin.podcastsCount.replace("{n}", String(user._count.podcasts))}
                     </span>
                   </div>
                 </td>
@@ -233,7 +239,7 @@ export default function AdminUsersPage() {
                 </td>
                 <td>
                   {user.id === session.user?.id ? (
-                    <span className="text-xs text-base-content/40">You</span>
+                    <span className="text-xs text-base-content/40">{t.admin.you}</span>
                   ) : (
                     <select
                       className="select select-bordered select-sm w-28"
@@ -258,7 +264,7 @@ export default function AdminUsersPage() {
 
       {filteredUsers.length === 0 && (
         <div className="text-center py-12 text-base-content/50">
-          <p>No users found matching your search.</p>
+          <p>{t.admin.noUsersFound}</p>
         </div>
       )}
     </div>

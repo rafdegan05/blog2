@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface PostCardProps {
   post: {
@@ -17,6 +20,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="card bg-base-100 shadow-md hover:shadow-xl transition-shadow duration-300">
       {post.coverImage && (
@@ -48,24 +52,24 @@ export default function PostCard({ post }: PostCardProps) {
 
         <div className="card-actions justify-between items-center mt-4">
           <div className="flex items-center gap-2 text-sm text-base-content/60">
-            <span>{post.author.name || "Anonymous"}</span>
+            <span>{post.author.name || t.common.anonymous}</span>
             <span>·</span>
             <span>{new Date(post.createdAt).toLocaleDateString()}</span>
             {post.readingTime && (
               <>
                 <span>·</span>
-                <span>{post.readingTime} min read</span>
+                <span>{t.common.minRead.replace("{n}", String(post.readingTime))}</span>
               </>
             )}
             {post._count && (
               <>
                 <span>·</span>
-                <span>{post._count.comments} comments</span>
+                <span>{t.common.comments.replace("{n}", String(post._count.comments))}</span>
               </>
             )}
           </div>
           <Link href={`/blog/${post.slug}`} className="btn btn-primary btn-sm">
-            Read more
+            {t.blog.readMore}
           </Link>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import FileUpload from "@/components/FileUpload";
 import Link from "next/link";
+import { useTranslation } from "@/components/LanguageProvider";
 
 interface PostData {
   title: string;
@@ -19,6 +20,7 @@ interface PostData {
 }
 
 export default function EditPostPage() {
+  const { t } = useTranslation();
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
@@ -45,7 +47,7 @@ export default function EditPostPage() {
       try {
         const res = await fetch(`/api/posts/${slug}`);
         if (!res.ok) {
-          setError("Post not found");
+          setError(t.blog.postNotFoundError);
           setLoading(false);
           return;
         }
@@ -53,7 +55,7 @@ export default function EditPostPage() {
 
         // Check ownership
         if (post.authorId !== session.user?.id && session.user?.role !== "ADMIN") {
-          setError("You don't have permission to edit this post");
+          setError(t.blog.noPermissionEdit);
           setLoading(false);
           return;
         }
@@ -66,7 +68,7 @@ export default function EditPostPage() {
         setCategories(post.categories.map((c) => c.name).join(", "));
         setTags(post.tags.map((t) => t.name).join(", "));
       } catch {
-        setError("Failed to load post");
+        setError(t.blog.loadFailed);
       } finally {
         setLoading(false);
       }
@@ -86,10 +88,10 @@ export default function EditPostPage() {
   if (!session) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-3xl font-bold mb-4">Sign in required</h1>
-        <p className="mb-4">You need to sign in to edit a post.</p>
+        <h1 className="text-3xl font-bold mb-4">{t.auth.signInRequired}</h1>
+        <p className="mb-4">{t.blog.signInToEdit}</p>
         <Link href="/auth/signin" className="btn btn-primary">
-          Sign In
+          {t.common.signIn}
         </Link>
       </div>
     );
@@ -115,7 +117,7 @@ export default function EditPostPage() {
           <span>{error}</span>
         </div>
         <Link href="/dashboard" className="btn btn-ghost">
-          Back to Dashboard
+          {t.blog.backToDashboard}
         </Link>
       </div>
     );
@@ -154,24 +156,24 @@ export default function EditPostPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to update post");
+        setError(data.error || t.blog.updateFailed);
         return;
       }
 
       const updated = await res.json();
-      setSuccess("Post updated successfully!");
+      setSuccess(t.blog.updateSuccess);
       setTimeout(() => {
         router.push(`/blog/${updated.slug}`);
       }, 1000);
     } catch {
-      setError("An error occurred while updating the post");
+      setError(t.blog.updateError);
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+    if (!confirm(t.blog.deleteConfirm)) {
       return;
     }
 
@@ -179,12 +181,12 @@ export default function EditPostPage() {
       const res = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to delete post");
+        setError(data.error || t.blog.deleteFailed);
         return;
       }
       router.push("/dashboard");
     } catch {
-      setError("An error occurred while deleting the post");
+      setError(t.blog.deleteError);
     }
   };
 
@@ -207,9 +209,9 @@ export default function EditPostPage() {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            Back
+            {t.common.back}
           </Link>
-          <h1 className="text-3xl font-bold">Edit Post</h1>
+          <h1 className="text-3xl font-bold">{t.blog.editPost}</h1>
         </div>
         <button onClick={handleDelete} className="btn btn-error btn-outline btn-sm gap-1">
           <svg
@@ -226,7 +228,7 @@ export default function EditPostPage() {
               d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
             />
           </svg>
-          Delete
+          {t.common.delete}
         </button>
       </div>
 
@@ -236,14 +238,14 @@ export default function EditPostPage() {
           className={`tab ${!preview ? "tab-active" : ""}`}
           onClick={() => setPreview(false)}
         >
-          Editor
+          {t.blog.editor}
         </button>
         <button
           role="tab"
           className={`tab ${preview ? "tab-active" : ""}`}
           onClick={() => setPreview(true)}
         >
-          Preview
+          {t.blog.preview}
         </button>
       </div>
 
@@ -268,9 +270,9 @@ export default function EditPostPage() {
 
       {preview ? (
         <div className="card bg-base-200 p-6">
-          <h1 className="text-4xl font-bold mb-4">{title || "Untitled"}</h1>
+          <h1 className="text-4xl font-bold mb-4">{title || t.blog.untitled}</h1>
           {excerpt && <p className="text-base-content/60 mb-4 italic">{excerpt}</p>}
-          <MarkdownRenderer content={content || "*No content yet...*"} />
+          <MarkdownRenderer content={content || t.blog.noContentYet} />
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -295,13 +297,13 @@ export default function EditPostPage() {
 
           <div className="form-control">
             <label className="label" htmlFor="edit-post-title">
-              <span className="label-text font-semibold">Title *</span>
+              <span className="label-text font-semibold">{t.blog.titleLabel}</span>
             </label>
             <input
               id="edit-post-title"
               type="text"
               className="input input-bordered w-full"
-              placeholder="Post title"
+              placeholder={t.blog.titlePlaceholder}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -310,12 +312,12 @@ export default function EditPostPage() {
 
           <div className="form-control">
             <label className="label" htmlFor="edit-post-excerpt">
-              <span className="label-text font-semibold">Excerpt</span>
+              <span className="label-text font-semibold">{t.blog.excerptLabel}</span>
             </label>
             <textarea
               id="edit-post-excerpt"
               className="textarea textarea-bordered w-full"
-              placeholder="Brief description of the post"
+              placeholder={t.blog.excerptPlaceholder}
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
               rows={2}
@@ -324,12 +326,12 @@ export default function EditPostPage() {
 
           <div className="form-control">
             <label className="label" htmlFor="edit-post-content">
-              <span className="label-text font-semibold">Content * (Markdown supported)</span>
+              <span className="label-text font-semibold">{t.blog.contentLabel}</span>
             </label>
             <textarea
               id="edit-post-content"
               className="textarea textarea-bordered w-full font-mono"
-              placeholder="Write your post content in Markdown..."
+              placeholder={t.blog.contentPlaceholder}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={15}
@@ -339,7 +341,7 @@ export default function EditPostPage() {
 
           <FileUpload
             type="image"
-            label="Cover Image"
+            label={t.blog.coverImage}
             value={coverImage}
             onUpload={setCoverImage}
             disabled={submitting}
@@ -348,26 +350,26 @@ export default function EditPostPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
               <label className="label" htmlFor="edit-post-categories">
-                <span className="label-text font-semibold">Categories (comma-separated)</span>
+                <span className="label-text font-semibold">{t.blog.categoriesLabel}</span>
               </label>
               <input
                 id="edit-post-categories"
                 type="text"
                 className="input input-bordered w-full"
-                placeholder="Tech, Programming"
+                placeholder={t.blog.categoriesPlaceholder}
                 value={categories}
                 onChange={(e) => setCategories(e.target.value)}
               />
             </div>
             <div className="form-control">
               <label className="label" htmlFor="edit-post-tags">
-                <span className="label-text font-semibold">Tags (comma-separated)</span>
+                <span className="label-text font-semibold">{t.blog.tagsLabel}</span>
               </label>
               <input
                 id="edit-post-tags"
                 type="text"
                 className="input input-bordered w-full"
-                placeholder="nextjs, react, typescript"
+                placeholder={t.blog.tagsPlaceholder}
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
               />
@@ -382,7 +384,7 @@ export default function EditPostPage() {
                 checked={published}
                 onChange={(e) => setPublished(e.target.checked)}
               />
-              <span className="label-text font-semibold">Published</span>
+              <span className="label-text font-semibold">{t.blog.publishedCheckbox}</span>
             </label>
           </div>
 
@@ -409,12 +411,12 @@ export default function EditPostPage() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    Save Changes
+                    {t.common.save}
                   </>
                 )}
               </button>
               <Link href={`/blog/${slug}`} className="btn btn-ghost">
-                Cancel
+                {t.common.cancel}
               </Link>
             </div>
           </div>
