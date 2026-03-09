@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "@/components/LanguageProvider";
 
 interface PostSummary {
@@ -20,6 +21,50 @@ interface PodcastSummary {
   duration?: number;
 }
 
+/** Intersection-Observer hook: adds `.revealed` when elements enter viewport */
+function useScrollReveal() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    // Wait one frame so the browser has painted before we start observing.
+    // This ensures elements already in the viewport get their entrance animation.
+    let rafId = requestAnimationFrame(() => {
+      const targets = el.querySelectorAll(".reveal, .reveal-scale");
+      if (targets.length === 0) return;
+
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("revealed");
+              io.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
+      );
+      targets.forEach((t) => io.observe(t));
+
+      // Store cleanup
+      rafId = 0 as unknown as number;
+      el.dataset.ioCleanup = "true";
+      const origCleanup = () => io.disconnect();
+      (el as unknown as Record<string, () => void>).__ioCleanup = origCleanup;
+    });
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      const cleanup = (el as unknown as Record<string, (() => void) | undefined>).__ioCleanup;
+      if (cleanup) cleanup();
+    };
+  }, []);
+
+  return containerRef;
+}
+
 export default function HomeContent({
   posts,
   podcasts,
@@ -28,13 +73,14 @@ export default function HomeContent({
   podcasts: PodcastSummary[];
 }) {
   const { t } = useTranslation();
+  const wrapperRef = useScrollReveal();
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="hero min-h-[70vh] bg-gradient-to-br from-base-200 to-base-300 relative overflow-hidden -mt-16 pt-16">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none">
+    <div ref={wrapperRef}>
+      {/* ── Hero Section ── */}
+      <section className="min-h-[80vh] bg-gradient-to-br from-base-200 via-base-100 to-base-200 relative overflow-hidden -mt-16 pt-16 flex items-center">
+        {/* Subtle grid */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="hero-grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -44,72 +90,99 @@ export default function HomeContent({
             <rect width="100%" height="100%" fill="url(#hero-grid)" />
           </svg>
         </div>
-        {/* Decorative blurred circles */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="hero-content text-center py-20 relative z-10">
-          <div className="max-w-3xl">
-            <p className="text-sm tracking-widest uppercase text-primary/80 mb-4 font-medium">
-              {t.home.badge}
-            </p>
-            <h1 className="text-5xl md:text-7xl font-extrabold leading-tight">
-              {t.home.heroTitle}
-              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                {t.home.heroHighlight}
-              </span>
-            </h1>
-            <p className="py-6 text-lg md:text-xl text-base-content/70 max-w-2xl mx-auto">
-              {t.home.heroText}
-            </p>
-            <p className="text-sm italic text-base-content/50 mb-8">{t.home.heroSubtext}</p>
-            <div className="flex gap-4 justify-center flex-wrap">
-              <Link href="/blog" className="btn btn-primary btn-lg gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                  />
-                </svg>
-                {t.home.readBlog}
-              </Link>
-              <Link href="/podcasts" className="btn btn-outline btn-lg gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                  />
-                </svg>
-                {t.home.listenPodcasts}
-              </Link>
-            </div>
+        {/* Decorative blurred shapes */}
+        <div className="absolute -top-32 -left-32 w-[28rem] h-[28rem] bg-primary/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] bg-secondary/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[36rem] h-[36rem] bg-accent/8 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full text-center py-20 px-4 relative z-10 max-w-3xl mx-auto">
+          {/* Greeting */}
+          <p className="reveal text-sm tracking-[0.2em] uppercase text-primary/80 mb-6 font-medium">
+            {t.home.badge}
+          </p>
+
+          {/* Main heading */}
+          <h1 className="reveal reveal-delay-1 text-4xl sm:text-5xl md:text-7xl font-extrabold leading-[1.1] mb-6">
+            {t.home.heroTitle}
+            <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              {t.home.heroHighlight}
+            </span>
+          </h1>
+
+          {/* Personal intro */}
+          <p className="reveal reveal-delay-2 text-lg md:text-xl text-base-content/70 max-w-2xl mx-auto leading-relaxed mb-2">
+            {t.home.heroText}
+          </p>
+          <p className="reveal reveal-delay-3 text-sm italic text-base-content/50 mb-10">
+            {t.home.heroSubtext}
+          </p>
+
+          {/* CTAs */}
+          <div className="reveal reveal-delay-4 flex gap-4 justify-center flex-wrap">
+            <Link href="/blog" className="btn btn-primary btn-lg gap-2 shadow-lg shadow-primary/20">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+              {t.home.readBlog}
+            </Link>
+            <Link href="/podcasts" className="btn btn-outline btn-lg gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+              {t.home.listenPodcasts}
+            </Link>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="reveal reveal-delay-4 mt-16 animate-bounce">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mx-auto text-base-content/30"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
+            </svg>
           </div>
         </div>
       </section>
 
-      {/* Pillars Section — Reflection, Documentation, Growth */}
-      <section className="py-20 px-4">
+      {/* ── Pillars Section ── */}
+      <section className="py-24 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">{t.home.pillarsTitle}</h2>
-          <div className="w-16 h-1 bg-gradient-to-r from-primary to-secondary mx-auto rounded-full mb-12" />
+          <h2 className="reveal text-3xl font-bold text-center mb-4">{t.home.pillarsTitle}</h2>
+          <div className="reveal reveal-delay-1 w-16 h-1 bg-gradient-to-r from-primary to-secondary mx-auto rounded-full mb-14" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Reflection */}
-            <div className="card bg-base-200/50 border border-base-300 hover:border-primary/30 transition-all hover:-translate-y-1">
+            <div className="reveal-scale reveal-delay-1 card bg-base-200/50 border border-base-300 hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
               <div className="card-body">
                 <div className="bg-primary/10 rounded-xl p-3 w-fit mb-3">
                   <svg
@@ -134,7 +207,7 @@ export default function HomeContent({
               </div>
             </div>
             {/* Documentation */}
-            <div className="card bg-base-200/50 border border-base-300 hover:border-secondary/30 transition-all hover:-translate-y-1">
+            <div className="reveal-scale reveal-delay-2 card bg-base-200/50 border border-base-300 hover:border-secondary/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
               <div className="card-body">
                 <div className="bg-secondary/10 rounded-xl p-3 w-fit mb-3">
                   <svg
@@ -159,7 +232,7 @@ export default function HomeContent({
               </div>
             </div>
             {/* Growth */}
-            <div className="card bg-base-200/50 border border-base-300 hover:border-accent/30 transition-all hover:-translate-y-1">
+            <div className="reveal-scale reveal-delay-3 card bg-base-200/50 border border-base-300 hover:border-accent/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
               <div className="card-body">
                 <div className="bg-accent/10 rounded-xl p-3 w-fit mb-3">
                   <svg
@@ -185,11 +258,11 @@ export default function HomeContent({
         </div>
       </section>
 
-      {/* Latest Posts Section */}
+      {/* ── Latest Posts ── */}
       {posts.length > 0 && (
-        <section className="py-16 px-4 bg-gradient-to-br from-base-200 to-base-300">
+        <section className="py-20 px-4 bg-gradient-to-br from-base-200 to-base-300">
           <div className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-10">
+            <div className="reveal flex justify-between items-center mb-12">
               <h2 className="text-3xl font-bold">{t.home.latestArticles}</h2>
               <Link href="/blog" className="btn btn-ghost btn-sm gap-1">
                 {t.home.viewAll}
@@ -210,11 +283,11 @@ export default function HomeContent({
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post) => (
+              {posts.map((post, i) => (
                 <Link
                   key={post.slug}
                   href={`/blog/${post.slug}`}
-                  className="card bg-base-100 shadow-md hover:shadow-xl transition-all hover:-translate-y-1 border border-base-300/50"
+                  className={`reveal-scale reveal-delay-${Math.min(i + 1, 3)} card bg-base-100 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-base-300/50`}
                 >
                   <div className="card-body">
                     <h3 className="card-title text-lg">{post.title}</h3>
@@ -234,11 +307,11 @@ export default function HomeContent({
         </section>
       )}
 
-      {/* Latest Podcasts Section */}
+      {/* ── Latest Podcasts ── */}
       {podcasts.length > 0 && (
-        <section className="py-16 px-4">
+        <section className="py-20 px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-10">
+            <div className="reveal flex justify-between items-center mb-12">
               <h2 className="text-3xl font-bold">{t.home.latestEpisodes}</h2>
               <Link href="/podcasts" className="btn btn-ghost btn-sm gap-1">
                 {t.home.viewAll}
@@ -259,11 +332,11 @@ export default function HomeContent({
               </Link>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {podcasts.map((podcast) => (
+              {podcasts.map((podcast, i) => (
                 <Link
                   key={podcast.slug}
                   href={`/podcasts/${podcast.slug}`}
-                  className="card bg-base-200 shadow-md hover:shadow-xl transition-all hover:-translate-y-1 border border-base-300/50"
+                  className={`reveal-scale reveal-delay-${Math.min(i + 1, 3)} card bg-base-200 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-base-300/50`}
                 >
                   <div className="card-body">
                     <div className="flex items-center gap-2 mb-2">
@@ -303,12 +376,12 @@ export default function HomeContent({
         </section>
       )}
 
-      {/* CTA Section */}
-      <section className="py-16 px-4 bg-gradient-to-br from-base-200 to-base-300">
-        <div className="max-w-3xl mx-auto text-center">
+      {/* ── CTA Section ── */}
+      <section className="py-20 px-4 bg-gradient-to-br from-base-200 to-base-300">
+        <div className="reveal max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">{t.home.ctaTitle}</h2>
-          <p className="text-base-content/60 mb-8 text-lg">{t.home.ctaText}</p>
-          <Link href="/blog" className="btn btn-primary btn-lg">
+          <p className="text-base-content/60 mb-8 text-lg leading-relaxed">{t.home.ctaText}</p>
+          <Link href="/blog" className="btn btn-primary btn-lg shadow-lg shadow-primary/20">
             {t.home.getStarted}
           </Link>
         </div>

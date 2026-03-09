@@ -52,13 +52,13 @@ export const en = {
 
   // ─── Homepage ───
   home: {
-    badge: "Personal Space",
-    heroTitle: "Think. Build. ",
-    heroHighlight: "Grow.",
+    badge: "Welcome to My Space",
+    heroTitle: "Hi, I ",
+    heroHighlight: "write & build.",
     heroText:
-      "A personal space for reflection, documentation, and growth. Where ideas take shape through writing and conversation.",
-    heroSubtext: "Writing to understand. Building to learn.",
-    readBlog: "Read the Journal",
+      "This is my corner to reflect on what I'm learning, document my process, and share ideas through writing and conversation.",
+    heroSubtext: "Writing to understand. Building to learn. Growing every day.",
+    readBlog: "Read My Journal",
     listenPodcasts: "Listen to Episodes",
     featuresTitle: "Everything You Need",
     featuresText: "A full-featured platform for creating, sharing, and discovering content.",
@@ -75,22 +75,22 @@ export const en = {
     featureThemesDesc: "Switch between over 30 beautiful DaisyUI themes with a single click.",
     featureResponsive: "Fully Responsive",
     featureResponsiveDesc: "Optimized for every device — desktop, tablet, and mobile.",
-    pillarsTitle: "What This Space Is About",
+    pillarsTitle: "What Drives This Space",
     pillarReflection: "Reflection",
     pillarReflectionDesc:
-      "Slowing down to think clearly. Every article is an exercise in understanding — turning scattered thoughts into structured ideas.",
+      "I slow down to think clearly. Every article is me working through an idea — turning scattered thoughts into something I can learn from.",
     pillarDocumentation: "Documentation",
     pillarDocumentationDesc:
-      "Capturing what I learn along the way. A living archive of processes, decisions, and lessons that shape the way I work.",
+      "I capture what I learn along the way. This is my living archive of processes, decisions, and lessons that shape how I work.",
     pillarGrowth: "Growth",
     pillarGrowthDesc:
-      "Tracking the evolution of skills and mindset over time. Each post marks a step forward in the journey.",
+      "I track how my skills and mindset evolve over time. Each post marks a step forward in the journey.",
     latestArticles: "Latest Reflections",
     latestEpisodes: "Latest Episodes",
     viewAll: "View all",
-    ctaTitle: "This is an open notebook.",
+    ctaTitle: "This is my open notebook.",
     ctaText:
-      "If something resonates, join the conversation. Every perspective makes the thinking richer.",
+      "If something here resonates with you, I'd love to hear your perspective. Every conversation makes the thinking richer.",
     getStarted: "Start Exploring",
   },
 
