@@ -572,6 +572,13 @@ export const it: Translations = {
     imageUrlPrompt: "Inserisci URL immagine:",
     publishSettings: "Impostazioni pubblicazione",
     readyToPublish: "Pronto per pubblicare?",
+    titleLabel: "Titolo",
+    subtitleLabel: "Sottotitolo",
+    addCoverImage: "Aggiungi un'immagine di copertina",
+    changeCoverImage: "Cambia",
+    removeCoverImage: "Rimuovi",
+    addCategory: "Aggiungi categoria...",
+    addTag: "Aggiungi tag...",
   },
 
   // ─── Theme ───

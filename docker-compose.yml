@@ -39,6 +39,8 @@ services:
       KEYCLOAK_ISSUER: "${KEYCLOAK_ISSUER:-}"
       KEYCLOAK_CLIENT_ID: "${KEYCLOAK_CLIENT_ID:-}"
       KEYCLOAK_CLIENT_SECRET: "${KEYCLOAK_CLIENT_SECRET:-}"
+    volumes:
+      - uploads:/app/public/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -62,4 +64,6 @@ services:
 
 volumes:
   pgdata:
+    driver: local
+  uploads:
     driver: local

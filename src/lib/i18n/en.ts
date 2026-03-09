@@ -572,6 +572,13 @@ export const en = {
     imageUrlPrompt: "Enter image URL:",
     publishSettings: "Publish settings",
     readyToPublish: "Ready to publish?",
+    titleLabel: "Title",
+    subtitleLabel: "Subtitle",
+    addCoverImage: "Add a cover image",
+    changeCoverImage: "Change",
+    removeCoverImage: "Remove",
+    addCategory: "Add category...",
+    addTag: "Add tag...",
   },
 
   // ─── Theme ───

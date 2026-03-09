@@ -6,6 +6,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import MediumEditor from "@/components/MediumEditor";
 import MarkdownEditor from "@/components/MarkdownEditor";
 import FileUpload from "@/components/FileUpload";
+import Image from "next/image";
 import Link from "next/link";
 import { useTranslation } from "@/components/LanguageProvider";
 
@@ -29,6 +30,7 @@ export default function NewPostPage() {
   const [editorMode, setEditorMode] = useState<EditorMode>("medium");
 
   const titleRef = useRef<HTMLTextAreaElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const hasUnsavedChanges = useRef(false);
 
   // Track unsaved changes
@@ -76,6 +78,79 @@ export default function NewPostPage() {
     if (!res.ok) throw new Error("Upload failed");
     const data = await res.json();
     return data.url;
+  }, []);
+
+  // Cover image upload handler
+  const handleCoverUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const url = await handleImageUpload(file);
+        setCoverImage(url);
+      } catch {
+        setError(t.blog.createPostError);
+      }
+      e.target.value = "";
+    },
+    [handleImageUpload, t]
+  );
+
+  // Category & tag pill helpers
+  const categoryList = useMemo(
+    () =>
+      categories
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean),
+    [categories]
+  );
+
+  const tagList = useMemo(
+    () =>
+      tags
+        .split(",")
+        .map((tg) => tg.trim())
+        .filter(Boolean),
+    [tags]
+  );
+
+  const addCategory = useCallback(
+    (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed || categoryList.includes(trimmed)) return;
+      setCategories((prev) => (prev ? `${prev}, ${trimmed}` : trimmed));
+    },
+    [categoryList]
+  );
+
+  const removeCategory = useCallback((name: string) => {
+    setCategories((prev) =>
+      prev
+        .split(",")
+        .map((c) => c.trim())
+        .filter((c) => c && c !== name)
+        .join(", ")
+    );
+  }, []);
+
+  const addTag = useCallback(
+    (name: string) => {
+      const trimmed = name.trim().replace(/^#/, "");
+      if (!trimmed || tagList.includes(trimmed)) return;
+      setTags((prev) => (prev ? `${prev}, ${trimmed}` : trimmed));
+    },
+    [tagList]
+  );
+
+  const removeTag = useCallback((name: string) => {
+    setTags((prev) =>
+      prev
+        .split(",")
+        .map((tg) => tg.trim())
+        .filter((tg) => tg && tg !== name)
+        .join(", ")
+    );
   }, []);
 
   const handleSubmit = useCallback(
@@ -325,36 +400,147 @@ export default function NewPostPage() {
           </div>
         )}
 
+        {/* Cover image */}
+        <div className="mb-6">
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleCoverUpload}
+          />
+          {coverImage ? (
+            <div className="medium-cover-preview group">
+              <Image
+                src={coverImage}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 100vw, 48rem"
+                className="object-cover"
+              />
+              <div className="medium-cover-overlay">
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  className="btn btn-sm btn-ghost text-white"
+                >
+                  {t.mediumEditor.changeCoverImage}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCoverImage("")}
+                  className="btn btn-sm btn-ghost text-white"
+                >
+                  {t.mediumEditor.removeCoverImage}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              className="medium-cover-empty"
+            >
+              <CoverImageIcon />
+              <span>{t.mediumEditor.addCoverImage}</span>
+            </button>
+          )}
+        </div>
+
         {/* Title */}
-        <textarea
-          ref={titleRef}
-          className="medium-title-input"
-          placeholder={t.mediumEditor.titlePlaceholder}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          rows={1}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              const editorEl = document.querySelector(".medium-editor-content .tiptap");
-              if (editorEl instanceof HTMLElement) editorEl.focus();
-            }
-          }}
-        />
+        <div className="medium-field-wrapper">
+          <label className="medium-field-label">{t.mediumEditor.titleLabel}</label>
+          <textarea
+            ref={titleRef}
+            className="medium-title-input"
+            placeholder={t.mediumEditor.titlePlaceholder}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            rows={1}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const editorEl = document.querySelector(".medium-editor-content .tiptap");
+                if (editorEl instanceof HTMLElement) editorEl.focus();
+              }
+            }}
+          />
+        </div>
 
         {/* Subtitle / Excerpt (inline) */}
-        <textarea
-          className="medium-subtitle-input mt-2 mb-8"
-          placeholder={t.mediumEditor.subtitlePlaceholder}
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
-          rows={1}
-          onInput={(e) => {
-            const el = e.currentTarget;
-            el.style.height = "auto";
-            el.style.height = el.scrollHeight + "px";
-          }}
-        />
+        <div className="medium-field-wrapper mt-2">
+          <label className="medium-field-label">{t.mediumEditor.subtitleLabel}</label>
+          <textarea
+            className="medium-subtitle-input"
+            placeholder={t.mediumEditor.subtitlePlaceholder}
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            rows={1}
+            onInput={(e) => {
+              const el = e.currentTarget;
+              el.style.height = "auto";
+              el.style.height = el.scrollHeight + "px";
+            }}
+          />
+        </div>
+
+        {/* Categories & Tags (inline pills) */}
+        <div className="medium-meta-area mt-4 mb-8">
+          <div className="medium-pills-row">
+            {categoryList.map((cat) => (
+              <span key={cat} className="badge badge-primary badge-sm gap-0.5 font-medium">
+                {cat}
+                <button
+                  type="button"
+                  onClick={() => removeCategory(cat)}
+                  className="medium-pill-remove"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              className="medium-pill-input"
+              placeholder={t.mediumEditor.addCategory}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  addCategory(e.currentTarget.value);
+                  e.currentTarget.value = "";
+                }
+                if (e.key === "Backspace" && !e.currentTarget.value && categoryList.length > 0) {
+                  removeCategory(categoryList[categoryList.length - 1]);
+                }
+              }}
+            />
+          </div>
+          <div className="medium-pills-row">
+            {tagList.map((tag) => (
+              <span key={tag} className="badge badge-outline badge-sm gap-0.5">
+                #{tag}
+                <button type="button" onClick={() => removeTag(tag)} className="medium-pill-remove">
+                  ×
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              className="medium-pill-input"
+              placeholder={t.mediumEditor.addTag}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  addTag(e.currentTarget.value);
+                  e.currentTarget.value = "";
+                }
+                if (e.key === "Backspace" && !e.currentTarget.value && tagList.length > 0) {
+                  removeTag(tagList[tagList.length - 1]);
+                }
+              }}
+            />
+          </div>
+        </div>
 
         {/* Content editor */}
         {editorMode === "medium" ? (
@@ -383,6 +569,24 @@ function ArrowLeftIcon() {
   return (
     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function CoverImageIcon() {
+  return (
+    <svg
+      className="w-8 h-8"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.5}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21zM8.25 8.25h.008v.008H8.25V8.25z"
+      />
     </svg>
   );
 }
