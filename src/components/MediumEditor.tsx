@@ -414,6 +414,56 @@ export default function MediumEditor({
               >
                 <span className="font-bold text-[11px] leading-none">H3</span>
               </BubbleButton>
+
+              <MenuDivider />
+
+              <BubbleButton
+                onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                isActive={editor.isActive("blockquote")}
+                title={t.mediumEditor.quote}
+              >
+                <QuoteIcon />
+              </BubbleButton>
+              <BubbleButton
+                onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                isActive={editor.isActive("codeBlock")}
+                title={t.mediumEditor.codeBlock}
+              >
+                <CodeBlockIcon />
+              </BubbleButton>
+              <BubbleButton
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                isActive={editor.isActive("bulletList")}
+                title={t.mediumEditor.bulletList}
+              >
+                <BulletListIcon />
+              </BubbleButton>
+              <BubbleButton
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                isActive={editor.isActive("orderedList")}
+                title={t.mediumEditor.orderedList}
+              >
+                <OrderedListIcon />
+              </BubbleButton>
+
+              <MenuDivider />
+
+              <BubbleButton
+                onClick={() => {
+                  (onImageUpload ? addImage : addImageByUrl)();
+                }}
+                isActive={false}
+                title={t.mediumEditor.image}
+              >
+                <ImageIcon />
+              </BubbleButton>
+              <BubbleButton
+                onClick={() => editor.chain().focus().setHorizontalRule().run()}
+                isActive={false}
+                title={t.mediumEditor.divider}
+              >
+                <DividerIcon />
+              </BubbleButton>
             </div>
           )}
         </div>
