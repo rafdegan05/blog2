@@ -54,10 +54,10 @@ export const en = {
   home: {
     badge: "Welcome to My Space",
     heroTitle: "Hi, I ",
-    heroHighlight: "write & build.",
+    heroHighlight: "develop, write & share.",
     heroText:
       "This is my corner to reflect on what I'm learning, document my process, and share ideas through writing and conversation.",
-    heroSubtext: "Writing to understand. Building to learn. Growing every day.",
+    heroSubtext: "Writing to understand. Building to learn.",
     readBlog: "Read My Journal",
     listenPodcasts: "Listen to Episodes",
     featuresTitle: "Everything You Need",

@@ -56,10 +56,10 @@ export const it: Translations = {
   home: {
     badge: "Benvenuto nel Mio Spazio",
     heroTitle: "Ciao, ",
-    heroHighlight: "scrivo e costruisco.",
+    heroHighlight: "sviluppo, scrivo e condivido.",
     heroText:
       "Questo è il mio angolo per riflettere su ciò che imparo, documentare il mio percorso e condividere idee attraverso la scrittura e la conversazione.",
-    heroSubtext: "Scrivere per capire. Costruire per imparare. Crescere ogni giorno.",
+    heroSubtext: "Scrivere per capire. Costruire per imparare.",
     readBlog: "Leggi i Miei Post",
     listenPodcasts: "Ascolta gli Episodi",
     featuresTitle: "Tutto Ciò di Cui Hai Bisogno",
