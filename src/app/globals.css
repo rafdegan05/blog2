@@ -347,7 +347,58 @@
   line-height: 1.7;
 }
 
-/* Code block */
+/* Code block (via CodeBlockLowlight node view) */
+.medium-code-block-wrapper {
+  position: relative;
+  margin: 1.25em 0;
+}
+
+.medium-code-block-wrapper pre {
+  background: var(--color-base-200);
+  border-radius: 0.5rem;
+  padding: 2.25rem 1.25rem 1rem;
+  overflow-x: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.medium-code-block-wrapper pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+.medium-code-lang-select {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  appearance: none;
+  background: var(--color-base-300);
+  color: var(--color-base-content);
+  border: 1px solid oklch(0 0 0 / 0.08);
+  border-radius: 0.25rem;
+  padding: 0.15rem 1.5rem 0.15rem 0.5rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23777'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.4rem center;
+  background-size: 8px 5px;
+}
+
+.medium-code-lang-select:hover,
+.medium-code-lang-select:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+/* Legacy / fallback: plain tiptap pre without node view */
 .medium-editor-content .tiptap pre {
   background: var(--color-base-200);
   border-radius: 0.5rem;
@@ -691,8 +742,28 @@
 }
 
 .post-body :where(pre) {
+  background: var(--color-base-200);
   border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin: 1.5rem 0;
   overflow-x: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.post-body :where(pre code) {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+.post-body :where(code) {
+  background: var(--color-base-200);
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
 }
 
 .post-body :where(img) {
@@ -744,4 +815,184 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Syntax highlighting (highlight.js / lowlight)
+   Adapts to "Quiet Morning" (light) & "Late Evening" (dark)
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Light theme tokens ── */
+:root,
+[data-theme="light"] {
+  --hl-keyword: oklch(0.48 0.14 300); /* plum — control flow */
+  --hl-string: oklch(0.48 0.12 145); /* forest green — literals */
+  --hl-number: oklch(0.5 0.13 55); /* warm amber — numbers */
+  --hl-comment: oklch(0.58 0.02 75); /* warm gray — muted */
+  --hl-function: oklch(0.45 0.12 245); /* blue — function names */
+  --hl-type: oklch(0.5 0.1 200); /* teal — types, classes */
+  --hl-variable: oklch(0.38 0.06 55); /* dark warm — variables */
+  --hl-title: oklch(0.45 0.12 245); /* blue — titles, definitions */
+  --hl-attr: oklch(0.52 0.1 40); /* terracotta — attributes */
+  --hl-tag: oklch(0.48 0.12 18); /* soft red — HTML tags */
+  --hl-meta: oklch(0.55 0.06 160); /* sage — meta / preprocessor */
+  --hl-builtin: oklch(0.5 0.1 200); /* teal — built-ins */
+  --hl-regexp: oklch(0.5 0.12 25); /* burnt orange — regex */
+  --hl-deletion: oklch(0.5 0.14 18); /* red — deletions */
+  --hl-addition: oklch(0.46 0.12 145); /* green — additions */
+}
+
+/* ── Dark theme tokens ── */
+[data-theme="dark"] {
+  --hl-keyword: oklch(0.72 0.12 300); /* lavender */
+  --hl-string: oklch(0.7 0.12 145); /* mint green */
+  --hl-number: oklch(0.72 0.12 75); /* warm gold */
+  --hl-comment: oklch(0.55 0.015 55); /* dim gray */
+  --hl-function: oklch(0.72 0.1 245); /* soft blue */
+  --hl-type: oklch(0.7 0.08 200); /* teal */
+  --hl-variable: oklch(0.82 0.01 75); /* parchment */
+  --hl-title: oklch(0.72 0.1 245); /* soft blue */
+  --hl-attr: oklch(0.7 0.1 55); /* warm gold */
+  --hl-tag: oklch(0.7 0.1 18); /* soft coral */
+  --hl-meta: oklch(0.65 0.06 160); /* sage */
+  --hl-builtin: oklch(0.7 0.08 200); /* teal */
+  --hl-regexp: oklch(0.68 0.12 25); /* amber-orange */
+  --hl-deletion: oklch(0.65 0.12 18); /* coral red */
+  --hl-addition: oklch(0.68 0.1 145); /* green */
+}
+
+/* OS-level dark fallback */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --hl-keyword: oklch(0.72 0.12 300);
+    --hl-string: oklch(0.7 0.12 145);
+    --hl-number: oklch(0.72 0.12 75);
+    --hl-comment: oklch(0.55 0.015 55);
+    --hl-function: oklch(0.72 0.1 245);
+    --hl-type: oklch(0.7 0.08 200);
+    --hl-variable: oklch(0.82 0.01 75);
+    --hl-title: oklch(0.72 0.1 245);
+    --hl-attr: oklch(0.7 0.1 55);
+    --hl-tag: oklch(0.7 0.1 18);
+    --hl-meta: oklch(0.65 0.06 160);
+    --hl-builtin: oklch(0.7 0.08 200);
+    --hl-regexp: oklch(0.68 0.12 25);
+    --hl-deletion: oklch(0.65 0.12 18);
+    --hl-addition: oklch(0.68 0.1 145);
+  }
+}
+
+/* ── Token rules ── */
+.hljs-keyword,
+.hljs-selector-tag {
+  color: var(--hl-keyword);
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: var(--hl-string);
+}
+
+.hljs-number,
+.hljs-literal {
+  color: var(--hl-number);
+}
+
+.hljs-comment {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+
+.hljs-function,
+.hljs-selector-id {
+  color: var(--hl-function);
+}
+
+.hljs-type,
+.hljs-selector-class {
+  color: var(--hl-type);
+}
+
+.hljs-variable,
+.hljs-template-variable {
+  color: var(--hl-variable);
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_ {
+  color: var(--hl-title);
+  font-weight: 600;
+}
+
+.hljs-attr,
+.hljs-attribute {
+  color: var(--hl-attr);
+}
+
+.hljs-tag {
+  color: var(--hl-tag);
+}
+
+.hljs-name {
+  color: var(--hl-tag);
+  font-weight: 600;
+}
+
+.hljs-meta,
+.hljs-meta .hljs-keyword {
+  color: var(--hl-meta);
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: var(--hl-builtin);
+}
+
+.hljs-regexp {
+  color: var(--hl-regexp);
+}
+
+.hljs-symbol {
+  color: var(--hl-number);
+}
+
+.hljs-deletion {
+  color: var(--hl-deletion);
+  background: oklch(0.5 0.05 18 / 0.1);
+}
+
+.hljs-addition {
+  color: var(--hl-addition);
+  background: oklch(0.5 0.05 145 / 0.1);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}
+
+.hljs-section {
+  color: var(--hl-title);
+  font-weight: 700;
+}
+
+.hljs-bullet {
+  color: var(--hl-keyword);
+}
+
+.hljs-link {
+  color: var(--hl-function);
+  text-decoration: underline;
+}
+
+.hljs-params {
+  color: var(--hl-variable);
+}
+
+.hljs-subst {
+  color: var(--hl-variable);
 }

@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import rehypeHighlight from "rehype-highlight";
 
 /**
  * Extended sanitization schema for compatibility with tiptap-markdown output.
@@ -40,7 +41,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <div className="prose max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, schema]]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, schema], rehypeHighlight]}
       >
         {content}
       </ReactMarkdown>

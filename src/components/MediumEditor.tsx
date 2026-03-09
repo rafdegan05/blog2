@@ -1,14 +1,25 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  NodeViewWrapper,
+  NodeViewContent,
+  ReactNodeViewRenderer,
+  type ReactNodeViewProps,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
 import TiptapLink from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { common, createLowlight } from "lowlight";
 import { Markdown } from "tiptap-markdown";
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useTranslation } from "@/components/LanguageProvider";
+
+const lowlight = createLowlight(common);
 
 interface MediumEditorProps {
   value: string;
@@ -112,15 +123,21 @@ export default function MediumEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [2, 3] },
-        codeBlock: {
-          HTMLAttributes: { class: "medium-code-block" },
-        },
+        codeBlock: false,
         blockquote: {
           HTMLAttributes: { class: "medium-blockquote" },
         },
         horizontalRule: {},
         bulletList: {},
         orderedList: {},
+      }),
+      CodeBlockLowlight.extend({
+        addNodeView() {
+          return ReactNodeViewRenderer(CodeBlockNodeView);
+        },
+      }).configure({
+        lowlight,
+        defaultLanguage: "plaintext",
       }),
       Placeholder.configure({
         placeholder: placeholder || t.mediumEditor.placeholder,
@@ -558,6 +575,71 @@ export default function MediumEditor({
       {/* ── Editor Content ── */}
       <EditorContent editor={editor} />
     </div>
+  );
+}
+
+/* ── Code Block Node View (with language selector) ─────────────────── */
+
+const LANGUAGES = [
+  "plaintext",
+  "bash",
+  "c",
+  "cpp",
+  "csharp",
+  "css",
+  "diff",
+  "go",
+  "graphql",
+  "ini",
+  "java",
+  "javascript",
+  "json",
+  "kotlin",
+  "lua",
+  "makefile",
+  "markdown",
+  "objectivec",
+  "perl",
+  "php",
+  "python",
+  "r",
+  "ruby",
+  "rust",
+  "scss",
+  "shell",
+  "sql",
+  "swift",
+  "typescript",
+  "xml",
+  "yaml",
+];
+
+function CodeBlockNodeView({ node, updateAttributes }: ReactNodeViewProps) {
+  return (
+    <NodeViewWrapper className="medium-code-block-wrapper">
+      <select
+        contentEditable={false}
+        className="medium-code-lang-select"
+        value={node.attrs.language || "plaintext"}
+        onChange={(e) => updateAttributes({ language: e.target.value })}
+      >
+        {LANGUAGES.map((lang) => (
+          <option key={lang} value={lang}>
+            {lang}
+          </option>
+        ))}
+        {/* If the current language isn't in our list, still show it */}
+        {node.attrs.language && !LANGUAGES.includes(node.attrs.language) && (
+          <option value={node.attrs.language}>{node.attrs.language}</option>
+        )}
+      </select>
+      <pre>
+        <NodeViewContent<"code">
+          as="code"
+          className={node.attrs.language ? `language-${node.attrs.language}` : ""}
+        />
+      </pre>
+    </NodeViewWrapper>
   );
 }
 
