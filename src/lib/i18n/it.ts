@@ -273,6 +273,14 @@ export const it: Translations = {
     noPermissionEdit: "Non hai i permessi per modificare questo post",
     loadFailed: "Impossibile caricare il post",
     backToDashboard: "Torna alla Dashboard",
+    writtenBy: "Scritto da",
+    wordCount: "{n} parole",
+    publishBtn: "Pubblica",
+    saveDraftBtn: "Salva bozza",
+    toSave: "per salvare",
+    deleteTitle: "Elimina post",
+    editorMedium: "Editor visuale",
+    editorMarkdown: "Editor Markdown",
   },
 
   // ─── Podcasts ───
@@ -539,6 +547,31 @@ export const it: Translations = {
     horizontalRule: "Linea orizzontale",
     preview: "Anteprima",
     emptyPreview: "Niente da visualizzare ancora...",
+  },
+
+  // ─── Medium-style Editor ───
+  mediumEditor: {
+    placeholder: "Racconta la tua storia...",
+    titlePlaceholder: "Titolo",
+    subtitlePlaceholder: "Aggiungi un sottotitolo...",
+    bold: "Grassetto",
+    italic: "Corsivo",
+    underline: "Sottolineato",
+    strikethrough: "Barrato",
+    code: "Codice inline",
+    link: "Link",
+    heading2: "Titolo grande",
+    heading3: "Titolo piccolo",
+    addBlock: "Aggiungi un blocco",
+    image: "Immagine",
+    divider: "Separatore",
+    quote: "Citazione",
+    codeBlock: "Blocco di codice",
+    bulletList: "Elenco puntato",
+    orderedList: "Elenco numerato",
+    imageUrlPrompt: "Inserisci URL immagine:",
+    publishSettings: "Impostazioni pubblicazione",
+    readyToPublish: "Pronto per pubblicare?",
   },
 
   // ─── Theme ───

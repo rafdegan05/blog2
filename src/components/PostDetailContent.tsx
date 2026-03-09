@@ -20,6 +20,7 @@ interface PostDetailContentProps {
     coverImage?: string;
     readingTime?: number;
     createdAt: string;
+    updatedAt?: string;
     author: {
       id: string;
       name?: string;
@@ -35,146 +36,197 @@ interface PostDetailContentProps {
 export default function PostDetailContent({ post }: PostDetailContentProps) {
   const { t } = useTranslation();
 
+  const formattedDate = new Date(post.createdAt).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const readingTime = post.readingTime ?? 0;
+
   return (
     <>
       <ScrollIndicator />
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        <div className="breadcrumbs text-sm mb-6">
-          <ul>
-            <li>
-              <Link href="/">{t.common.home}</Link>
-            </li>
-            <li>
-              <Link href="/blog">{t.blog.title}</Link>
-            </li>
-            <li>{post.title}</li>
-          </ul>
+
+      {/* ── Cover image (full-bleed) ── */}
+      {post.coverImage && (
+        <div className="relative w-full max-h-[28rem] overflow-hidden">
+          <Image
+            src={post.coverImage}
+            alt={post.title}
+            width={1920}
+            height={1080}
+            className="w-full h-auto object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-base-100 via-transparent to-transparent" />
         </div>
+      )}
 
-        {/* Cover Image */}
-        {post.coverImage && (
-          <figure className="relative mb-8 h-64 md:h-96">
-            <Image
-              src={post.coverImage}
-              alt={post.title}
-              fill
-              className="object-cover rounded-xl"
-              priority
-            />
-          </figure>
-        )}
+      <article className="post-detail max-w-3xl mx-auto px-4 pt-8 pb-16">
+        {/* ── Breadcrumb ── */}
+        <nav className="flex items-center gap-1.5 text-sm text-base-content/50 mb-8">
+          <Link href="/" className="hover:text-primary transition-colors">
+            {t.common.home}
+          </Link>
+          <ChevronIcon />
+          <Link href="/blog" className="hover:text-primary transition-colors">
+            {t.blog.title}
+          </Link>
+          <ChevronIcon />
+          <span className="text-base-content/70 truncate max-w-[200px]">{post.title}</span>
+        </nav>
 
-        {/* Post Header */}
-        <header className="mb-8">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">{post.title}</h1>
+        {/* ── Header ── */}
+        <header className="mb-10">
+          {/* Categories (above title like Medium) */}
+          {post.categories && post.categories.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {post.categories.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  href={`/blog?category=${cat.slug}`}
+                  className="badge badge-primary badge-sm font-medium hover:brightness-110 transition-all"
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Title */}
+          <div className="flex items-start gap-3 mb-5">
+            <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold leading-tight tracking-tight flex-1">
+              {post.title}
+            </h1>
             <EditButton href={`/blog/edit/${post.slug}`} authorId={post.author.id} />
           </div>
 
-          <div className="flex items-center gap-4 text-base-content/60 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="avatar placeholder">
-                <div className="bg-neutral text-neutral-content w-8 rounded-full flex items-center justify-center">
-                  {post.author.image ? (
-                    <Image
-                      src={post.author.image}
-                      alt=""
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
-                  ) : (
-                    <span className="text-xs">
-                      {post.author.name?.charAt(0)?.toUpperCase() || "U"}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <span className="font-medium">{post.author.name || t.common.anonymous}</span>
-            </div>
-            <span>·</span>
-            <span>
-              {new Date(post.createdAt).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </span>
-            {post.readingTime && (
-              <>
-                <span>·</span>
-                <span>{t.common.minRead.replace("{n}", String(post.readingTime))}</span>
-              </>
-            )}
-          </div>
+          {/* Subtitle / Excerpt */}
+          {post.excerpt && (
+            <p className="text-lg md:text-xl text-base-content/60 leading-relaxed mb-6">
+              {post.excerpt}
+            </p>
+          )}
 
-          {/* Tags and Categories */}
-          <div className="flex flex-wrap gap-2">
-            {post.categories?.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/blog?category=${cat.slug}`}
-                className="badge badge-primary"
-              >
-                {cat.name}
-              </Link>
-            ))}
-            {post.tags?.map((tag) => (
-              <Link key={tag.slug} href={`/blog?tag=${tag.slug}`} className="badge badge-outline">
-                {tag.name}
-              </Link>
-            ))}
+          {/* Author strip */}
+          <div className="flex items-center gap-4 py-4 border-y border-base-200">
+            <div className="avatar placeholder">
+              <div className="bg-neutral text-neutral-content w-11 h-11 rounded-full flex items-center justify-center overflow-hidden">
+                {post.author.image ? (
+                  <Image
+                    src={post.author.image}
+                    alt=""
+                    width={44}
+                    height={44}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-medium">
+                    {post.author.name?.charAt(0)?.toUpperCase() || "U"}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm">{post.author.name || t.common.anonymous}</div>
+              <div className="flex items-center gap-2 text-xs text-base-content/50 flex-wrap">
+                <span>{formattedDate}</span>
+                {readingTime > 0 && (
+                  <>
+                    <span>·</span>
+                    <span>{t.common.minRead.replace("{n}", String(readingTime))}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Share (compact, top-right) */}
+            <ShareButtons
+              title={post.title}
+              url={typeof window !== "undefined" ? window.location.href : `/blog/${post.slug}`}
+              description={post.excerpt}
+            />
           </div>
         </header>
 
-        {/* Post Content */}
-        <article className="divider" />
-        <MarkdownRenderer content={post.content} />
-
-        {/* Reactions & Share */}
-        <div className="mt-8 mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <ReactionBar postId={post.id} />
-          <ShareButtons
-            title={post.title}
-            url={typeof window !== "undefined" ? window.location.href : `/blog/${post.slug}`}
-            description={post.excerpt}
-          />
+        {/* ── Article body ── */}
+        <div className="post-body mb-12">
+          <MarkdownRenderer content={post.content} />
         </div>
 
-        {/* Author Bio */}
+        {/* ── Tags ── */}
+        {post.tags && post.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-8 pb-8 border-b border-base-200">
+            {post.tags.map((tag) => (
+              <Link
+                key={tag.slug}
+                href={`/blog?tag=${tag.slug}`}
+                className="badge badge-outline badge-sm hover:badge-primary transition-all"
+              >
+                #{tag.name}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* ── Reactions ── */}
+        <div className="mb-10">
+          <ReactionBar postId={post.id} />
+        </div>
+
+        {/* ── Author bio card ── */}
         {post.author.bio && (
-          <div className="card bg-base-200 mt-8">
-            <div className="card-body flex-row items-center gap-4">
-              <div className="avatar placeholder">
-                <div className="bg-neutral text-neutral-content w-16 rounded-full flex items-center justify-center">
+          <div className="post-author-card mb-12">
+            <div className="flex items-start gap-4">
+              <div className="avatar placeholder shrink-0">
+                <div className="bg-neutral text-neutral-content w-16 h-16 rounded-full flex items-center justify-center overflow-hidden">
                   {post.author.image ? (
                     <Image
                       src={post.author.image}
                       alt=""
                       width={64}
                       height={64}
-                      className="rounded-full"
+                      className="rounded-full object-cover"
                     />
                   ) : (
-                    <span className="text-xl">
+                    <span className="text-xl font-medium">
                       {post.author.name?.charAt(0)?.toUpperCase() || "U"}
                     </span>
                   )}
                 </div>
               </div>
-              <div>
-                <h3 className="font-bold">{post.author.name}</h3>
-                <p className="text-base-content/60">{post.author.bio}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wider text-base-content/40 mb-1">
+                  {t.blog.writtenBy}
+                </p>
+                <h3 className="font-bold text-lg mb-1">{post.author.name}</h3>
+                <p className="text-sm text-base-content/60 leading-relaxed">{post.author.bio}</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Comments */}
+        {/* ── Comments ── */}
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         <Comments postId={post.id} initialComments={(post.comments || []) as any} />
-      </div>
+      </article>
     </>
+  );
+}
+
+/* ── Icons ── */
+
+function ChevronIcon() {
+  return (
+    <svg
+      className="w-3.5 h-3.5 opacity-40 shrink-0"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
   );
 }

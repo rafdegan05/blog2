@@ -64,8 +64,13 @@ export default function BlogContent({
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => (
-              <PostCard key={post.slug as string} post={post as never} />
+            {posts.map((post, i) => (
+              <div
+                key={post.slug as string}
+                className={i === 0 && pagination.page === 1 ? "col-span-full" : ""}
+              >
+                <PostCard post={post as never} featured={i === 0 && pagination.page === 1} />
+              </div>
             ))}
           </div>
           <Pagination

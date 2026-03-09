@@ -268,3 +268,480 @@
     animation: none !important;
   }
 }
+
+/* ── Medium-style Editor ── */
+
+.medium-editor-wrapper {
+  position: relative;
+}
+
+/* Main editor area */
+.medium-editor-content {
+  min-height: 400px;
+  outline: none;
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: var(--color-base-content);
+}
+
+.medium-editor-content:focus {
+  outline: none;
+}
+
+/* Tiptap ProseMirror content styles */
+.medium-editor-content .tiptap {
+  outline: none;
+  min-height: 400px;
+  padding: 0;
+}
+
+.medium-editor-content .tiptap > * + * {
+  margin-top: 0.75em;
+}
+
+/* Placeholder */
+.medium-editor-content .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--color-base-content);
+  opacity: 0.35;
+  pointer-events: none;
+  height: 0;
+  font-style: italic;
+}
+
+/* Paragraphs */
+.medium-editor-content .tiptap p {
+  margin-bottom: 0.5em;
+  font-size: 1.125rem;
+  line-height: 1.8;
+}
+
+/* Headings */
+.medium-editor-content .tiptap h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.medium-editor-content .tiptap h3 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin-top: 1.25em;
+  margin-bottom: 0.4em;
+  line-height: 1.4;
+}
+
+/* Blockquote */
+.medium-editor-content .tiptap blockquote {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 1.25rem;
+  margin: 1.5em 0;
+  font-style: italic;
+  color: var(--color-base-content);
+  opacity: 0.85;
+  font-size: 1.2rem;
+  line-height: 1.7;
+}
+
+/* Code block */
+.medium-editor-content .tiptap pre {
+  background: var(--color-base-200);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin: 1.25em 0;
+  overflow-x: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.medium-editor-content .tiptap pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* Inline code */
+.medium-editor-content .tiptap code {
+  background: var(--color-base-200);
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+}
+
+/* Lists */
+.medium-editor-content .tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.75em 0;
+}
+
+.medium-editor-content .tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin: 0.75em 0;
+}
+
+.medium-editor-content .tiptap li {
+  margin-bottom: 0.25em;
+  line-height: 1.7;
+}
+
+.medium-editor-content .tiptap li p {
+  margin-bottom: 0;
+}
+
+/* Horizontal rule */
+.medium-editor-content .tiptap hr {
+  border: none;
+  text-align: center;
+  margin: 2em 0;
+}
+
+.medium-editor-content .tiptap hr::before {
+  content: "···";
+  letter-spacing: 0.6em;
+  color: var(--color-base-content);
+  opacity: 0.5;
+  font-size: 1.5rem;
+}
+
+/* Images */
+.medium-editor-content .tiptap img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1.5em auto;
+  display: block;
+}
+
+/* Links */
+.medium-editor-content .tiptap a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.medium-editor-content .tiptap a:hover {
+  opacity: 0.8;
+}
+
+/* Strong & emphasis */
+.medium-editor-content .tiptap strong {
+  font-weight: 700;
+}
+
+.medium-editor-content .tiptap em {
+  font-style: italic;
+}
+
+.medium-editor-content .tiptap u {
+  text-decoration: underline;
+}
+
+.medium-editor-content .tiptap s {
+  text-decoration: line-through;
+}
+
+/* ── Bubble Menu (toolbar on selection) ── */
+
+.medium-bubble-menu {
+  display: flex;
+  align-items: center;
+  background: oklch(0.2 0.01 55);
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 50;
+}
+
+[data-theme="dark"] .medium-bubble-menu {
+  background: oklch(0.3 0.01 55);
+}
+
+.medium-bubble-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.25rem;
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.medium-bubble-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.medium-bubble-btn.is-active {
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Floating Menu (+ button on empty lines) ── */
+
+.medium-floating-menu {
+  z-index: 40;
+}
+
+.medium-floating-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-base-300);
+  color: var(--color-base-content);
+  opacity: 0.5;
+  background: var(--color-base-100);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.medium-floating-trigger:hover {
+  opacity: 0.8;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.medium-floating-trigger.expanded {
+  transform: rotate(45deg);
+  opacity: 0.8;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.medium-floating-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  border: 1.5px solid var(--color-base-300);
+  color: var(--color-base-content);
+  opacity: 0.6;
+  background: var(--color-base-100);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.medium-floating-btn:hover {
+  opacity: 1;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-base-200);
+}
+
+/* ── Medium-style title input ── */
+
+.medium-title-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--color-base-content);
+  padding: 0;
+  resize: none;
+  overflow: hidden;
+}
+
+.medium-title-input::placeholder {
+  color: var(--color-base-content);
+  opacity: 0.3;
+}
+
+.medium-title-input:focus {
+  outline: none;
+}
+
+.medium-subtitle-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-base-content);
+  opacity: 0.7;
+  padding: 0;
+  resize: none;
+  overflow: hidden;
+}
+
+.medium-subtitle-input::placeholder {
+  color: var(--color-base-content);
+  opacity: 0.3;
+}
+
+.medium-subtitle-input:focus {
+  outline: none;
+  opacity: 1;
+}
+
+/* Animate in from left for floating menu items */
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-in.slide-in-from-left-2 {
+  animation: slide-in-left 0.2s ease both;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Post Card styles
+   ═══════════════════════════════════════════════════════ */
+
+.post-card {
+  background: var(--color-base-100);
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-base-200);
+  padding: 0;
+  overflow: hidden;
+  transition:
+    box-shadow 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.2s ease;
+}
+
+.post-card:hover {
+  box-shadow: 0 8px 30px -8px oklch(0 0 0 / 0.12);
+  border-color: var(--color-base-300);
+}
+
+.post-card > * {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.post-card > *:first-child {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.post-card-featured {
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+/* ═══════════════════════════════════════════════════════
+   Post Detail page
+   ═══════════════════════════════════════════════════════ */
+
+.post-detail {
+  animation: fade-in-up 0.5s ease both;
+}
+
+.post-body {
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: var(--color-base-content);
+}
+
+.post-body :where(h2) {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.post-body :where(h3) {
+  font-size: 1.375rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.post-body :where(p) {
+  margin-bottom: 1.5rem;
+}
+
+.post-body :where(blockquote) {
+  border-left: 3px solid var(--color-primary);
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--color-base-content);
+  opacity: 0.85;
+}
+
+.post-body :where(pre) {
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.post-body :where(img) {
+  border-radius: 0.5rem;
+  margin: 2rem auto;
+  max-width: 100%;
+}
+
+.post-body :where(a) {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.post-body :where(a:hover) {
+  opacity: 0.8;
+}
+
+.post-body :where(ul, ol) {
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.post-body :where(li) {
+  margin-bottom: 0.5rem;
+}
+
+.post-body :where(hr) {
+  border: none;
+  height: 1px;
+  background: var(--color-base-200);
+  margin: 2.5rem 0;
+}
+
+/* ── Author bio card ── */
+
+.post-author-card {
+  background: var(--color-base-200);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

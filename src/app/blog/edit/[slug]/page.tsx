@@ -2,12 +2,14 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import { useState, useEffect } from "react";
-import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import MediumEditor from "@/components/MediumEditor";
 import MarkdownEditor from "@/components/MarkdownEditor";
 import FileUpload from "@/components/FileUpload";
 import Link from "next/link";
 import { useTranslation } from "@/components/LanguageProvider";
+
+type EditorMode = "medium" | "markdown";
 
 interface PostData {
   title: string;
@@ -34,12 +36,68 @@ export default function EditPostPage() {
   const [categories, setCategories] = useState("");
   const [tags, setTags] = useState("");
   const [published, setPublished] = useState(false);
-  const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editorMode, setEditorMode] = useState<EditorMode>("medium");
 
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+  const hasUnsavedChanges = useRef(false);
+  const initialLoadDone = useRef(false);
+
+  // Track unsaved changes (only after initial load)
+  useEffect(() => {
+    if (initialLoadDone.current) {
+      hasUnsavedChanges.current = true;
+    }
+  }, [title, content, excerpt, coverImage, categories, tags, published]);
+
+  // Warn on leave with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // Auto-resize title textarea
+  const resizeTitle = useCallback(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, []);
+
+  useEffect(() => {
+    resizeTitle();
+  }, [title, resizeTitle]);
+
+  // Word count & reading time
+  const stats = useMemo(() => {
+    const text = content.replace(/[#*_~`>\[\]()!-]/g, " ");
+    const words = text.split(/\s+/).filter((w) => w.length > 0).length;
+    const readingTime = Math.max(1, Math.ceil(words / 200));
+    return { words, readingTime };
+  }, [content]);
+
+  // Image upload handler for inline images
+  const handleImageUpload = useCallback(async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", "image");
+    const res = await fetch("/api/upload", { method: "POST", body: formData });
+    if (!res.ok) throw new Error("Upload failed");
+    const data = await res.json();
+    return data.url;
+  }, []);
+
+  // Fetch post data
   useEffect(() => {
     if (status === "loading") return;
     if (!session) return;
@@ -67,7 +125,13 @@ export default function EditPostPage() {
         setCoverImage(post.coverImage || "");
         setPublished(post.published);
         setCategories(post.categories.map((c) => c.name).join(", "));
-        setTags(post.tags.map((t) => t.name).join(", "));
+        setTags(post.tags.map((tg) => tg.name).join(", "));
+
+        // Mark initial load done after a tick, so the first round of
+        // setState calls won't flag as unsaved
+        setTimeout(() => {
+          initialLoadDone.current = true;
+        }, 100);
       } catch {
         setError(t.blog.loadFailed);
       } finally {
@@ -76,7 +140,88 @@ export default function EditPostPage() {
     };
 
     fetchPost();
-  }, [slug, session, status]);
+  }, [slug, session, status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSubmit = useCallback(
+    async (e?: React.FormEvent) => {
+      e?.preventDefault();
+      if (submitting || !title.trim() || !content.trim()) return;
+      setSubmitting(true);
+      setError("");
+      setSuccess("");
+
+      try {
+        const res = await fetch(`/api/posts/${slug}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            content,
+            excerpt: excerpt || undefined,
+            coverImage: coverImage || undefined,
+            published,
+            categories: categories
+              ? categories
+                  .split(",")
+                  .map((c) => c.trim())
+                  .filter(Boolean)
+              : undefined,
+            tags: tags
+              ? tags
+                  .split(",")
+                  .map((tg) => tg.trim())
+                  .filter(Boolean)
+              : undefined,
+          }),
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || t.blog.updateFailed);
+          return;
+        }
+
+        hasUnsavedChanges.current = false;
+        const updated = await res.json();
+        setSuccess(t.blog.updateSuccess);
+        setTimeout(() => {
+          router.push(`/blog/${updated.slug}`);
+        }, 1000);
+      } catch {
+        setError(t.blog.updateError);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [submitting, title, content, excerpt, coverImage, published, categories, tags, slug, router, t]
+  );
+
+  // Keyboard shortcut: Ctrl/Cmd + S to save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSubmit]);
+
+  const handleDelete = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || t.blog.deleteFailed);
+        return;
+      }
+      hasUnsavedChanges.current = false;
+      router.push("/dashboard");
+    } catch {
+      setError(t.blog.deleteError);
+    }
+  }, [slug, router, t]);
 
   if (status === "loading" || loading) {
     return (
@@ -88,9 +233,9 @@ export default function EditPostPage() {
 
   if (!session) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <h1 className="text-3xl font-bold mb-4">{t.auth.signInRequired}</h1>
-        <p className="mb-4">{t.blog.signInToEdit}</p>
+        <p className="mb-6 opacity-60">{t.blog.signInToEdit}</p>
         <Link href="/auth/signin" className="btn btn-primary">
           {t.common.signIn}
         </Link>
@@ -100,21 +245,8 @@ export default function EditPostPage() {
 
   if (error && !title) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
         <div className="alert alert-error mb-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="stroke-current shrink-0 h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
           <span>{error}</span>
         </div>
         <Link href="/dashboard" className="btn btn-ghost">
@@ -124,251 +256,154 @@ export default function EditPostPage() {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const res = await fetch(`/api/posts/${slug}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          content,
-          excerpt: excerpt || undefined,
-          coverImage: coverImage || undefined,
-          published,
-          categories: categories
-            ? categories
-                .split(",")
-                .map((c) => c.trim())
-                .filter(Boolean)
-            : undefined,
-          tags: tags
-            ? tags
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean)
-            : undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || t.blog.updateFailed);
-        return;
-      }
-
-      const updated = await res.json();
-      setSuccess(t.blog.updateSuccess);
-      setTimeout(() => {
-        router.push(`/blog/${updated.slug}`);
-      }, 1000);
-    } catch {
-      setError(t.blog.updateError);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!confirm(t.blog.deleteConfirm)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/posts/${slug}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || t.blog.deleteFailed);
-        return;
-      }
-      router.push("/dashboard");
-    } catch {
-      setError(t.blog.deleteError);
-    }
-  };
-
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Link href={`/blog/${slug}`} className="btn btn-ghost btn-sm">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            {t.common.back}
+    <>
+      {/* ── Top bar ── */}
+      <div className="sticky top-0 z-30 bg-base-100/80 backdrop-blur-md border-b border-base-200">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Link
+            href={`/blog/${slug}`}
+            className="btn btn-ghost btn-sm gap-1 opacity-60 hover:opacity-100"
+          >
+            <ArrowLeftIcon />
+            <span className="hidden sm:inline">{t.common.back}</span>
           </Link>
-          <h1 className="text-3xl font-bold">{t.blog.editPost}</h1>
+
+          <div className="flex items-center gap-2">
+            {/* Word count / Reading time */}
+            {stats.words > 0 && (
+              <span className="text-xs text-base-content/40 hidden sm:inline">
+                {t.blog.wordCount.replace("{n}", String(stats.words))} ·{" "}
+                {t.common.minRead.replace("{n}", String(stats.readingTime))}
+              </span>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="btn btn-ghost btn-sm text-error opacity-60 hover:opacity-100"
+              title={t.common.delete}
+            >
+              <TrashIcon />
+            </button>
+
+            {/* Editor mode toggle */}
+            <div className="join join-horizontal">
+              <button
+                type="button"
+                onClick={() => setEditorMode("medium")}
+                className={`join-item btn btn-ghost btn-xs ${
+                  editorMode === "medium" ? "btn-active" : "opacity-50"
+                }`}
+                title={t.blog.editorMedium}
+              >
+                <WysiwygIcon />
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorMode("markdown")}
+                className={`join-item btn btn-ghost btn-xs ${
+                  editorMode === "markdown" ? "btn-active" : "opacity-50"
+                }`}
+                title={t.blog.editorMarkdown}
+              >
+                <MarkdownMdIcon />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowSettings(!showSettings)}
+              className={`btn btn-ghost btn-sm gap-1 ${showSettings ? "btn-active" : ""}`}
+            >
+              <SettingsIcon />
+              <span className="hidden sm:inline">{t.mediumEditor.publishSettings}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSubmit()}
+              disabled={submitting || !title.trim() || !content.trim()}
+              className="btn btn-primary btn-sm"
+            >
+              {submitting ? <span className="loading loading-spinner loading-xs" /> : t.common.save}
+            </button>
+          </div>
         </div>
-        <button onClick={handleDelete} className="btn btn-error btn-outline btn-sm gap-1">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-          {t.common.delete}
-        </button>
       </div>
 
-      <div role="tablist" className="tabs tabs-boxed mb-6">
-        <button
-          role="tab"
-          className={`tab ${!preview ? "tab-active" : ""}`}
-          onClick={() => setPreview(false)}
-        >
-          {t.blog.editor}
-        </button>
-        <button
-          role="tab"
-          className={`tab ${preview ? "tab-active" : ""}`}
-          onClick={() => setPreview(true)}
-        >
-          {t.blog.preview}
-        </button>
-      </div>
-
+      {/* ── Success toast ── */}
       {success && (
-        <div className="alert alert-success mb-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="stroke-current shrink-0 h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>{success}</span>
+        <div className="border-b border-success/30 bg-success/10 transition-all duration-300">
+          <div className="max-w-3xl mx-auto px-4 py-2 text-sm text-success text-center flex items-center justify-center gap-2">
+            <CheckIcon />
+            {success}
+          </div>
         </div>
       )}
 
-      {preview ? (
-        <div className="card bg-base-200 p-6">
-          <h1 className="text-4xl font-bold mb-4">{title || t.blog.untitled}</h1>
-          {excerpt && <p className="text-base-content/60 mb-4 italic">{excerpt}</p>}
-          <MarkdownRenderer content={content || t.blog.noContentYet} />
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+      {/* ── Settings panel (collapsible, animated) ── */}
+      <div
+        className={`border-b border-base-200 bg-base-100 overflow-hidden transition-all duration-300 ease-in-out ${
+          showSettings ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="max-w-3xl mx-auto px-4 py-4">
           {error && (
-            <div className="alert alert-error">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="stroke-current shrink-0 h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+            <div className="alert alert-error mb-4 text-sm">
               <span>{error}</span>
             </div>
           )}
 
-          <div className="form-control">
-            <label className="label" htmlFor="edit-post-title">
-              <span className="label-text font-semibold">{t.blog.titleLabel}</span>
-            </label>
-            <input
-              id="edit-post-title"
-              type="text"
-              className="input input-bordered w-full"
-              placeholder={t.blog.titlePlaceholder}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-control">
-            <label className="label" htmlFor="edit-post-excerpt">
-              <span className="label-text font-semibold">{t.blog.excerptLabel}</span>
-            </label>
-            <textarea
-              id="edit-post-excerpt"
-              className="textarea textarea-bordered w-full"
-              placeholder={t.blog.excerptPlaceholder}
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              rows={2}
-            />
-          </div>
-
-          <div className="form-control">
-            <label className="label" htmlFor="edit-post-content">
-              <span className="label-text font-semibold">{t.blog.contentLabel}</span>
-            </label>
-            <MarkdownEditor
-              id="edit-post-content"
-              value={content}
-              onChange={setContent}
-              placeholder={t.blog.contentPlaceholder}
-              rows={15}
-              required
-            />
-          </div>
-
-          <FileUpload
-            type="image"
-            label={t.blog.coverImage}
-            value={coverImage}
-            onUpload={setCoverImage}
-            disabled={submitting}
-          />
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-control">
-              <label className="label" htmlFor="edit-post-categories">
-                <span className="label-text font-semibold">{t.blog.categoriesLabel}</span>
+              <label className="label py-1">
+                <span className="label-text text-xs font-medium uppercase tracking-wide opacity-60">
+                  {t.blog.excerptLabel}
+                </span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered textarea-sm w-full"
+                placeholder={t.blog.excerptPlaceholder}
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div>
+              <FileUpload
+                type="image"
+                label={t.blog.coverImage}
+                value={coverImage}
+                onUpload={setCoverImage}
+                disabled={submitting}
+              />
+            </div>
+
+            <div className="form-control">
+              <label className="label py-1">
+                <span className="label-text text-xs font-medium uppercase tracking-wide opacity-60">
+                  {t.blog.categoriesLabel}
+                </span>
               </label>
               <input
-                id="edit-post-categories"
                 type="text"
-                className="input input-bordered w-full"
+                className="input input-bordered input-sm w-full"
                 placeholder={t.blog.categoriesPlaceholder}
                 value={categories}
                 onChange={(e) => setCategories(e.target.value)}
               />
             </div>
+
             <div className="form-control">
-              <label className="label" htmlFor="edit-post-tags">
-                <span className="label-text font-semibold">{t.blog.tagsLabel}</span>
+              <label className="label py-1">
+                <span className="label-text text-xs font-medium uppercase tracking-wide opacity-60">
+                  {t.blog.tagsLabel}
+                </span>
               </label>
               <input
-                id="edit-post-tags"
                 type="text"
-                className="input input-bordered w-full"
+                className="input input-bordered input-sm w-full"
                 placeholder={t.blog.tagsPlaceholder}
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
@@ -376,52 +411,193 @@ export default function EditPostPage() {
             </div>
           </div>
 
-          <div className="form-control">
-            <label className="label cursor-pointer justify-start gap-3">
+          <div className="mt-3 flex items-center justify-between">
+            <label className="label cursor-pointer justify-start gap-3 py-1">
               <input
                 type="checkbox"
-                className="checkbox checkbox-primary"
+                className="toggle toggle-primary toggle-sm"
                 checked={published}
                 onChange={(e) => setPublished(e.target.checked)}
               />
-              <span className="label-text font-semibold">{t.blog.publishedCheckbox}</span>
+              <span className="label-text text-sm">
+                {published ? t.common.published : t.common.draft}
+              </span>
             </label>
+
+            <span className="text-xs text-base-content/30">Ctrl+S {t.blog.toSave}</span>
           </div>
+        </div>
+      </div>
 
-          <div className="divider" />
+      {/* ── Main editor area ── */}
+      <div className="max-w-3xl mx-auto px-4 py-10">
+        {error && !showSettings && (
+          <div className="alert alert-error mb-6 text-sm">
+            <span>{error}</span>
+          </div>
+        )}
 
-          <div className="flex gap-4 justify-between">
-            <div className="flex gap-3">
-              <button type="submit" className="btn btn-primary gap-2" disabled={submitting}>
-                {submitting ? (
-                  <span className="loading loading-spinner loading-sm" />
-                ) : (
-                  <>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    {t.common.save}
-                  </>
-                )}
-              </button>
-              <Link href={`/blog/${slug}`} className="btn btn-ghost">
+        {/* Title */}
+        <textarea
+          ref={titleRef}
+          className="medium-title-input"
+          placeholder={t.mediumEditor.titlePlaceholder}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          rows={1}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const editorEl = document.querySelector(".medium-editor-content .tiptap");
+              if (editorEl instanceof HTMLElement) editorEl.focus();
+            }
+          }}
+        />
+
+        {/* Subtitle / Excerpt (inline) */}
+        <textarea
+          className="medium-subtitle-input mt-2 mb-8"
+          placeholder={t.mediumEditor.subtitlePlaceholder}
+          value={excerpt}
+          onChange={(e) => setExcerpt(e.target.value)}
+          rows={1}
+          onInput={(e) => {
+            const el = e.currentTarget;
+            el.style.height = "auto";
+            el.style.height = el.scrollHeight + "px";
+          }}
+        />
+
+        {/* Content editor */}
+        {editorMode === "medium" ? (
+          <MediumEditor
+            value={content}
+            onChange={setContent}
+            placeholder={t.mediumEditor.placeholder}
+            onImageUpload={handleImageUpload}
+          />
+        ) : (
+          <MarkdownEditor
+            value={content}
+            onChange={setContent}
+            placeholder={t.blog.contentPlaceholder}
+            rows={20}
+          />
+        )}
+      </div>
+
+      {/* ── Delete confirmation modal ── */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowDeleteModal(false)}
+          />
+          <div className="relative bg-base-100 rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <h3 className="font-bold text-lg mb-2">{t.blog.deleteTitle}</h3>
+            <p className="text-sm text-base-content/60 mb-6">{t.blog.deleteConfirm}</p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowDeleteModal(false)}
+              >
                 {t.common.cancel}
-              </Link>
+              </button>
+              <button
+                type="button"
+                className="btn btn-error btn-sm"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  handleDelete();
+                }}
+              >
+                {t.common.delete}
+              </button>
             </div>
           </div>
-        </form>
+        </div>
       )}
-    </div>
+    </>
+  );
+}
+
+/* ── Icons ── */
+
+function ArrowLeftIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function WysiwygIcon() {
+  return (
+    <svg
+      className="h-3.5 w-3.5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h14" />
+    </svg>
+  );
+}
+
+function MarkdownMdIcon() {
+  return (
+    <svg
+      className="h-3.5 w-3.5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 8l-4 4 4 4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4-4 4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M14 4l-4 16" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.11 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
   );
 }

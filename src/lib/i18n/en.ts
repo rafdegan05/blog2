@@ -272,6 +272,14 @@ export const en = {
     noPermissionEdit: "You don't have permission to edit this post",
     loadFailed: "Failed to load post",
     backToDashboard: "Back to Dashboard",
+    writtenBy: "Written by",
+    wordCount: "{n} words",
+    publishBtn: "Publish",
+    saveDraftBtn: "Save Draft",
+    toSave: "to save",
+    deleteTitle: "Delete post",
+    editorMedium: "Visual editor",
+    editorMarkdown: "Markdown editor",
   },
 
   // ─── Podcasts ───
@@ -539,6 +547,31 @@ export const en = {
     horizontalRule: "Horizontal rule",
     preview: "Preview",
     emptyPreview: "Nothing to preview yet...",
+  },
+
+  // ─── Medium-style Editor ───
+  mediumEditor: {
+    placeholder: "Tell your story...",
+    titlePlaceholder: "Title",
+    subtitlePlaceholder: "Add a subtitle...",
+    bold: "Bold",
+    italic: "Italic",
+    underline: "Underline",
+    strikethrough: "Strikethrough",
+    code: "Inline code",
+    link: "Link",
+    heading2: "Large heading",
+    heading3: "Small heading",
+    addBlock: "Add a block",
+    image: "Image",
+    divider: "Divider",
+    quote: "Quote",
+    codeBlock: "Code block",
+    bulletList: "Bullet list",
+    orderedList: "Numbered list",
+    imageUrlPrompt: "Enter image URL:",
+    publishSettings: "Publish settings",
+    readyToPublish: "Ready to publish?",
   },
 
   // ─── Theme ───
