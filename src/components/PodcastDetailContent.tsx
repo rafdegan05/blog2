@@ -4,6 +4,7 @@ import EditButton from "@/components/EditButton";
 import ReactionBar from "@/components/ReactionBar";
 import ShareButtons from "@/components/ShareButtons";
 import ScrollIndicator from "@/components/ScrollIndicator";
+import WaveformPlayer from "@/components/WaveformPlayer";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
@@ -135,11 +136,8 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
 
             {/* Audio Player */}
             <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-2">{t.podcasts.listenNow}</h3>
-              <audio controls className="w-full" preload="metadata">
-                <source src={podcast.audioUrl} type="audio/mpeg" />
-                {t.podcasts.audioNotSupported}
-              </audio>
+              <h3 className="text-lg font-semibold mb-3">{t.podcasts.listenNow}</h3>
+              <WaveformPlayer src={podcast.audioUrl} />
             </div>
 
             {/* Reactions & Share */}

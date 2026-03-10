@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
+import WaveformPlayer from "@/components/WaveformPlayer";
 
 interface PodcastCardProps {
   podcast: {
@@ -68,10 +69,7 @@ export default function PodcastCard({ podcast }: PodcastCardProps) {
 
         {/* Audio Player */}
         <div className="mt-3">
-          <audio controls className="w-full" preload="metadata">
-            <source src={podcast.audioUrl} type="audio/mpeg" />
-            {t.podcasts.audioNotSupported}
-          </audio>
+          <WaveformPlayer src={podcast.audioUrl} compact />
         </div>
 
         <div className="card-actions justify-between items-center mt-2">
