@@ -71,7 +71,17 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { title, description, audioUrl, coverImage, duration, published, categories, tags } = body;
+  const {
+    title,
+    description,
+    audioUrl,
+    coverImage,
+    duration,
+    published,
+    categories,
+    tags,
+    transcript,
+  } = body;
 
   if (!title || !audioUrl) {
     return NextResponse.json({ error: "Title and audio URL are required" }, { status: 400 });
@@ -93,6 +103,7 @@ export async function POST(request: NextRequest) {
       audioUrl,
       coverImage,
       duration,
+      transcript,
       published: published || false,
       authorId: session.user.id,
       categories: categories?.length

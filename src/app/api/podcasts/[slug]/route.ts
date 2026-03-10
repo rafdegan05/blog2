@@ -42,7 +42,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const body = await request.json();
-  const { title, description, audioUrl, coverImage, duration, published, categories, tags } = body;
+  const {
+    title,
+    description,
+    audioUrl,
+    coverImage,
+    duration,
+    published,
+    categories,
+    tags,
+    transcript,
+  } = body;
 
   const podcast = await prisma.podcast.update({
     where: { slug },
@@ -53,6 +63,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       ...(coverImage !== undefined && { coverImage }),
       ...(duration !== undefined && { duration }),
       ...(published !== undefined && { published }),
+      ...(transcript !== undefined && { transcript }),
       ...(categories && {
         categories: {
           set: [],
