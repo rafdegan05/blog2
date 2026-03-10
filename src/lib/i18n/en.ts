@@ -499,8 +499,16 @@ export const en = {
     reply: "Reply",
     send: "Send",
     signInPrompt: " to leave a comment.",
-    noComments: "No comments yet. Be the first!",
+    noComments: "No comments yet.",
+    beFirst: "Start the conversation — share your thoughts!",
     deleteConfirm: "Delete this comment?",
+    justNow: "just now",
+    minutesAgo: "{n}m ago",
+    hoursAgo: "{n}h ago",
+    daysAgo: "{n}d ago",
+    collapse: "Collapse",
+    expand: "Expand",
+    collapsedReplies: "{n} replies hidden — click to expand",
   },
 
   // ─── Reactions ───

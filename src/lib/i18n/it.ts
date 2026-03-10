@@ -499,8 +499,16 @@ export const it: Translations = {
     reply: "Rispondi",
     send: "Invia",
     signInPrompt: " per lasciare un commento.",
-    noComments: "Ancora nessun commento. Sii il primo!",
+    noComments: "Ancora nessun commento.",
+    beFirst: "Inizia la conversazione — condividi i tuoi pensieri!",
     deleteConfirm: "Eliminare questo commento?",
+    justNow: "adesso",
+    minutesAgo: "{n}min fa",
+    hoursAgo: "{n}h fa",
+    daysAgo: "{n}g fa",
+    collapse: "Comprimi",
+    expand: "Espandi",
+    collapsedReplies: "{n} risposte nascoste — clicca per espandere",
   },
 
   // ─── Reactions ───
