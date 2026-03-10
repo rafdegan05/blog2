@@ -346,6 +346,10 @@ export const it: Translations = {
     transcriptHint:
       "Supporta file .txt, .srt, .vtt e .md. Puoi anche scrivere o incollare direttamente.",
     importTranscript: "Importa file",
+    generateTranscript: "Genera",
+    generatingTranscript: "Generazione…",
+    generateTranscriptError:
+      "Trascrizione fallita. Assicurati che un file audio sia stato caricato.",
     clearTranscript: "Cancella",
     copyTranscript: "Copia",
     copied: "Copiato!",
