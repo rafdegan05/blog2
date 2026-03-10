@@ -9,3 +9,10 @@ node_modules
 coverage
 .vscode
 src/generated
+.docker
+*.log
+vitest.config.ts
+commitlint.config.js
+release.config.cjs
+eslint.config.mjs
+src/__tests__

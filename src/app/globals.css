@@ -207,6 +207,165 @@
   @apply p-2 border-b;
 }
 
+/* ── Home Page ── */
+
+/* Hero */
+.home-hero {
+  position: relative;
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(
+    160deg,
+    oklch(var(--b2)) 0%,
+    oklch(var(--b1)) 40%,
+    oklch(var(--b2)) 100%
+  );
+  margin-top: -4rem;
+  padding-top: 4rem;
+}
+
+.home-hero-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.home-hero-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.18;
+}
+
+.home-hero-blob--primary {
+  width: 32rem;
+  height: 32rem;
+  top: -8rem;
+  left: -8rem;
+  background: oklch(var(--p));
+  animation: hero-float 14s ease-in-out infinite;
+}
+
+.home-hero-blob--secondary {
+  width: 28rem;
+  height: 28rem;
+  bottom: -6rem;
+  right: -6rem;
+  background: oklch(var(--s));
+  animation: hero-float 18s ease-in-out infinite reverse;
+}
+
+.home-hero-blob--accent {
+  width: 24rem;
+  height: 24rem;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: oklch(var(--a));
+  opacity: 0.08;
+  animation: hero-float 22s ease-in-out infinite 2s;
+}
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(2rem, -1.5rem) scale(1.05);
+  }
+  66% {
+    transform: translate(-1rem, 1rem) scale(0.97);
+  }
+}
+
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Scroll cue pill */
+.home-scroll-cue {
+  width: 1.5rem;
+  height: 2.5rem;
+  border: 2px solid oklch(var(--bc) / 0.2);
+  border-radius: 9999px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.home-scroll-cue-dot {
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 50%;
+  background: oklch(var(--bc) / 0.4);
+  position: absolute;
+  left: 50%;
+  top: 0.4rem;
+  transform: translateX(-50%);
+  animation: scroll-cue-bounce 1.8s ease-in-out infinite;
+}
+
+@keyframes scroll-cue-bounce {
+  0%,
+  100% {
+    top: 0.4rem;
+    opacity: 1;
+  }
+  50% {
+    top: 1.4rem;
+    opacity: 0.3;
+  }
+}
+
+/* Pillar cards */
+.home-pillar-card {
+  @apply card bg-base-200/50 border border-base-300 transition-all duration-300;
+  @apply hover:-translate-y-1 hover:shadow-lg;
+}
+.home-pillar-card:nth-child(1):hover {
+  border-color: oklch(var(--p) / 0.3);
+}
+.home-pillar-card:nth-child(2):hover {
+  border-color: oklch(var(--s) / 0.3);
+}
+.home-pillar-card:nth-child(3):hover {
+  border-color: oklch(var(--a) / 0.3);
+}
+
+.home-pillar-card .card-body {
+  @apply p-6;
+}
+
+/* CTA section */
+.home-cta-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.home-cta-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, oklch(var(--b2)) 0%, oklch(var(--b3, var(--b2))) 100%);
+  pointer-events: none;
+}
+
+.home-cta-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, oklch(var(--p) / 0.06) 0%, transparent 70%);
+}
+
 /* ── Scroll-reveal animations ── */
 @keyframes reveal-up {
   from {
