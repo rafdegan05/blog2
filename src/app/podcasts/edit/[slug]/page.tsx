@@ -2,10 +2,12 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import FileUpload from "@/components/FileUpload";
+import CaptionEditor from "@/components/CaptionEditor";
 import Link from "next/link";
 import { useTranslation } from "@/components/LanguageProvider";
+import type { WhisperLanguageCode, CaptionFormat } from "@/lib/captions";
 
 interface PodcastData {
   title: string;
@@ -42,50 +44,36 @@ export default function EditPodcastPage() {
   const [success, setSuccess] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [generatingTranscript, setGeneratingTranscript] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImportTranscript = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleGenerateTranscript = useCallback(async () => {
-    if (!audioUrl) {
-      setError(t.podcasts.generateTranscriptError);
-      return;
-    }
-    setGeneratingTranscript(true);
-    setError("");
-    try {
-      const res = await fetch("/api/podcasts/transcribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audioUrl }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || t.podcasts.generateTranscriptError);
+  const handleGenerateTranscript = useCallback(
+    async (language: WhisperLanguageCode, format: CaptionFormat) => {
+      if (!audioUrl) {
+        setError(t.podcasts.generateTranscriptError);
         return;
       }
-      const data = await res.json();
-      setTranscript(data.transcript);
-    } catch {
-      setError(t.podcasts.generateTranscriptError);
-    } finally {
-      setGeneratingTranscript(false);
-    }
-  }, [audioUrl, t]);
-
-  const handleTranscriptFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result;
-      if (typeof text === "string") setTranscript(text);
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  }, []);
+      setGeneratingTranscript(true);
+      setError("");
+      try {
+        const res = await fetch("/api/podcasts/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audioUrl, language, format }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || t.podcasts.generateTranscriptError);
+          return;
+        }
+        const data = await res.json();
+        setTranscript(data.transcript);
+      } catch {
+        setError(t.podcasts.generateTranscriptError);
+      } finally {
+        setGeneratingTranscript(false);
+      }
+    },
+    [audioUrl, t]
+  );
 
   useEffect(() => {
     if (status === "loading") return;
@@ -535,93 +523,14 @@ export default function EditPodcastPage() {
               <span className="podcast-form-badge">{t.podcasts.optionalBadge}</span>
             </div>
             <div className="podcast-form-section-body">
-              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleImportTranscript}
-                  className="btn btn-outline btn-sm gap-1.5"
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-                    />
-                  </svg>
-                  {t.podcasts.importTranscript}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleGenerateTranscript}
-                  className="btn btn-secondary btn-sm gap-1.5"
-                  disabled={generatingTranscript || !audioUrl}
-                >
-                  {generatingTranscript ? (
-                    <span className="loading loading-spinner loading-xs" />
-                  ) : (
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
-                      />
-                    </svg>
-                  )}
-                  {generatingTranscript
-                    ? t.podcasts.generatingTranscript
-                    : t.podcasts.generateTranscript}
-                </button>
-                {transcript && (
-                  <button
-                    type="button"
-                    onClick={() => setTranscript("")}
-                    className="btn btn-ghost btn-sm text-error gap-1.5"
-                  >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    {t.podcasts.clearTranscript}
-                  </button>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".txt,.srt,.vtt,.md"
-                  className="hidden"
-                  onChange={handleTranscriptFile}
-                />
-                {transcript && (
-                  <span className="ml-auto text-xs text-base-content/40">
-                    {transcript.length.toLocaleString()} {t.podcasts.characters}
-                  </span>
-                )}
-              </div>
-              <textarea
-                className="textarea textarea-bordered w-full font-mono text-sm leading-relaxed"
-                placeholder={t.podcasts.transcriptPlaceholder}
+              <CaptionEditor
                 value={transcript}
-                onChange={(e) => setTranscript(e.target.value)}
-                rows={8}
+                onChange={setTranscript}
+                audioUrl={audioUrl}
+                generating={generatingTranscript}
+                onGenerate={handleGenerateTranscript}
+                disabled={submitting}
               />
-              <p className="text-xs text-base-content/40 mt-1.5">{t.podcasts.transcriptHint}</p>
             </div>
           </div>
 

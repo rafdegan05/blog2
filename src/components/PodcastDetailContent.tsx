@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import EditButton from "@/components/EditButton";
 import ReactionBar from "@/components/ReactionBar";
 import ShareButtons from "@/components/ShareButtons";
@@ -9,6 +9,16 @@ import WaveformPlayer from "@/components/WaveformPlayer";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
+import {
+  parseCaptions,
+  detectFormat,
+  serializeToSRT,
+  serializeToVTT,
+  serializeToPlainText,
+  formatTimestampShort,
+  type CaptionCue,
+  type CaptionFormat,
+} from "@/lib/captions";
 
 interface PodcastDetailContentProps {
   podcast: {
@@ -46,6 +56,20 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"description" | "transcript">("description");
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+
+  const parsedCues = useMemo<CaptionCue[]>(() => {
+    if (!podcast.transcript) return [];
+    const { cues } = parseCaptions(podcast.transcript);
+    return cues;
+  }, [podcast.transcript]);
+
+  const detectedFormat = useMemo<CaptionFormat>(() => {
+    if (!podcast.transcript) return "txt";
+    return detectFormat(podcast.transcript);
+  }, [podcast.transcript]);
+
+  const hasCues = parsedCues.length > 0 && parsedCues.some((c) => c.startTime > 0 || c.endTime > 0);
 
   const dateLocale = language === "it" ? "it-IT" : "en-US";
 
@@ -60,16 +84,36 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
     }
   }, [podcast.transcript]);
 
-  const handleDownloadTranscript = useCallback(() => {
-    if (!podcast.transcript) return;
-    const blob = new Blob([podcast.transcript], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${podcast.slug}-transcript.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [podcast.transcript, podcast.slug]);
+  const handleDownloadTranscript = useCallback(
+    (fmt: CaptionFormat) => {
+      if (!podcast.transcript) return;
+      let content: string;
+      let extension: string;
+      let mimeType: string;
+      if (fmt === "srt") {
+        content = parsedCues.length > 0 ? serializeToSRT(parsedCues) : podcast.transcript;
+        extension = "srt";
+        mimeType = "application/x-subrip";
+      } else if (fmt === "vtt") {
+        content = parsedCues.length > 0 ? serializeToVTT(parsedCues) : podcast.transcript;
+        extension = "vtt";
+        mimeType = "text/vtt";
+      } else {
+        content = parsedCues.length > 0 ? serializeToPlainText(parsedCues) : podcast.transcript;
+        extension = "txt";
+        mimeType = "text/plain";
+      }
+      const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${podcast.slug}-transcript.${extension}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setShowDownloadMenu(false);
+    },
+    [podcast.transcript, podcast.slug, parsedCues]
+  );
 
   return (
     <>
@@ -273,14 +317,47 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
                     {copySuccess ? t.podcasts.copied : t.podcasts.copyTranscript}
                   </span>
                 </button>
-                <button
-                  onClick={handleDownloadTranscript}
-                  className="btn btn-ghost btn-xs gap-1"
-                  title={t.podcasts.downloadTranscript}
-                >
-                  <DownloadIcon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t.podcasts.downloadTranscript}</span>
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                    className="btn btn-ghost btn-xs gap-1"
+                    title={t.podcasts.downloadTranscript}
+                  >
+                    <DownloadIcon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t.podcasts.downloadTranscript}</span>
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showDownloadMenu && (
+                    <div className="absolute right-0 top-full mt-1 z-20 bg-base-100 shadow-xl border border-base-content/10 rounded-lg py-1 min-w-[120px]">
+                      <button
+                        onClick={() => handleDownloadTranscript("srt")}
+                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-base-content/5 transition-colors"
+                      >
+                        SRT
+                      </button>
+                      <button
+                        onClick={() => handleDownloadTranscript("vtt")}
+                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-base-content/5 transition-colors"
+                      >
+                        WebVTT
+                      </button>
+                      <button
+                        onClick={() => handleDownloadTranscript("txt")}
+                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-base-content/5 transition-colors"
+                      >
+                        TXT
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={() => setTranscriptOpen(!transcriptOpen)}
                   className="btn btn-ghost btn-xs gap-1"
@@ -301,9 +378,25 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
             <div
               className={`ted-transcript-body ${transcriptOpen ? "ted-transcript-expanded" : ""}`}
             >
-              <p className="whitespace-pre-wrap leading-relaxed text-base-content/75">
-                {podcast.transcript}
-              </p>
+              {hasCues ? (
+                <div className="space-y-1">
+                  {parsedCues.map((cue) => (
+                    <div
+                      key={cue.id}
+                      className="flex gap-3 py-1.5 group hover:bg-base-content/3 rounded px-2 -mx-2 transition-colors"
+                    >
+                      <span className="text-xs font-mono text-primary/70 pt-0.5 select-none shrink-0 min-w-[4rem] text-right">
+                        {formatTimestampShort(cue.startTime)}
+                      </span>
+                      <p className="text-base-content/75 leading-relaxed flex-1">{cue.text}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="whitespace-pre-wrap leading-relaxed text-base-content/75">
+                  {podcast.transcript}
+                </p>
+              )}
             </div>
             {!transcriptOpen && (
               <button onClick={() => setTranscriptOpen(true)} className="ted-show-more">

@@ -196,11 +196,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { audioUrl } = await request.json();
+    const { audioUrl, language, format } = await request.json();
 
     if (!audioUrl || typeof audioUrl !== "string") {
       return NextResponse.json({ error: "audioUrl is required" }, { status: 400 });
     }
+
+    // Language for Whisper (default: "en")
+    const whisperLang =
+      typeof language === "string" && language.length >= 2
+        ? language.slice(0, 2).toLowerCase()
+        : "en";
+
+    // Output format: "srt" | "vtt" | "txt" (default: "srt")
+    const outputFormat =
+      typeof format === "string" && ["srt", "vtt", "txt"].includes(format) ? format : "srt";
 
     // Read audio file from the filesystem
     let audioBuffer: Buffer;
@@ -265,7 +275,7 @@ export async function POST(request: NextRequest) {
       chunk_length_s: 30,
       stride_length_s: 5,
       return_timestamps: true,
-      language: "en",
+      language: whisperLang,
     });
 
     // Clean up
@@ -279,12 +289,36 @@ export async function POST(request: NextRequest) {
       timestamp: [number, number | null];
     }
 
-    function formatTimestamp(seconds: number): string {
+    function pad2(n: number): string {
+      return n.toString().padStart(2, "0");
+    }
+
+    function pad3(n: number): string {
+      return n.toString().padStart(3, "0");
+    }
+
+    function formatTimestampSRT(seconds: number): string {
       const h = Math.floor(seconds / 3600);
       const m = Math.floor((seconds % 3600) / 60);
       const s = Math.floor(seconds % 60);
-      if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-      return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+      const ms = Math.round((seconds - Math.floor(seconds)) * 1000);
+      return `${pad2(h)}:${pad2(m)}:${pad2(s)},${pad3(ms)}`;
+    }
+
+    function formatTimestampVTT(seconds: number): string {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      const ms = Math.round((seconds - Math.floor(seconds)) * 1000);
+      return `${pad2(h)}:${pad2(m)}:${pad2(s)}.${pad3(ms)}`;
+    }
+
+    function formatTimestampShort(seconds: number): string {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = Math.floor(seconds % 60);
+      if (h > 0) return `${h}:${pad2(m)}:${pad2(s)}`;
+      return `${pad2(m)}:${pad2(s)}`;
     }
 
     let transcriptText: string;
@@ -294,13 +328,34 @@ export async function POST(request: NextRequest) {
       : ((result as { chunks?: TranscriptChunk[] }).chunks ?? []);
 
     if (chunks.length > 0) {
-      // Build transcript with timestamps: [MM:SS] text
-      transcriptText = chunks
-        .map((chunk) => {
-          const start = formatTimestamp(chunk.timestamp[0] ?? 0);
-          return `[${start}] ${chunk.text.trim()}`;
-        })
-        .join("\n");
+      if (outputFormat === "srt") {
+        // SRT format
+        transcriptText = chunks
+          .map((chunk, i) => {
+            const start = formatTimestampSRT(chunk.timestamp[0] ?? 0);
+            const end = formatTimestampSRT(chunk.timestamp[1] ?? (chunk.timestamp[0] ?? 0) + 5);
+            return `${i + 1}\n${start} --> ${end}\n${chunk.text.trim()}`;
+          })
+          .join("\n\n");
+      } else if (outputFormat === "vtt") {
+        // VTT format
+        const body = chunks
+          .map((chunk) => {
+            const start = formatTimestampVTT(chunk.timestamp[0] ?? 0);
+            const end = formatTimestampVTT(chunk.timestamp[1] ?? (chunk.timestamp[0] ?? 0) + 5);
+            return `${start} --> ${end}\n${chunk.text.trim()}`;
+          })
+          .join("\n\n");
+        transcriptText = `WEBVTT\n\n${body}`;
+      } else {
+        // Plain text with [MM:SS] timestamps
+        transcriptText = chunks
+          .map((chunk) => {
+            const start = formatTimestampShort(chunk.timestamp[0] ?? 0);
+            return `[${start}] ${chunk.text.trim()}`;
+          })
+          .join("\n");
+      }
     } else {
       // Fallback: plain text without timestamps
       transcriptText = Array.isArray(result)
@@ -308,7 +363,14 @@ export async function POST(request: NextRequest) {
         : (result as { text: string }).text;
     }
 
-    return NextResponse.json({ transcript: transcriptText.trim() }, { status: 200 });
+    return NextResponse.json(
+      {
+        transcript: transcriptText.trim(),
+        language: whisperLang,
+        format: outputFormat,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Transcription error:", error);
     const message =
