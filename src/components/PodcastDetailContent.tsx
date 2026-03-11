@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import EditButton from "@/components/EditButton";
 import ReactionBar from "@/components/ReactionBar";
 import ShareButtons from "@/components/ShareButtons";
 import ScrollIndicator from "@/components/ScrollIndicator";
-import WaveformPlayer from "@/components/WaveformPlayer";
+import WaveformPlayer, { type WaveformPlayerHandle } from "@/components/WaveformPlayer";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
@@ -70,6 +70,16 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
   }, [podcast.transcript]);
 
   const hasCues = parsedCues.length > 0 && parsedCues.some((c) => c.startTime > 0 || c.endTime > 0);
+
+  const playerRef = useRef<WaveformPlayerHandle>(null);
+
+  const handleTimestampClick = useCallback((seconds: number) => {
+    playerRef.current?.seekTo(seconds);
+    // Scroll the player into view so the user can see it playing
+    document
+      .querySelector(".ted-player-card")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
 
   const dateLocale = language === "it" ? "it-IT" : "en-US";
 
@@ -246,7 +256,7 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
       {/* ── Player section ── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 ted-player-wrapper">
         <div className="ted-player-card">
-          <WaveformPlayer src={podcast.audioUrl} />
+          <WaveformPlayer ref={playerRef} src={podcast.audioUrl} />
 
           {/* Reactions & Share */}
           <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-base-content/8">
@@ -385,9 +395,16 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
                       key={cue.id}
                       className="flex gap-3 py-1.5 group hover:bg-base-content/3 rounded px-2 -mx-2 transition-colors"
                     >
-                      <span className="text-xs font-mono text-primary/70 pt-0.5 select-none shrink-0 min-w-[4rem] text-right">
+                      <button
+                        type="button"
+                        onClick={() => handleTimestampClick(cue.startTime)}
+                        className="text-xs font-mono text-primary/70 pt-0.5 select-none shrink-0 min-w-[4rem] text-right hover:text-primary hover:underline cursor-pointer transition-colors"
+                        title={
+                          language === "it" ? "Riproduci da questo punto" : "Play from this point"
+                        }
+                      >
                         {formatTimestampShort(cue.startTime)}
-                      </span>
+                      </button>
                       <p className="text-base-content/75 leading-relaxed flex-1">{cue.text}</p>
                     </div>
                   ))}

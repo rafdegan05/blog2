@@ -1,6 +1,11 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
+
+export interface WaveformPlayerHandle {
+  /** Seek audio to given time in seconds and start playing */
+  seekTo: (seconds: number) => void;
+}
 
 interface WaveformPlayerProps {
   src: string;
@@ -78,267 +83,292 @@ function drawWaveform(
 
 /* ── Component ── */
 
-export default function WaveformPlayer({ src, compact = false }: WaveformPlayerProps) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number>(0);
+const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
+  function WaveformPlayer({ src, compact = false }, ref) {
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const rafRef = useRef<number>(0);
 
-  const [peaksData, setPeaksData] = useState<{ src: string; peaks: number[] } | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [speed, setSpeed] = useState(1);
+    const [peaksData, setPeaksData] = useState<{ src: string; peaks: number[] } | null>(null);
+    const [playing, setPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [volume, setVolume] = useState(1);
+    const [speed, setSpeed] = useState(1);
 
-  const barCount = compact ? BAR_COUNT_COMPACT : BAR_COUNT_FULL;
+    const barCount = compact ? BAR_COUNT_COMPACT : BAR_COUNT_FULL;
 
-  // Derive peaks & loading from peaksData — avoids synchronous setState in effect
-  const peaks = peaksData?.src === src ? peaksData.peaks : null;
-  const loading = peaks === null;
+    // Derive peaks & loading from peaksData — avoids synchronous setState in effect
+    const peaks = peaksData?.src === src ? peaksData.peaks : null;
+    const loading = peaks === null;
 
-  /* ── Decode audio → peaks ── */
-  useEffect(() => {
-    let cancelled = false;
+    /* ── Expose seekTo via ref ── */
+    useImperativeHandle(
+      ref,
+      () => ({
+        seekTo(seconds: number) {
+          const audio = audioRef.current;
+          if (!audio) return;
+          audio.currentTime = seconds;
+          setCurrentTime(seconds);
+          if (audio.duration) {
+            setProgress(seconds / audio.duration);
+          }
+          if (audio.paused) {
+            audio.play();
+            setPlaying(true);
+          }
+        },
+      }),
+      []
+    );
 
-    (async () => {
-      try {
-        const res = await fetch(src);
-        const buf = await res.arrayBuffer();
-        const actx = new AudioContext();
-        const decoded = await actx.decodeAudioData(buf);
-        if (!cancelled) {
-          setPeaksData({ src, peaks: extractPeaks(decoded, barCount) });
+    /* ── Decode audio → peaks ── */
+    useEffect(() => {
+      let cancelled = false;
+
+      (async () => {
+        try {
+          const res = await fetch(src);
+          const buf = await res.arrayBuffer();
+          const actx = new AudioContext();
+          const decoded = await actx.decodeAudioData(buf);
+          if (!cancelled) {
+            setPeaksData({ src, peaks: extractPeaks(decoded, barCount) });
+          }
+          await actx.close();
+        } catch {
+          // Fallback: generate flat bars so the player is still usable
+          if (!cancelled) {
+            const flat = Array.from({ length: barCount }, () => 0.3 + Math.random() * 0.4);
+            setPeaksData({ src, peaks: flat });
+          }
         }
-        await actx.close();
-      } catch {
-        // Fallback: generate flat bars so the player is still usable
-        if (!cancelled) {
-          const flat = Array.from({ length: barCount }, () => 0.3 + Math.random() * 0.4);
-          setPeaksData({ src, peaks: flat });
-        }
-      }
-    })();
+      })();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [src, barCount]);
-
-  /* ── Get theme colours from CSS custom properties ── */
-  const getColors = useCallback(() => {
-    const el = containerRef.current;
-    if (!el)
-      return {
-        played: "#6366f1",
-        unplayed: "rgba(128,128,128,0.25)",
-        cursor: "#6366f1",
+      return () => {
+        cancelled = true;
       };
-    const s = getComputedStyle(el);
-    const primary = s.getPropertyValue("--waveform-played").trim() || "#6366f1";
-    const unplayed = s.getPropertyValue("--waveform-unplayed").trim() || "rgba(128,128,128,0.25)";
-    const cursor = s.getPropertyValue("--waveform-cursor").trim() || primary;
-    return { played: primary, unplayed, cursor };
-  }, []);
+    }, [src, barCount]);
 
-  /* ── Render loop ── */
-  const draw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !peaks) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    drawWaveform(ctx, peaks, progress, rect.width, rect.height, getColors());
-  }, [peaks, progress, getColors]);
+    /* ── Get theme colours from CSS custom properties ── */
+    const getColors = useCallback(() => {
+      const el = containerRef.current;
+      if (!el)
+        return {
+          played: "#6366f1",
+          unplayed: "rgba(128,128,128,0.25)",
+          cursor: "#6366f1",
+        };
+      const s = getComputedStyle(el);
+      const primary = s.getPropertyValue("--waveform-played").trim() || "#6366f1";
+      const unplayed = s.getPropertyValue("--waveform-unplayed").trim() || "rgba(128,128,128,0.25)";
+      const cursor = s.getPropertyValue("--waveform-cursor").trim() || primary;
+      return { played: primary, unplayed, cursor };
+    }, []);
 
-  useEffect(() => {
-    draw();
-  }, [draw]);
+    /* ── Render loop ── */
+    const draw = useCallback(() => {
+      const canvas = canvasRef.current;
+      if (!canvas || !peaks) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      drawWaveform(ctx, peaks, progress, rect.width, rect.height, getColors());
+    }, [peaks, progress, getColors]);
 
-  /* ── Animation frame for smooth progress ── */
-  useEffect(() => {
-    if (!playing) return;
+    useEffect(() => {
+      draw();
+    }, [draw]);
 
-    const tick = () => {
-      const audio = audioRef.current;
-      if (audio && audio.duration) {
-        setCurrentTime(audio.currentTime);
-        setProgress(audio.currentTime / audio.duration);
-      }
+    /* ── Animation frame for smooth progress ── */
+    useEffect(() => {
+      if (!playing) return;
+
+      const tick = () => {
+        const audio = audioRef.current;
+        if (audio && audio.duration) {
+          setCurrentTime(audio.currentTime);
+          setProgress(audio.currentTime / audio.duration);
+        }
+        rafRef.current = requestAnimationFrame(tick);
+      };
       rafRef.current = requestAnimationFrame(tick);
+
+      return () => cancelAnimationFrame(rafRef.current);
+    }, [playing]);
+
+    /* ── Handlers ── */
+
+    const togglePlay = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      if (audio.paused) {
+        audio.play();
+        setPlaying(true);
+      } else {
+        audio.pause();
+        setPlaying(false);
+      }
     };
-    rafRef.current = requestAnimationFrame(tick);
 
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [playing]);
+    const seek = (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const audio = audioRef.current;
+      const canvas = canvasRef.current;
+      if (!audio || !canvas || !audio.duration) return;
+      const rect = canvas.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      audio.currentTime = pct * audio.duration;
+      setProgress(pct);
+      setCurrentTime(audio.currentTime);
+    };
 
-  /* ── Handlers ── */
+    const onLoaded = () => {
+      const audio = audioRef.current;
+      if (audio) {
+        setDuration(audio.duration);
+      }
+    };
 
-  const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (audio.paused) {
-      audio.play();
-      setPlaying(true);
-    } else {
-      audio.pause();
+    const onEnded = () => {
       setPlaying(false);
-    }
-  };
+      setProgress(0);
+      setCurrentTime(0);
+    };
 
-  const seek = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const audio = audioRef.current;
-    const canvas = canvasRef.current;
-    if (!audio || !canvas || !audio.duration) return;
-    const rect = canvas.getBoundingClientRect();
-    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    audio.currentTime = pct * audio.duration;
-    setProgress(pct);
-    setCurrentTime(audio.currentTime);
-  };
+    const changeVolume = (v: number) => {
+      setVolume(v);
+      if (audioRef.current) audioRef.current.volume = v;
+    };
 
-  const onLoaded = () => {
-    const audio = audioRef.current;
-    if (audio) {
-      setDuration(audio.duration);
-    }
-  };
+    const changeSpeed = (s: number) => {
+      setSpeed(s);
+      if (audioRef.current) audioRef.current.playbackRate = s;
+    };
 
-  const onEnded = () => {
-    setPlaying(false);
-    setProgress(0);
-    setCurrentTime(0);
-  };
+    const skipForward = () => {
+      const audio = audioRef.current;
+      if (audio) audio.currentTime = Math.min(audio.duration, audio.currentTime + 15);
+    };
 
-  const changeVolume = (v: number) => {
-    setVolume(v);
-    if (audioRef.current) audioRef.current.volume = v;
-  };
+    const skipBackward = () => {
+      const audio = audioRef.current;
+      if (audio) audio.currentTime = Math.max(0, audio.currentTime - 15);
+    };
 
-  const changeSpeed = (s: number) => {
-    setSpeed(s);
-    if (audioRef.current) audioRef.current.playbackRate = s;
-  };
+    const canvasHeight = compact ? 48 : 80;
 
-  const skipForward = () => {
-    const audio = audioRef.current;
-    if (audio) audio.currentTime = Math.min(audio.duration, audio.currentTime + 15);
-  };
+    return (
+      <div
+        ref={containerRef}
+        className={`waveform-player ${compact ? "waveform-player--compact" : ""}`}
+      >
+        {/* Hidden native audio element */}
+        <audio
+          ref={audioRef}
+          src={src}
+          preload="metadata"
+          onLoadedMetadata={onLoaded}
+          onEnded={onEnded}
+        />
 
-  const skipBackward = () => {
-    const audio = audioRef.current;
-    if (audio) audio.currentTime = Math.max(0, audio.currentTime - 15);
-  };
-
-  const canvasHeight = compact ? 48 : 80;
-
-  return (
-    <div
-      ref={containerRef}
-      className={`waveform-player ${compact ? "waveform-player--compact" : ""}`}
-    >
-      {/* Hidden native audio element */}
-      <audio
-        ref={audioRef}
-        src={src}
-        preload="metadata"
-        onLoadedMetadata={onLoaded}
-        onEnded={onEnded}
-      />
-
-      {/* Top row: play + waveform + time */}
-      <div className="waveform-player-main">
-        {/* Play / pause */}
-        <button
-          onClick={togglePlay}
-          className="waveform-play-btn"
-          aria-label={playing ? "Pause" : "Play"}
-          disabled={loading}
-        >
-          {loading ? (
-            <span className="loading loading-spinner loading-sm" />
-          ) : playing ? (
-            <PauseIcon />
-          ) : (
-            <PlayIcon />
-          )}
-        </button>
-
-        {/* Skip back (full mode) */}
-        {!compact && (
-          <button onClick={skipBackward} className="waveform-skip-btn" aria-label="Back 15s">
-            <Skip15BackIcon />
+        {/* Top row: play + waveform + time */}
+        <div className="waveform-player-main">
+          {/* Play / pause */}
+          <button
+            onClick={togglePlay}
+            className="waveform-play-btn"
+            aria-label={playing ? "Pause" : "Play"}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : playing ? (
+              <PauseIcon />
+            ) : (
+              <PlayIcon />
+            )}
           </button>
-        )}
 
-        {/* Waveform canvas */}
-        <div className="waveform-canvas-wrap">
-          <canvas
-            ref={canvasRef}
-            onClick={seek}
-            className="waveform-canvas"
-            style={{ height: canvasHeight }}
-          />
-          {/* Time overlay */}
-          <div className="waveform-time">
-            <span>{fmtTime(currentTime)}</span>
-            <span>{fmtTime(duration)}</span>
+          {/* Skip back (full mode) */}
+          {!compact && (
+            <button onClick={skipBackward} className="waveform-skip-btn" aria-label="Back 15s">
+              <Skip15BackIcon />
+            </button>
+          )}
+
+          {/* Waveform canvas */}
+          <div className="waveform-canvas-wrap">
+            <canvas
+              ref={canvasRef}
+              onClick={seek}
+              className="waveform-canvas"
+              style={{ height: canvasHeight }}
+            />
+            {/* Time overlay */}
+            <div className="waveform-time">
+              <span>{fmtTime(currentTime)}</span>
+              <span>{fmtTime(duration)}</span>
+            </div>
           </div>
+
+          {/* Skip forward (full mode) */}
+          {!compact && (
+            <button onClick={skipForward} className="waveform-skip-btn" aria-label="Forward 15s">
+              <Skip15ForwardIcon />
+            </button>
+          )}
         </div>
 
-        {/* Skip forward (full mode) */}
+        {/* Bottom row: speed + volume (full mode) */}
         {!compact && (
-          <button onClick={skipForward} className="waveform-skip-btn" aria-label="Forward 15s">
-            <Skip15ForwardIcon />
-          </button>
+          <div className="waveform-controls">
+            {/* Speed selector */}
+            <div className="waveform-speed">
+              {[0.5, 1, 1.25, 1.5, 2].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => changeSpeed(s)}
+                  className={`waveform-speed-btn ${speed === s ? "waveform-speed-btn--active" : ""}`}
+                >
+                  {s}×
+                </button>
+              ))}
+            </div>
+
+            {/* Volume */}
+            <div className="waveform-volume">
+              <button
+                onClick={() => changeVolume(volume > 0 ? 0 : 1)}
+                className="waveform-volume-icon"
+                aria-label={volume === 0 ? "Unmute" : "Mute"}
+              >
+                {volume === 0 ? <VolumeOffIcon /> : <VolumeIcon />}
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={volume}
+                onChange={(e) => changeVolume(Number(e.target.value))}
+                className="waveform-volume-slider"
+              />
+            </div>
+          </div>
         )}
       </div>
+    );
+  }
+);
 
-      {/* Bottom row: speed + volume (full mode) */}
-      {!compact && (
-        <div className="waveform-controls">
-          {/* Speed selector */}
-          <div className="waveform-speed">
-            {[0.5, 1, 1.25, 1.5, 2].map((s) => (
-              <button
-                key={s}
-                onClick={() => changeSpeed(s)}
-                className={`waveform-speed-btn ${speed === s ? "waveform-speed-btn--active" : ""}`}
-              >
-                {s}×
-              </button>
-            ))}
-          </div>
-
-          {/* Volume */}
-          <div className="waveform-volume">
-            <button
-              onClick={() => changeVolume(volume > 0 ? 0 : 1)}
-              className="waveform-volume-icon"
-              aria-label={volume === 0 ? "Unmute" : "Mute"}
-            >
-              {volume === 0 ? <VolumeOffIcon /> : <VolumeIcon />}
-            </button>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={volume}
-              onChange={(e) => changeVolume(Number(e.target.value))}
-              className="waveform-volume-slider"
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+export default WaveformPlayer;
 
 /* ══════════════════════════
    Icons
