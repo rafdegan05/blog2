@@ -152,7 +152,7 @@ model Podcast {
   audioUrl    String
   coverImage  String?
   duration    Int?     // duration in seconds
-  transcript  String?  @db.Text
+  transcript  String?  @db.Text  // @deprecated – migrated to PodcastTranscript
   published   Boolean  @default(false)
   moderation  ModerationStatus @default(APPROVED)
   flagReason  String?  @db.Text
@@ -162,12 +162,28 @@ model Podcast {
   authorId String
   author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
-  categories Category[] @relation("PodcastCategories")
-  tags       Tag[]      @relation("PodcastTags")
-  reactions  Reaction[]
+  categories  Category[]          @relation("PodcastCategories")
+  tags        Tag[]               @relation("PodcastTags")
+  reactions   Reaction[]
+  transcripts PodcastTranscript[]
 
   @@index([slug])
   @@index([authorId])
+}
+
+// ─── Podcast Transcript (multi-language) ───
+
+model PodcastTranscript {
+  id        String   @id @default(cuid())
+  language  String   // ISO 639-1 code, e.g. "en", "it", "es"
+  content   String   @db.Text
+  podcastId String
+  podcast   Podcast  @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([podcastId, language])
+  @@index([podcastId])
 }
 
 // ─── Category ───

@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
         author: { select: { id: true, name: true, image: true } },
         categories: true,
         tags: true,
+        transcripts: { select: { language: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
     published,
     categories,
     tags,
-    transcript,
+    transcripts,
   } = body;
 
   if (!title || !audioUrl) {
@@ -103,7 +104,6 @@ export async function POST(request: NextRequest) {
       audioUrl,
       coverImage,
       duration,
-      transcript,
       published: published || false,
       authorId: session.user.id,
       categories: categories?.length
@@ -134,11 +134,23 @@ export async function POST(request: NextRequest) {
             })),
           }
         : undefined,
+      transcripts:
+        transcripts && Array.isArray(transcripts) && transcripts.length > 0
+          ? {
+              create: transcripts
+                .filter((tr: { language: string; content: string }) => tr.content)
+                .map((tr: { language: string; content: string }) => ({
+                  language: tr.language,
+                  content: tr.content,
+                })),
+            }
+          : undefined,
     },
     include: {
       author: { select: { id: true, name: true, image: true } },
       categories: true,
       tags: true,
+      transcripts: { select: { language: true, content: true } },
     },
   });
 

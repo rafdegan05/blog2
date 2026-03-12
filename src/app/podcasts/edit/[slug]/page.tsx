@@ -8,6 +8,7 @@ import CaptionEditor from "@/components/CaptionEditor";
 import Link from "next/link";
 import { useTranslation } from "@/components/LanguageProvider";
 import type { WhisperLanguageCode, CaptionFormat } from "@/lib/captions";
+import { WHISPER_LANGUAGES } from "@/lib/captions";
 
 interface PodcastData {
   title: string;
@@ -15,7 +16,7 @@ interface PodcastData {
   audioUrl: string;
   coverImage?: string;
   duration?: number;
-  transcript?: string | null;
+  transcripts?: { language: string; content: string }[];
   published: boolean;
   categories: { name: string }[];
   tags: { name: string }[];
@@ -27,7 +28,7 @@ export default function EditPodcastPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params.slug as string;
-  const { t } = useTranslation();
+  const { t, language: uiLang } = useTranslation();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -36,7 +37,8 @@ export default function EditPodcastPage() {
   const [duration, setDuration] = useState("");
   const [categories, setCategories] = useState("");
   const [tags, setTags] = useState("");
-  const [transcript, setTranscript] = useState("");
+  const [transcripts, setTranscripts] = useState<Record<string, string>>({});
+  const [activeTranscriptLang, setActiveTranscriptLang] = useState<string>("en");
   const [published, setPublished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -44,6 +46,40 @@ export default function EditPodcastPage() {
   const [success, setSuccess] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [generatingTranscript, setGeneratingTranscript] = useState(false);
+
+  const transcriptLangs = Object.keys(transcripts);
+
+  const handleAddTranscriptLang = useCallback(
+    (lang: string) => {
+      if (!transcripts[lang]) {
+        setTranscripts((prev) => ({ ...prev, [lang]: "" }));
+      }
+      setActiveTranscriptLang(lang);
+    },
+    [transcripts]
+  );
+
+  const handleRemoveTranscriptLang = useCallback(
+    (lang: string) => {
+      setTranscripts((prev) => {
+        const next = { ...prev };
+        delete next[lang];
+        return next;
+      });
+      if (activeTranscriptLang === lang) {
+        const remaining = transcriptLangs.filter((l) => l !== lang);
+        setActiveTranscriptLang(remaining[0] || "en");
+      }
+    },
+    [activeTranscriptLang, transcriptLangs]
+  );
+
+  const handleTranscriptChange = useCallback(
+    (value: string) => {
+      setTranscripts((prev) => ({ ...prev, [activeTranscriptLang]: value }));
+    },
+    [activeTranscriptLang]
+  );
 
   const handleGenerateTranscript = useCallback(
     async (language: WhisperLanguageCode, format: CaptionFormat) => {
@@ -65,14 +101,14 @@ export default function EditPodcastPage() {
           return;
         }
         const data = await res.json();
-        setTranscript(data.transcript);
+        setTranscripts((prev) => ({ ...prev, [activeTranscriptLang]: data.transcript }));
       } catch {
         setError(t.podcasts.generateTranscriptError);
       } finally {
         setGeneratingTranscript(false);
       }
     },
-    [audioUrl, t]
+    [audioUrl, t, activeTranscriptLang]
   );
 
   useEffect(() => {
@@ -101,7 +137,15 @@ export default function EditPodcastPage() {
         setCoverImage(podcast.coverImage || "");
         setDuration(podcast.duration ? String(podcast.duration) : "");
         setPublished(podcast.published);
-        setTranscript(podcast.transcript || "");
+        // Load transcripts as Record<lang, content>
+        if (podcast.transcripts && podcast.transcripts.length > 0) {
+          const tMap: Record<string, string> = {};
+          for (const tr of podcast.transcripts) {
+            tMap[tr.language] = tr.content;
+          }
+          setTranscripts(tMap);
+          setActiveTranscriptLang(podcast.transcripts[0].language);
+        }
         setCategories(podcast.categories.map((c) => c.name).join(", "));
         setTags(podcast.tags.map((t) => t.name).join(", "));
       } catch {
@@ -171,8 +215,10 @@ export default function EditPodcastPage() {
           audioUrl,
           coverImage: coverImage || undefined,
           duration: duration ? parseInt(duration) : undefined,
-          transcript: transcript || null,
           published,
+          transcripts: Object.entries(transcripts)
+            .filter(([, content]) => content)
+            .map(([language, content]) => ({ language, content })),
           categories: categories
             ? categories
                 .split(",")
@@ -523,14 +569,70 @@ export default function EditPodcastPage() {
               <span className="podcast-form-badge">{t.podcasts.optionalBadge}</span>
             </div>
             <div className="podcast-form-section-body">
-              <CaptionEditor
-                value={transcript}
-                onChange={setTranscript}
-                audioUrl={audioUrl}
-                generating={generatingTranscript}
-                onGenerate={handleGenerateTranscript}
-                disabled={submitting}
-              />
+              {/* Language tabs */}
+              <div className="transcript-lang-tabs">
+                {transcriptLangs.map((lang) => {
+                  const langInfo = WHISPER_LANGUAGES.find((l) => l.code === lang);
+                  const label = langInfo
+                    ? uiLang === "it"
+                      ? langInfo.labelIt
+                      : langInfo.label
+                    : lang.toUpperCase();
+                  return (
+                    <div
+                      key={lang}
+                      className={`transcript-lang-tab ${activeTranscriptLang === lang ? "transcript-lang-tab--active" : ""}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setActiveTranscriptLang(lang)}
+                        className="transcript-lang-tab-btn"
+                      >
+                        {label}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTranscriptLang(lang)}
+                        className="transcript-lang-tab-remove"
+                        title={t.podcasts.removeLanguage}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+                {/* Add language dropdown */}
+                <div className="transcript-lang-add">
+                  <select
+                    className="select select-xs select-bordered"
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) handleAddTranscriptLang(e.target.value);
+                    }}
+                  >
+                    <option value="">{t.podcasts.addLanguage}</option>
+                    {WHISPER_LANGUAGES.filter((l) => !transcriptLangs.includes(l.code)).map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {uiLang === "it" ? l.labelIt : l.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {transcriptLangs.length > 0 ? (
+                <CaptionEditor
+                  key={activeTranscriptLang}
+                  value={transcripts[activeTranscriptLang] || ""}
+                  onChange={handleTranscriptChange}
+                  audioUrl={audioUrl}
+                  generating={generatingTranscript}
+                  onGenerate={handleGenerateTranscript}
+                  disabled={submitting}
+                />
+              ) : (
+                <p className="text-sm text-base-content/50 py-4">{t.podcasts.addLanguageHint}</p>
+              )}
             </div>
           </div>
 

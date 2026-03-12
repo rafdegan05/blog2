@@ -16,9 +16,15 @@ import {
   serializeToVTT,
   serializeToPlainText,
   formatTimestampShort,
+  WHISPER_LANGUAGES,
   type CaptionCue,
   type CaptionFormat,
 } from "@/lib/captions";
+
+interface PodcastTranscript {
+  language: string;
+  content: string;
+}
 
 interface PodcastDetailContentProps {
   podcast: {
@@ -29,7 +35,7 @@ interface PodcastDetailContentProps {
     audioUrl: string;
     coverImage?: string;
     duration?: number;
-    transcript?: string | null;
+    transcripts?: PodcastTranscript[];
     createdAt: string;
     author: {
       id: string;
@@ -58,16 +64,32 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
   const [copySuccess, setCopySuccess] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
+  const hasTranscripts = podcast.transcripts && podcast.transcripts.length > 0;
+  const availableLangs = useMemo(
+    () => (podcast.transcripts || []).map((tr) => tr.language),
+    [podcast.transcripts]
+  );
+  const [selectedTranscriptLang, setSelectedTranscriptLang] = useState<string>(
+    availableLangs[0] || "en"
+  );
+
+  const activeTranscript = useMemo(
+    () =>
+      (podcast.transcripts || []).find((tr) => tr.language === selectedTranscriptLang)?.content ||
+      null,
+    [podcast.transcripts, selectedTranscriptLang]
+  );
+
   const parsedCues = useMemo<CaptionCue[]>(() => {
-    if (!podcast.transcript) return [];
-    const { cues } = parseCaptions(podcast.transcript);
+    if (!activeTranscript) return [];
+    const { cues } = parseCaptions(activeTranscript);
     return cues;
-  }, [podcast.transcript]);
+  }, [activeTranscript]);
 
   const detectedFormat = useMemo<CaptionFormat>(() => {
-    if (!podcast.transcript) return "txt";
-    return detectFormat(podcast.transcript);
-  }, [podcast.transcript]);
+    if (!activeTranscript) return "txt";
+    return detectFormat(activeTranscript);
+  }, [activeTranscript]);
 
   const hasCues = parsedCues.length > 0 && parsedCues.some((c) => c.startTime > 0 || c.endTime > 0);
 
@@ -75,41 +97,40 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
 
   const handleTimestampClick = useCallback((seconds: number) => {
     playerRef.current?.seekTo(seconds);
-    // Scroll the player into view so the user can see it playing
     document
-      .querySelector(".ted-player-card")
+      .querySelector(".sp-player-card")
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
   const dateLocale = language === "it" ? "it-IT" : "en-US";
 
   const handleCopyTranscript = useCallback(async () => {
-    if (!podcast.transcript) return;
+    if (!activeTranscript) return;
     try {
-      await navigator.clipboard.writeText(podcast.transcript);
+      await navigator.clipboard.writeText(activeTranscript);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch {
       /* clipboard not available */
     }
-  }, [podcast.transcript]);
+  }, [activeTranscript]);
 
   const handleDownloadTranscript = useCallback(
     (fmt: CaptionFormat) => {
-      if (!podcast.transcript) return;
+      if (!activeTranscript) return;
       let content: string;
       let extension: string;
       let mimeType: string;
       if (fmt === "srt") {
-        content = parsedCues.length > 0 ? serializeToSRT(parsedCues) : podcast.transcript;
+        content = parsedCues.length > 0 ? serializeToSRT(parsedCues) : activeTranscript;
         extension = "srt";
         mimeType = "application/x-subrip";
       } else if (fmt === "vtt") {
-        content = parsedCues.length > 0 ? serializeToVTT(parsedCues) : podcast.transcript;
+        content = parsedCues.length > 0 ? serializeToVTT(parsedCues) : activeTranscript;
         extension = "vtt";
         mimeType = "text/vtt";
       } else {
-        content = parsedCues.length > 0 ? serializeToPlainText(parsedCues) : podcast.transcript;
+        content = parsedCues.length > 0 ? serializeToPlainText(parsedCues) : activeTranscript;
         extension = "txt";
         mimeType = "text/plain";
       }
@@ -117,31 +138,32 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${podcast.slug}-transcript.${extension}`;
+      a.download = `${podcast.slug}-${selectedTranscriptLang}-transcript.${extension}`;
       a.click();
       URL.revokeObjectURL(url);
       setShowDownloadMenu(false);
     },
-    [podcast.transcript, podcast.slug, parsedCues]
+    [activeTranscript, podcast.slug, parsedCues, selectedTranscriptLang]
   );
 
   return (
     <>
       <ScrollIndicator />
 
-      {/* ── TED-style dark immersive hero ── */}
-      <div className="ted-detail-hero">
-        {/* Background cover blurred */}
+      {/* ── Spotify-style hero with gradient ── */}
+      <div className="sp-hero">
+        {/* Blurred background from cover */}
         {podcast.coverImage && (
-          <div className="ted-detail-hero-bg">
+          <div className="sp-hero-bg">
             <Image src={podcast.coverImage} alt="" fill className="object-cover" priority />
           </div>
         )}
+        <div className="sp-hero-gradient" />
 
-        <div className="ted-detail-hero-content">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="sp-hero-content">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Breadcrumb */}
-            <nav className="ted-breadcrumb">
+            <nav className="sp-breadcrumb">
               <Link href="/">{t.common.home}</Link>
               <ChevronIcon />
               <Link href="/podcasts">{t.podcasts.title}</Link>
@@ -149,9 +171,9 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
               <span>{podcast.title}</span>
             </nav>
 
-            <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-              {/* Cover */}
-              <div className="ted-detail-cover">
+            <div className="sp-hero-layout">
+              {/* Cover art with shadow */}
+              <div className="sp-cover">
                 {podcast.coverImage ? (
                   <Image
                     src={podcast.coverImage}
@@ -161,88 +183,66 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
                     priority
                   />
                 ) : (
-                  <div className="w-full h-full bg-base-300/50 flex items-center justify-center">
-                    <WaveIcon className="w-20 h-20 opacity-20" />
+                  <div className="sp-cover-placeholder">
+                    <WaveIcon className="w-16 h-16 opacity-30" />
                   </div>
                 )}
               </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0 py-2">
-                {/* Categories */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {podcast.categories?.map((cat) => (
-                    <Link
-                      key={cat.slug}
-                      href={`/podcasts?category=${cat.slug}`}
-                      className="ted-detail-tag"
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
-                </div>
+              {/* Meta info */}
+              <div className="sp-meta">
+                <span className="sp-type-label">
+                  {language === "it" ? "Episodio podcast" : "Podcast Episode"}
+                </span>
 
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight text-white">
-                  {podcast.title}
-                </h1>
+                <h1 className="sp-title">{podcast.title}</h1>
 
-                <EditButton href={`/podcasts/edit/${podcast.slug}`} authorId={podcast.author.id} />
-
-                {/* Author row */}
-                <div className="flex items-center gap-4 mt-5 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <div className="ted-detail-avatar">
-                      {podcast.author.image ? (
-                        <Image
-                          src={podcast.author.image}
-                          alt=""
-                          width={44}
-                          height={44}
-                          className="rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-sm font-semibold text-white">
-                          {podcast.author.name?.charAt(0)?.toUpperCase() || "U"}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm text-white">
-                        {podcast.author.name || t.common.anonymous}
-                      </p>
-                      <p className="text-xs text-white/50">
-                        {new Date(podcast.createdAt).toLocaleDateString(dateLocale, {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </p>
-                    </div>
+                {/* Author + date row */}
+                <div className="sp-author-row">
+                  <div className="sp-avatar">
+                    {podcast.author.image ? (
+                      <Image
+                        src={podcast.author.image}
+                        alt=""
+                        width={28}
+                        height={28}
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-bold text-white">
+                        {podcast.author.name?.charAt(0)?.toUpperCase() || "U"}
+                      </span>
+                    )}
                   </div>
+                  <span className="sp-author-name">
+                    {podcast.author.name || t.common.anonymous}
+                  </span>
+                  <span className="sp-dot">·</span>
+                  <span className="sp-date">
+                    {new Date(podcast.createdAt).toLocaleDateString(dateLocale, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
                   {podcast.duration && (
-                    <div className="flex items-center gap-1.5 text-sm text-white/60">
-                      <ClockIcon className="w-4 h-4" />
-                      <span>{formatDuration(podcast.duration)}</span>
-                    </div>
-                  )}
-                  {podcast.transcript && (
-                    <div className="flex items-center gap-1.5 text-sm text-white/60">
-                      <TranscriptIcon className="w-4 h-4" />
-                      <span>{t.podcasts.transcriptBadge}</span>
-                    </div>
+                    <>
+                      <span className="sp-dot">·</span>
+                      <span className="sp-date">{formatDuration(podcast.duration)}</span>
+                    </>
                   )}
                 </div>
 
-                {/* Tags */}
-                {podcast.tags && podcast.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-4">
-                    {podcast.tags.map((tag) => (
+                {/* Categories as chips */}
+                {podcast.categories && podcast.categories.length > 0 && (
+                  <div className="sp-chips">
+                    {podcast.categories.map((cat) => (
                       <Link
-                        key={tag.slug}
-                        href={`/podcasts?tag=${tag.slug}`}
-                        className="ted-detail-hashtag"
+                        key={cat.slug}
+                        href={`/podcasts?category=${cat.slug}`}
+                        className="sp-chip"
                       >
-                        #{tag.name}
+                        {cat.name}
                       </Link>
                     ))}
                   </div>
@@ -253,131 +253,169 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
         </div>
       </div>
 
-      {/* ── Player section ── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 ted-player-wrapper">
-        <div className="ted-player-card">
-          <WaveformPlayer ref={playerRef} src={podcast.audioUrl} />
-
-          {/* Reactions & Share */}
-          <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-base-content/8">
-            <ReactionBar podcastId={podcast.id} />
-            <ShareButtons
-              title={podcast.title}
-              url={
-                typeof window !== "undefined" ? window.location.href : `/podcasts/${podcast.slug}`
-              }
-              description={podcast.description}
-            />
+      {/* ── Action bar (Spotify-style play + actions row) ── */}
+      <div className="sp-action-bar">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="sp-actions-row">
+            <div className="sp-actions-left">
+              <EditButton href={`/podcasts/edit/${podcast.slug}`} authorId={podcast.author.id} />
+              {hasTranscripts && (
+                <div className="sp-badge">
+                  <TranscriptIcon className="w-3.5 h-3.5" />
+                  <span>{t.podcasts.transcriptBadge}</span>
+                </div>
+              )}
+            </div>
+            <div className="sp-actions-right">
+              <ReactionBar podcastId={podcast.id} />
+              <ShareButtons
+                title={podcast.title}
+                url={
+                  typeof window !== "undefined" ? window.location.href : `/podcasts/${podcast.slug}`
+                }
+                description={podcast.description}
+              />
+            </div>
           </div>
         </div>
       </div>
 
+      {/* ── Player card ── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="sp-player-card">
+          <WaveformPlayer ref={playerRef} src={podcast.audioUrl} />
+        </div>
+      </div>
+
+      {/* ── Tags row ── */}
+      {podcast.tags && podcast.tags.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          <div className="sp-tags">
+            {podcast.tags.map((tag) => (
+              <Link key={tag.slug} href={`/podcasts?tag=${tag.slug}`} className="sp-tag">
+                #{tag.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Content section ── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 sp-content-section">
         {/* Tabs */}
-        {podcast.transcript ? (
-          <div className="ted-tabs mb-8">
+        {hasTranscripts ? (
+          <div className="sp-tabs">
             <button
               onClick={() => setActiveTab("description")}
-              className={`ted-tab ${activeTab === "description" ? "ted-tab-active" : ""}`}
+              className={`sp-tab ${activeTab === "description" ? "sp-tab--active" : ""}`}
             >
-              <DescriptionIcon className="w-4 h-4" />
               {t.podcasts.description}
             </button>
             <button
               onClick={() => setActiveTab("transcript")}
-              className={`ted-tab ${activeTab === "transcript" ? "ted-tab-active" : ""}`}
+              className={`sp-tab ${activeTab === "transcript" ? "sp-tab--active" : ""}`}
             >
-              <TranscriptIcon className="w-4 h-4" />
               {t.podcasts.transcript}
             </button>
           </div>
         ) : null}
 
         {/* Description panel */}
-        {(activeTab === "description" || !podcast.transcript) && podcast.description && (
-          <div className="ted-content-panel">
-            <p className="text-base-content/75 whitespace-pre-wrap leading-relaxed text-lg">
-              {podcast.description}
-            </p>
+        {(activeTab === "description" || !hasTranscripts) && podcast.description && (
+          <div className="sp-panel">
+            <p className="sp-description-text">{podcast.description}</p>
           </div>
         )}
 
         {/* Transcript panel */}
-        {activeTab === "transcript" && podcast.transcript && (
-          <div className="ted-content-panel">
+        {activeTab === "transcript" && hasTranscripts && (
+          <div className="sp-panel">
+            {/* Language selector (only if multiple transcripts) */}
+            {availableLangs.length > 1 && (
+              <div className="sp-transcript-lang-selector">
+                {availableLangs.map((lang) => {
+                  const langInfo = WHISPER_LANGUAGES.find((l) => l.code === lang);
+                  const label = langInfo
+                    ? language === "it"
+                      ? langInfo.labelIt
+                      : langInfo.label
+                    : lang.toUpperCase();
+                  return (
+                    <button
+                      key={lang}
+                      onClick={() => setSelectedTranscriptLang(lang)}
+                      className={`sp-transcript-lang-btn ${selectedTranscriptLang === lang ? "sp-transcript-lang-btn--active" : ""}`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-base-content/8">
-              <h3 className="font-bold flex items-center gap-2 text-base">
-                <TranscriptIcon className="w-5 h-5 text-primary" />
+            <div className="sp-transcript-toolbar">
+              <h3 className="sp-transcript-title">
+                <TranscriptIcon className="w-5 h-5" />
                 {t.podcasts.transcript}
               </h3>
-              <div className="flex items-center gap-1">
+              <div className="sp-transcript-actions">
                 <button
                   onClick={handleCopyTranscript}
-                  className="btn btn-ghost btn-xs gap-1"
+                  className="sp-icon-btn"
                   title={t.podcasts.copyTranscript}
                 >
                   {copySuccess ? (
-                    <CheckIcon className="w-4 h-4 text-success" />
+                    <CheckIcon className="w-4 h-4 text-green-400" />
                   ) : (
                     <CopyIcon className="w-4 h-4" />
                   )}
-                  <span className="hidden sm:inline">
+                  <span className="hidden sm:inline text-xs">
                     {copySuccess ? t.podcasts.copied : t.podcasts.copyTranscript}
                   </span>
                 </button>
                 <div className="relative">
                   <button
                     onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                    className="btn btn-ghost btn-xs gap-1"
+                    className="sp-icon-btn"
                     title={t.podcasts.downloadTranscript}
                   >
                     <DownloadIcon className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t.podcasts.downloadTranscript}</span>
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <span className="hidden sm:inline text-xs">
+                      {t.podcasts.downloadTranscript}
+                    </span>
+                    <ChevronDownIcon className="w-3 h-3" />
                   </button>
                   {showDownloadMenu && (
-                    <div className="absolute right-0 top-full mt-1 z-20 bg-base-100 shadow-xl border border-base-content/10 rounded-lg py-1 min-w-[120px]">
+                    <div className="sp-dropdown">
                       <button
                         onClick={() => handleDownloadTranscript("srt")}
-                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-base-content/5 transition-colors"
+                        className="sp-dropdown-item"
                       >
                         SRT
                       </button>
                       <button
                         onClick={() => handleDownloadTranscript("vtt")}
-                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-base-content/5 transition-colors"
+                        className="sp-dropdown-item"
                       >
                         WebVTT
                       </button>
                       <button
                         onClick={() => handleDownloadTranscript("txt")}
-                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-base-content/5 transition-colors"
+                        className="sp-dropdown-item"
                       >
                         TXT
                       </button>
                     </div>
                   )}
                 </div>
-                <button
-                  onClick={() => setTranscriptOpen(!transcriptOpen)}
-                  className="btn btn-ghost btn-xs gap-1"
-                >
+                <button onClick={() => setTranscriptOpen(!transcriptOpen)} className="sp-icon-btn">
                   {transcriptOpen ? (
                     <CollapseIcon className="w-4 h-4" />
                   ) : (
                     <ExpandIcon className="w-4 h-4" />
                   )}
-                  <span className="hidden sm:inline">
+                  <span className="hidden sm:inline text-xs">
                     {transcriptOpen ? t.podcasts.collapseAll : t.podcasts.expandAll}
                   </span>
                 </button>
@@ -385,38 +423,32 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
             </div>
 
             {/* Transcript body */}
-            <div
-              className={`ted-transcript-body ${transcriptOpen ? "ted-transcript-expanded" : ""}`}
-            >
+            <div className={`sp-transcript-body ${transcriptOpen ? "sp-transcript-expanded" : ""}`}>
               {hasCues ? (
-                <div className="space-y-1">
+                <div className="sp-cue-list">
                   {parsedCues.map((cue) => (
-                    <div
-                      key={cue.id}
-                      className="flex gap-3 py-1.5 group hover:bg-base-content/3 rounded px-2 -mx-2 transition-colors"
-                    >
+                    <div key={cue.id} className="sp-cue">
                       <button
                         type="button"
                         onClick={() => handleTimestampClick(cue.startTime)}
-                        className="text-xs font-mono text-primary/70 pt-0.5 select-none shrink-0 min-w-[4rem] text-right hover:text-primary hover:underline cursor-pointer transition-colors"
+                        className="sp-cue-time"
                         title={
                           language === "it" ? "Riproduci da questo punto" : "Play from this point"
                         }
                       >
+                        <PlaySmallIcon className="w-3 h-3 opacity-0 group-hover:opacity-100" />
                         {formatTimestampShort(cue.startTime)}
                       </button>
-                      <p className="text-base-content/75 leading-relaxed flex-1">{cue.text}</p>
+                      <p className="sp-cue-text">{cue.text}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="whitespace-pre-wrap leading-relaxed text-base-content/75">
-                  {podcast.transcript}
-                </p>
+                <p className="sp-plain-transcript">{activeTranscript}</p>
               )}
             </div>
             {!transcriptOpen && (
-              <button onClick={() => setTranscriptOpen(true)} className="ted-show-more">
+              <button onClick={() => setTranscriptOpen(true)} className="sp-show-more">
                 {t.podcasts.showFullTranscript}
               </button>
             )}
@@ -425,27 +457,27 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
 
         {/* Author Bio */}
         {podcast.author.bio && (
-          <div className="ted-author-card mt-10">
-            <div className="flex items-start gap-5">
-              <div className="ted-author-avatar">
+          <div className="sp-author-card">
+            <div className="sp-author-inner">
+              <div className="sp-author-avatar-lg">
                 {podcast.author.image ? (
                   <Image
                     src={podcast.author.image}
                     alt=""
-                    width={64}
-                    height={64}
+                    width={72}
+                    height={72}
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <span className="text-xl font-bold">
+                  <span className="text-2xl font-bold">
                     {podcast.author.name?.charAt(0)?.toUpperCase() || "U"}
                   </span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="ted-author-label">{t.podcasts.hostedBy}</p>
-                <h4 className="font-bold text-xl mb-1">{podcast.author.name}</h4>
-                <p className="text-base-content/55 text-sm leading-relaxed">{podcast.author.bio}</p>
+                <p className="sp-author-label">{t.podcasts.hostedBy}</p>
+                <h4 className="sp-author-name-lg">{podcast.author.name}</h4>
+                <p className="sp-author-bio">{podcast.author.bio}</p>
               </div>
             </div>
           </div>
@@ -478,13 +510,27 @@ function WaveIcon({ className }: { className?: string }) {
 function ChevronIcon() {
   return (
     <svg
-      className="w-3.5 h-3.5 opacity-40"
+      className="w-3 h-3 opacity-40"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2.5}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
       fill="none"
       viewBox="0 0 24 24"
       stroke="currentColor"
       strokeWidth={2}
     >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
     </svg>
   );
 }
@@ -507,38 +553,10 @@ function TranscriptIcon({ className }: { className?: string }) {
   );
 }
 
-function ClockIcon({ className }: { className?: string }) {
+function PlaySmallIcon({ className }: { className?: string }) {
   return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-}
-
-function DescriptionIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"
-      />
+    <svg className={className} viewBox="0 0 16 16" fill="currentColor">
+      <path d="M4 2.5v11l9-5.5z" />
     </svg>
   );
 }

@@ -60,6 +60,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/src/generated       ./src/generat
 # Prisma CLI + seed runtime (isolated to avoid pnpm symlink issues)
 COPY --from=prisma-cli --chown=nextjs:nodejs /prisma-cli/node_modules  /app/prisma-cli/node_modules
 COPY --from=builder    --chown=nextjs:nodejs /app/prisma/seed.ts       /app/prisma-cli/prisma/seed.ts
+COPY --from=builder    --chown=nextjs:nodejs /app/prisma/migrate-transcripts.ts /app/prisma-cli/prisma/migrate-transcripts.ts
 COPY --from=builder    --chown=nextjs:nodejs /app/src/generated        /app/prisma-cli/src/generated
 
 # Entrypoint

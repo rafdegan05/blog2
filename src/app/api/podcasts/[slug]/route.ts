@@ -12,6 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       author: { select: { id: true, name: true, image: true, bio: true } },
       categories: true,
       tags: true,
+      transcripts: { select: { language: true, content: true } },
     },
   });
 
@@ -19,7 +20,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Podcast not found" }, { status: 404 });
   }
 
-  return NextResponse.json(podcast);
+  // Backward compat: if old transcript column has data but no PodcastTranscript rows exist,
+  // synthesize a transcripts array so the UI works during migration
+  const response: Record<string, unknown> = { ...podcast };
+  if ((!podcast.transcripts || podcast.transcripts.length === 0) && podcast.transcript) {
+    response.transcripts = [{ language: "en", content: podcast.transcript }];
+  }
+
+  return NextResponse.json(response);
 }
 
 // PUT /api/podcasts/[slug]
@@ -51,7 +59,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     published,
     categories,
     tags,
-    transcript,
+    transcripts,
   } = body;
 
   const podcast = await prisma.podcast.update({
@@ -63,7 +71,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       ...(coverImage !== undefined && { coverImage }),
       ...(duration !== undefined && { duration }),
       ...(published !== undefined && { published }),
-      ...(transcript !== undefined && { transcript }),
       ...(categories && {
         categories: {
           set: [],
@@ -99,8 +106,54 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       author: { select: { id: true, name: true, image: true } },
       categories: true,
       tags: true,
+      transcripts: { select: { language: true, content: true } },
     },
   });
+
+  // Upsert transcripts if provided
+  if (transcripts && Array.isArray(transcripts)) {
+    // Get existing transcript languages for this podcast
+    const existingTranscripts = await prisma.podcastTranscript.findMany({
+      where: { podcastId: existing.id },
+      select: { language: true },
+    });
+    const existingLangs = new Set(existingTranscripts.map((t) => t.language));
+    const incomingLangs = new Set(
+      transcripts
+        .filter((tr: { language: string; content: string }) => tr.content)
+        .map((tr: { language: string; content: string }) => tr.language)
+    );
+
+    // Delete transcripts for languages no longer present
+    const toDelete = [...existingLangs].filter((lang) => !incomingLangs.has(lang));
+    if (toDelete.length > 0) {
+      await prisma.podcastTranscript.deleteMany({
+        where: { podcastId: existing.id, language: { in: toDelete } },
+      });
+    }
+
+    // Upsert each transcript
+    for (const tr of transcripts as { language: string; content: string }[]) {
+      if (!tr.content) continue;
+      await prisma.podcastTranscript.upsert({
+        where: { podcastId_language: { podcastId: existing.id, language: tr.language } },
+        create: { podcastId: existing.id, language: tr.language, content: tr.content },
+        update: { content: tr.content },
+      });
+    }
+
+    // Re-fetch with updated transcripts
+    const updated = await prisma.podcast.findUnique({
+      where: { slug: podcast.slug },
+      include: {
+        author: { select: { id: true, name: true, image: true } },
+        categories: true,
+        tags: true,
+        transcripts: { select: { language: true, content: true } },
+      },
+    });
+    return NextResponse.json(updated);
+  }
 
   return NextResponse.json(podcast);
 }

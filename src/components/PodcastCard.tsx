@@ -17,6 +17,7 @@ interface PodcastCardProps {
     categories: { name: string; slug: string }[];
     tags: { name: string; slug: string }[];
     transcript?: string | null;
+    transcripts?: { language: string }[];
   };
   /** Render as a wider featured/hero layout */
   featured?: boolean;
@@ -165,7 +166,7 @@ export default function PodcastCard({ podcast, featured = false }: PodcastCardPr
           <div className="ted-duration-pill">{formatDuration(podcast.duration)}</div>
         )}
         {/* Transcript badge */}
-        {podcast.transcript && (
+        {(podcast.transcript || (podcast.transcripts && podcast.transcripts.length > 0)) && (
           <div className="ted-transcript-badge">
             <TranscriptIcon className="w-3 h-3" />
           </div>
