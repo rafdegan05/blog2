@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
     audioUrl,
     coverImage,
     duration,
+    language,
     published,
     categories,
     tags,
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
       audioUrl,
       coverImage,
       duration,
+      language: language || undefined,
       published: published || false,
       authorId: session.user.id,
       categories: categories?.length

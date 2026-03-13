@@ -16,6 +16,7 @@ interface PodcastData {
   audioUrl: string;
   coverImage?: string;
   duration?: number;
+  language?: string;
   transcripts?: { language: string; content: string }[];
   published: boolean;
   categories: { name: string }[];
@@ -35,6 +36,8 @@ export default function EditPodcastPage() {
   const [audioUrl, setAudioUrl] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [duration, setDuration] = useState("");
+  const [podcastLanguage, setPodcastLanguage] = useState("");
+  const [detectingLanguage, setDetectingLanguage] = useState(false);
   const [categories, setCategories] = useState("");
   const [tags, setTags] = useState("");
   const [transcripts, setTranscripts] = useState<Record<string, string>>({});
@@ -102,13 +105,17 @@ export default function EditPodcastPage() {
         }
         const data = await res.json();
         setTranscripts((prev) => ({ ...prev, [activeTranscriptLang]: data.transcript }));
+        // If Whisper auto-detected a language, set it as the podcast language
+        if (data.detectedLanguage && !podcastLanguage) {
+          setPodcastLanguage(data.detectedLanguage);
+        }
       } catch {
         setError(t.podcasts.generateTranscriptError);
       } finally {
         setGeneratingTranscript(false);
       }
     },
-    [audioUrl, t, activeTranscriptLang]
+    [audioUrl, t, activeTranscriptLang, podcastLanguage]
   );
 
   useEffect(() => {
@@ -136,6 +143,7 @@ export default function EditPodcastPage() {
         setAudioUrl(podcast.audioUrl);
         setCoverImage(podcast.coverImage || "");
         setDuration(podcast.duration ? String(podcast.duration) : "");
+        setPodcastLanguage(podcast.language || "");
         setPublished(podcast.published);
         // Load transcripts as Record<lang, content>
         if (podcast.transcripts && podcast.transcripts.length > 0) {
@@ -215,6 +223,7 @@ export default function EditPodcastPage() {
           audioUrl,
           coverImage: coverImage || undefined,
           duration: duration ? parseInt(duration) : undefined,
+          language: podcastLanguage || undefined,
           published,
           transcripts: Object.entries(transcripts)
             .filter(([, content]) => content)
@@ -544,10 +553,94 @@ export default function EditPodcastPage() {
                   />
                 </div>
               </div>
+              {/* Episode language with auto-detect */}
+              <div className="form-control mt-4">
+                <label className="label py-1" htmlFor="edit-podcast-language">
+                  <span className="label-text text-xs font-medium uppercase tracking-wide opacity-60">
+                    {t.podcasts.episodeLanguageLabel}
+                  </span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <select
+                    id="edit-podcast-language"
+                    className="select select-bordered flex-1"
+                    value={podcastLanguage}
+                    onChange={(e) => setPodcastLanguage(e.target.value)}
+                  >
+                    <option value="">{t.podcasts.selectLanguage}</option>
+                    {WHISPER_LANGUAGES.map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {uiLang === "it" ? l.labelIt : l.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm gap-1.5"
+                    disabled={!audioUrl || detectingLanguage}
+                    onClick={async () => {
+                      if (!audioUrl) return;
+                      setDetectingLanguage(true);
+                      setError("");
+                      try {
+                        const res = await fetch("/api/podcasts/transcribe", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ audioUrl, language: "auto", format: "txt" }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          if (data.detectedLanguage) {
+                            setPodcastLanguage(data.detectedLanguage);
+                            if (!transcripts[data.detectedLanguage]) {
+                              setTranscripts((prev) => ({
+                                ...prev,
+                                [data.detectedLanguage]: data.transcript,
+                              }));
+                              setActiveTranscriptLang(data.detectedLanguage);
+                            }
+                          } else {
+                            setError(t.podcasts.detectLanguageError);
+                          }
+                        } else {
+                          const data = await res.json().catch(() => null);
+                          setError(data?.error || t.podcasts.detectLanguageError);
+                        }
+                      } catch {
+                        setError(t.podcasts.detectLanguageError);
+                      } finally {
+                        setDetectingLanguage(false);
+                      }
+                    }}
+                  >
+                    {detectingLanguage ? (
+                      <span className="loading loading-spinner loading-xs" />
+                    ) : (
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                        />
+                      </svg>
+                    )}
+                    {t.podcasts.detectLanguage}
+                  </button>
+                </div>
+                <label className="label py-0.5">
+                  <span className="label-text-alt text-xs opacity-50">
+                    {t.podcasts.detectLanguageHint}
+                  </span>
+                </label>
+              </div>
             </div>
           </div>
-
-          {/* ── Section 4: Transcript ── */}
           <div className="podcast-form-section">
             <div className="podcast-form-section-header">
               <div className="podcast-form-section-icon">

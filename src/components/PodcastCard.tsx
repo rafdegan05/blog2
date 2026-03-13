@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
+import { WHISPER_LANGUAGES } from "@/lib/captions";
 
 interface PodcastCardProps {
   podcast: {
@@ -12,6 +13,7 @@ interface PodcastCardProps {
     coverImage?: string | null;
     audioUrl: string;
     duration?: number | null;
+    language?: string | null;
     createdAt: string;
     author: { name?: string | null; image?: string | null };
     categories: { name: string; slug: string }[];
@@ -38,7 +40,7 @@ function formatMinutes(seconds: number): string {
 }
 
 export default function PodcastCard({ podcast, featured = false }: PodcastCardProps) {
-  const { t } = useTranslation();
+  const { t, language: uiLang } = useTranslation();
 
   const formattedDate = new Date(podcast.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
@@ -224,6 +226,22 @@ export default function PodcastCard({ podcast, featured = false }: PodcastCardPr
                 <span className="whitespace-nowrap">{formatMinutes(podcast.duration)}</span>
               </>
             )}
+            {podcast.language &&
+              (() => {
+                const langInfo = WHISPER_LANGUAGES.find((l) => l.code === podcast.language);
+                return (
+                  <>
+                    <span>·</span>
+                    <span className="whitespace-nowrap">
+                      {langInfo
+                        ? uiLang === "it"
+                          ? langInfo.labelIt
+                          : langInfo.label
+                        : podcast.language.toUpperCase()}
+                    </span>
+                  </>
+                );
+              })()}
           </div>
         </div>
       </div>

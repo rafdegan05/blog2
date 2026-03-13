@@ -56,6 +56,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     audioUrl,
     coverImage,
     duration,
+    language,
     published,
     categories,
     tags,
@@ -70,6 +71,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       ...(audioUrl && { audioUrl }),
       ...(coverImage !== undefined && { coverImage }),
       ...(duration !== undefined && { duration }),
+      ...(language !== undefined && { language: language || null }),
       ...(published !== undefined && { published }),
       ...(categories && {
         categories: {

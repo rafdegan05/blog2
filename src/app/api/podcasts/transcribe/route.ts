@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { canCreateContent } from "@/lib/permissions";
+import { detectLanguage } from "@/lib/language-detect";
 import { readFile, writeFile, unlink, mkdir, access } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
@@ -202,11 +203,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "audioUrl is required" }, { status: 400 });
     }
 
-    // Language for Whisper (default: "en")
-    const whisperLang =
-      typeof language === "string" && language.length >= 2
+    // Language for Whisper: "auto" or empty/missing means auto-detect
+    const isAutoDetect = !language || language === "auto";
+    const whisperLang = isAutoDetect
+      ? null
+      : typeof language === "string" && language.length >= 2
         ? language.slice(0, 2).toLowerCase()
-        : "en";
+        : null;
 
     // Output format: "srt" | "vtt" | "txt" (default: "srt")
     const outputFormat =
@@ -275,7 +278,7 @@ export async function POST(request: NextRequest) {
       chunk_length_s: 30,
       stride_length_s: 5,
       return_timestamps: true,
-      language: whisperLang,
+      ...(whisperLang ? { language: whisperLang } : {}),
     });
 
     // Clean up
@@ -363,10 +366,24 @@ export async function POST(request: NextRequest) {
         : (result as { text: string }).text;
     }
 
+    const finalText = transcriptText.trim();
+
+    // Detect language from transcript text when auto-detect was requested
+    let detectedLang = whisperLang || "en";
+    let detectedLanguage: string | undefined;
+    if (isAutoDetect) {
+      const detection = detectLanguage(finalText);
+      if (detection) {
+        detectedLang = detection.language;
+        detectedLanguage = detection.language;
+      }
+    }
+
     return NextResponse.json(
       {
-        transcript: transcriptText.trim(),
-        language: whisperLang,
+        transcript: finalText,
+        language: detectedLang,
+        detectedLanguage,
         format: outputFormat,
       },
       { status: 200 }

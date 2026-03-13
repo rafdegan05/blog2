@@ -360,6 +360,12 @@ export const it: Translations = {
     addLanguage: "+ Aggiungi lingua",
     removeLanguage: "Rimuovi lingua",
     addLanguageHint: "Seleziona una lingua sopra per aggiungere una trascrizione.",
+    episodeLanguageLabel: "Lingua dell'episodio",
+    selectLanguage: "Seleziona lingua…",
+    detectLanguage: "Rileva",
+    detectLanguageHint: "Rileva automaticamente la lingua parlata dall'audio tramite IA",
+    detectLanguageError:
+      "Rilevamento lingua fallito. Assicurati che un file audio sia stato caricato.",
     hostedBy: "Condotto da",
     deleteBtn: "Elimina",
     deleteConfirmShort: "Eliminare questo podcast?",

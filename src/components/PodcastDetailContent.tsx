@@ -35,6 +35,7 @@ interface PodcastDetailContentProps {
     audioUrl: string;
     coverImage?: string;
     duration?: number;
+    language?: string;
     transcripts?: PodcastTranscript[];
     createdAt: string;
     author: {
@@ -231,6 +232,39 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
                       <span className="sp-date">{formatDuration(podcast.duration)}</span>
                     </>
                   )}
+                  {podcast.language &&
+                    (() => {
+                      const langInfo = WHISPER_LANGUAGES.find((l) => l.code === podcast.language);
+                      const langLabel = langInfo
+                        ? language === "it"
+                          ? langInfo.labelIt
+                          : langInfo.label
+                        : podcast.language.toUpperCase();
+                      return (
+                        <>
+                          <span className="sp-dot">·</span>
+                          <span
+                            className="sp-date sp-lang-badge"
+                            title={t.podcasts.episodeLanguageLabel}
+                          >
+                            <svg
+                              className="w-3.5 h-3.5 inline-block mr-0.5 -mt-0.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802"
+                              />
+                            </svg>
+                            {langLabel}
+                          </span>
+                        </>
+                      );
+                    })()}
                 </div>
 
                 {/* Categories as chips */}
