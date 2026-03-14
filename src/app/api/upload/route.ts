@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { canCreateContent } from "@/lib/permissions";
-import { writeFile, mkdir } from "fs/promises";
+import { uploadToS3 } from "@/lib/s3";
 import path from "path";
 import crypto from "crypto";
 
@@ -79,19 +79,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create upload directory
+    // Upload to S3
     const uploadDir = isImage ? "uploads/images" : "uploads/audio";
-    const absoluteDir = path.join(process.cwd(), "public", uploadDir);
-    await mkdir(absoluteDir, { recursive: true });
-
-    // Generate unique filename and write file
     const uniqueName = generateUniqueFilename(file.name);
-    const filePath = path.join(absoluteDir, uniqueName);
+    const s3Key = `${uploadDir}/${uniqueName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filePath, buffer);
 
-    // Return the public URL
-    const url = `/${uploadDir}/${uniqueName}`;
+    await uploadToS3(buffer, s3Key, file.type);
+
+    // Return the internal path (used by the serving route)
+    const url = `/${s3Key}`;
 
     return NextResponse.json(
       {

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { canCreateContent } from "@/lib/permissions";
 import { detectLanguage } from "@/lib/language-detect";
-import { readFile, writeFile, unlink, mkdir, access } from "fs/promises";
+import { getFromS3, existsInS3 } from "@/lib/s3";
+import { writeFile, unlink, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 import { execFile } from "child_process";
@@ -215,32 +216,24 @@ export async function POST(request: NextRequest) {
     const outputFormat =
       typeof format === "string" && ["srt", "vtt", "txt"].includes(format) ? format : "srt";
 
-    // Read audio file from the filesystem
+    // Read audio file from S3 or remote URL
     let audioBuffer: Buffer;
 
-    if (audioUrl.startsWith("/uploads/") || audioUrl.startsWith("/public/")) {
-      // Local file – resolve relative to public/
-      const relativePath = audioUrl.replace(/^\/public\//, "/").replace(/^\//, "");
-      const absolutePath = path.join(process.cwd(), "public", relativePath);
+    if (audioUrl.startsWith("/uploads/")) {
+      // S3 file – key is the path without leading slash
+      const s3Key = audioUrl.replace(/^\//, "");
 
-      // Security: ensure the path is within public/uploads
-      const uploadsDir = path.resolve(path.join(process.cwd(), "public", "uploads"));
-      const resolved = path.resolve(absolutePath);
-      if (!resolved.startsWith(uploadsDir)) {
-        return NextResponse.json({ error: "Invalid audio path" }, { status: 400 });
-      }
-
-      // Verify the file exists before attempting to read
-      try {
-        await access(resolved);
-      } catch {
+      // Verify the file exists in S3
+      const exists = await existsInS3(s3Key);
+      if (!exists) {
         return NextResponse.json(
           { error: `Audio file not found: ${audioUrl}. Please upload the file first.` },
           { status: 404 }
         );
       }
 
-      audioBuffer = await readFile(resolved);
+      const result = await getFromS3(s3Key);
+      audioBuffer = result.buffer;
     } else if (audioUrl.startsWith("http://") || audioUrl.startsWith("https://")) {
       // Remote file – download it
       const response = await fetch(audioUrl);

@@ -1,26 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, stat } from "fs/promises";
-import path from "path";
-
-const CONTENT_TYPES: Record<string, string> = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".gif": "image/gif",
-  ".webp": "image/webp",
-  ".svg": "image/svg+xml",
-  ".mp3": "audio/mpeg",
-  ".wav": "audio/wav",
-  ".ogg": "audio/ogg",
-  ".aac": "audio/aac",
-  ".m4a": "audio/mp4",
-  ".webm": "audio/webm",
-};
+import { getFromS3 } from "@/lib/s3";
 
 /**
- * Serve uploaded files from public/uploads.
- * Needed because Next.js standalone mode only serves files
- * that existed in public/ at build time; runtime uploads get 404.
+ * Serve uploaded files from S3.
+ * The URL path `/uploads/images/foo.jpg` maps to S3 key `uploads/images/foo.jpg`.
  */
 export async function GET(
   _request: NextRequest,
@@ -28,28 +11,20 @@ export async function GET(
 ) {
   const { path: segments } = await params;
 
-  // Guard against directory-traversal
-  const uploadsDir = path.resolve(path.join(process.cwd(), "public", "uploads"));
-  const filePath = path.resolve(path.join(uploadsDir, ...segments));
-
-  if (!filePath.startsWith(uploadsDir)) {
+  // Validate segments — no ".." or empty parts allowed
+  if (segments.some((s) => s === ".." || s === "" || s.includes("\0"))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
+  const s3Key = `uploads/${segments.join("/")}`;
+
   try {
-    const [fileBuffer, fileStat] = await Promise.all([readFile(filePath), stat(filePath)]);
+    const { buffer, contentType } = await getFromS3(s3Key);
 
-    if (fileStat.isDirectory()) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    const ext = path.extname(filePath).toLowerCase();
-    const contentType = CONTENT_TYPES[ext] || "application/octet-stream";
-
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(buffer, {
       headers: {
         "Content-Type": contentType,
-        "Content-Length": String(fileStat.size),
+        "Content-Length": String(buffer.length),
         "Cache-Control": "public, max-age=31536000, immutable",
       },
     });

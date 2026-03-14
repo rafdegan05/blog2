@@ -66,9 +66,6 @@ COPY --from=builder    --chown=nextjs:nodejs /app/src/generated        /app/pris
 # Entrypoint
 COPY scripts/start.sh ./start.sh
 RUN sed -i 's/\r$//' ./start.sh && chmod +x ./start.sh \
- && mkdir -p /app/public/uploads/images /app/public/uploads/audio \
- && chown -R nextjs:nodejs /app/public/uploads
-
 USER nextjs
 EXPOSE 3000
 

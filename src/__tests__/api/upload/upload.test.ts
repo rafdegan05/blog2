@@ -2,10 +2,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { mockSession, mockNoSession, resetAllMocks } from "@/__tests__/helpers/api-helpers";
 
-// Mock fs/promises
-vi.mock("fs/promises", () => ({
-  writeFile: vi.fn().mockResolvedValue(undefined),
-  mkdir: vi.fn().mockResolvedValue(undefined),
+// Mock S3 client
+vi.mock("@/lib/s3", () => ({
+  uploadToS3: vi.fn().mockResolvedValue("uploads/images/mock-key.png"),
 }));
 
 import { POST } from "@/app/api/upload/route";
