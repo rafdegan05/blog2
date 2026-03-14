@@ -571,6 +571,11 @@ export const it: Translations = {
     collapse: "Comprimi",
     expand: "Espandi",
     collapsedReplies: "{n} risposte nascoste — clicca per espandere",
+    repliesWord: "risposte",
+    collapseAll: "Comprimi tutti",
+    expandAll: "Espandi tutti",
+    sortNewest: "Pi\u00f9 recenti",
+    sortOldest: "Meno recenti",
   },
 
   // ─── Reactions ───

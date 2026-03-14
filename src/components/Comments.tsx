@@ -1,13 +1,25 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, createContext, useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ReactionBar from "@/components/ReactionBar";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import MarkdownEditor from "@/components/MarkdownEditor";
 import { useTranslation } from "@/components/LanguageProvider";
+
+/* ── Collapse context (for collapse-all / expand-all) ── */
+
+interface CollapseCtx {
+  collapseSignal: number;
+  expandSignal: number;
+}
+
+const CollapseContext = createContext<CollapseCtx>({
+  collapseSignal: 0,
+  expandSignal: 0,
+});
 
 /* ── Types ── */
 
@@ -23,6 +35,8 @@ interface CommentsProps {
   postId: string;
   initialComments: CommentData[];
 }
+
+type SortMode = "newest" | "oldest";
 
 /* ── Helpers ── */
 
@@ -47,6 +61,20 @@ function countAll(comments: CommentData[]): number {
   return comments.reduce((sum, c) => sum + 1 + (c.replies ? countAll(c.replies) : 0), 0);
 }
 
+/** Depth-based thread-line color classes */
+const THREAD_COLORS = [
+  "rc-line-blue",
+  "rc-line-violet",
+  "rc-line-teal",
+  "rc-line-amber",
+  "rc-line-rose",
+  "rc-line-green",
+];
+
+function threadColor(depth: number) {
+  return THREAD_COLORS[depth % THREAD_COLORS.length];
+}
+
 /* ── Avatar ── */
 
 function Avatar({
@@ -58,9 +86,10 @@ function Avatar({
   image?: string | null;
   size?: number;
 }) {
-  const cls = size <= 32 ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+  const cls =
+    size <= 28 ? "w-7 h-7 text-[10px]" : size <= 32 ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
   return (
-    <div className={`comment-avatar ${cls}`}>
+    <div className={`rc-avatar ${cls}`}>
       {image ? (
         <Image
           src={image}
@@ -77,7 +106,7 @@ function Avatar({
 }
 
 /* ═══════════════════════════════════════
-   CommentItem
+   CommentItem — Reddit-style
    ═══════════════════════════════════════ */
 
 function CommentItem({
@@ -98,6 +127,7 @@ function CommentItem({
   const { data: session } = useSession();
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
+  const { collapseSignal, expandSignal } = useContext(CollapseContext);
 
   const [showReply, setShowReply] = useState(false);
   const [replyContent, setReplyContent] = useState("");
@@ -108,24 +138,51 @@ function CommentItem({
   const [saving, setSaving] = useState(false);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+
+  /* Auto-collapse deep threads (depth >= 4) */
+  const [collapsed, setCollapsed] = useState(depth >= 4);
+
+  /* React to global collapse / expand signals */
+  const [lastCollapseSignal, setLastCollapseSignal] = useState(collapseSignal);
+  const [lastExpandSignal, setLastExpandSignal] = useState(expandSignal);
+
+  if (collapseSignal !== lastCollapseSignal) {
+    setLastCollapseSignal(collapseSignal);
+    setCollapsed(true);
+  }
+  if (expandSignal !== lastExpandSignal) {
+    setLastExpandSignal(expandSignal);
+    setCollapsed(false);
+  }
 
   const isOwner = session?.user?.id === comment.author.id;
   const hasReplies = comment.replies && comment.replies.length > 0;
+  const replyCount = comment.replies ? countAll(comment.replies) : 0;
 
   /* ── Reply ── */
   const handleReply = async () => {
     if (!replyContent.trim()) return;
     setSubmitting(true);
     try {
-      await fetch("/api/comments", {
+      const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: replyContent, postId, parentId: comment.id }),
+        body: JSON.stringify({
+          content: replyContent,
+          postId,
+          parentId: comment.id,
+        }),
       });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error("Failed to post reply:", res.status, errBody);
+        return;
+      }
       setReplyContent("");
       setShowReply(false);
       onReplyAdded();
+    } catch (error) {
+      console.error("Failed to post reply:", error);
     } finally {
       setSubmitting(false);
     }
@@ -136,13 +193,20 @@ function CommentItem({
     if (!editContent.trim()) return;
     setSaving(true);
     try {
-      await fetch(`/api/comments/${comment.id}`, {
+      const res = await fetch(`/api/comments/${comment.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: editContent }),
       });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error("Failed to edit comment:", res.status, errBody);
+        return;
+      }
       setEditing(false);
       onEdited();
+    } catch (error) {
+      console.error("Failed to edit comment:", error);
     } finally {
       setSaving(false);
     }
@@ -150,83 +214,127 @@ function CommentItem({
 
   /* ── Delete ── */
   const handleDelete = async () => {
-    await fetch(`/api/comments/${comment.id}`, { method: "DELETE" });
-    setShowDeleteConfirm(false);
-    onDeleted();
+    try {
+      const res = await fetch(`/api/comments/${comment.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error("Failed to delete comment:", res.status, errBody);
+        return;
+      }
+      setShowDeleteConfirm(false);
+      onDeleted();
+    } catch (error) {
+      console.error("Failed to delete comment:", error);
+    }
   };
 
-  return (
-    <div
-      className={`comment-item ${depth > 0 ? "comment-item--nested" : ""}`}
-      style={{ "--comment-depth": depth } as React.CSSProperties}
-    >
-      {/* Header */}
-      <div className="comment-header">
-        <Avatar name={comment.author.name} image={comment.author.image} />
-        <div className="flex flex-col min-w-0">
-          <span className="comment-author">{comment.author.name || t.common.anonymous}</span>
-          <span className="comment-time">{relativeTime(comment.createdAt)}</span>
-        </div>
-
-        {/* Collapse toggle for threads */}
-        {hasReplies && (
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="comment-collapse-btn ml-auto"
-            aria-label={collapsed ? t.comments.expand : t.comments.collapse}
-          >
-            <svg
-              className={`w-4 h-4 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+  /* ── Collapsed view (Reddit-style: [+] username · 3h ago (5 replies)) ── */
+  if (collapsed) {
+    return (
+      <div
+        className="rc-comment rc-comment--collapsed"
+        style={{ "--rc-depth": depth } as React.CSSProperties}
+      >
+        {depth > 0 && (
+          <div className={`rc-thread-line ${threadColor(depth - 1)}`} aria-hidden="true" />
         )}
+        <button
+          className="rc-collapsed-bar"
+          onClick={() => setCollapsed(false)}
+          aria-label={t.comments.expand}
+        >
+          <span className="rc-expand-icon">[+]</span>
+          <Avatar name={comment.author.name} image={comment.author.image} size={20} />
+          <span className="rc-collapsed-meta">
+            <span className="rc-author">{comment.author.name || t.common.anonymous}</span>
+            <span className="rc-sep">·</span>
+            <span className="rc-time">{relativeTime(comment.createdAt)}</span>
+            {hasReplies && (
+              <>
+                <span className="rc-sep">·</span>
+                <span className="rc-children-count">
+                  ({replyCount} {replyCount === 1 ? t.comments.reply : t.comments.repliesWord})
+                </span>
+              </>
+            )}
+          </span>
+        </button>
       </div>
+    );
+  }
 
-      {/* Body */}
-      {editing ? (
-        <div className="comment-edit-area">
-          <MarkdownEditor
-            value={editContent}
-            onChange={setEditContent}
-            placeholder={t.comments.writeComment}
-            rows={3}
-            compact
-          />
-          <div className="flex gap-2 justify-end mt-2">
-            <button
-              className="btn btn-ghost btn-xs"
-              onClick={() => {
-                setEditing(false);
-                setEditContent(comment.content);
-              }}
-            >
-              {t.common.cancel}
-            </button>
-            <button className="btn btn-primary btn-xs" onClick={handleEdit} disabled={saving}>
-              {saving ? <span className="loading loading-spinner loading-xs" /> : t.common.save}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="comment-body">
-          <MarkdownRenderer content={comment.content} />
-        </div>
+  /* ── Expanded view ── */
+  return (
+    <div className="rc-comment" style={{ "--rc-depth": depth } as React.CSSProperties}>
+      {/* Clickable thread line for nesting — click to collapse */}
+      {depth > 0 && (
+        <button
+          className={`rc-thread-line rc-thread-line--clickable ${threadColor(depth - 1)}`}
+          onClick={() => setCollapsed(true)}
+          aria-label={t.comments.collapse}
+        />
       )}
 
-      {/* Actions */}
-      <div className="comment-actions">
-        <ReactionBar commentId={comment.id} compact />
+      <div className="rc-comment-main">
+        {/* ── Header: avatar · username · time ── */}
+        <div className="rc-header">
+          <Avatar name={comment.author.name} image={comment.author.image} size={28} />
+          <span className="rc-author">{comment.author.name || t.common.anonymous}</span>
+          <span className="rc-sep">·</span>
+          <span className="rc-time">{relativeTime(comment.createdAt)}</span>
+          {/* Top-level collapse button */}
+          {depth === 0 && (
+            <button
+              className="rc-collapse-top"
+              onClick={() => setCollapsed(true)}
+              aria-label={t.comments.collapse}
+              title={t.comments.collapse}
+            >
+              <MinusIcon />
+            </button>
+          )}
+        </div>
 
-        <div className="comment-action-btns">
+        {/* ── Body ── */}
+        {editing ? (
+          <div className="rc-edit-area">
+            <MarkdownEditor
+              value={editContent}
+              onChange={setEditContent}
+              placeholder={t.comments.writeComment}
+              rows={3}
+              compact
+            />
+            <div className="rc-edit-actions">
+              <button
+                className="btn btn-ghost btn-xs"
+                onClick={() => {
+                  setEditing(false);
+                  setEditContent(comment.content);
+                }}
+              >
+                {t.common.cancel}
+              </button>
+              <button className="btn btn-primary btn-xs" onClick={handleEdit} disabled={saving}>
+                {saving ? <span className="loading loading-spinner loading-xs" /> : t.common.save}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="rc-body">
+            <MarkdownRenderer content={comment.content} />
+          </div>
+        )}
+
+        {/* ── Action bar (Reddit-style: inline row) ── */}
+        <div className="rc-actions">
+          <ReactionBar commentId={comment.id} compact />
+
           {session && (
             <button
-              className="comment-action-btn"
+              className="rc-action-btn"
               onClick={() => {
                 setShowReply(!showReply);
                 setShowDeleteConfirm(false);
@@ -239,7 +347,7 @@ function CommentItem({
           {isOwner && (
             <>
               <button
-                className="comment-action-btn"
+                className="rc-action-btn"
                 onClick={() => {
                   setEditing(true);
                   setShowDeleteConfirm(false);
@@ -249,7 +357,7 @@ function CommentItem({
                 {t.common.edit}
               </button>
               <button
-                className="comment-action-btn comment-action-btn--danger"
+                className="rc-action-btn rc-action-btn--danger"
                 onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
               >
                 <TrashIcon />
@@ -258,78 +366,71 @@ function CommentItem({
             </>
           )}
         </div>
-      </div>
 
-      {/* Inline delete confirmation */}
-      {showDeleteConfirm && (
-        <div className="comment-delete-confirm">
-          <span className="text-sm">{t.comments.deleteConfirm}</span>
-          <div className="flex gap-2">
-            <button className="btn btn-ghost btn-xs" onClick={() => setShowDeleteConfirm(false)}>
-              {t.common.cancel}
-            </button>
-            <button className="btn btn-error btn-xs" onClick={handleDelete}>
-              {t.common.delete}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Reply form */}
-      {showReply && (
-        <div className="comment-reply-form">
-          <Avatar name={session?.user?.name} image={session?.user?.image} size={28} />
-          <div className="flex-1">
-            <MarkdownEditor
-              value={replyContent}
-              onChange={setReplyContent}
-              placeholder={t.comments.writeReply}
-              rows={2}
-              compact
-            />
-            <div className="flex gap-2 justify-end mt-2">
-              <button className="btn btn-ghost btn-xs" onClick={() => setShowReply(false)}>
+        {/* Delete confirmation */}
+        {showDeleteConfirm && (
+          <div className="rc-delete-confirm">
+            <span>{t.comments.deleteConfirm}</span>
+            <div className="flex gap-2">
+              <button className="btn btn-ghost btn-xs" onClick={() => setShowDeleteConfirm(false)}>
                 {t.common.cancel}
               </button>
-              <button
-                className="btn btn-primary btn-xs"
-                onClick={handleReply}
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <span className="loading loading-spinner loading-xs" />
-                ) : (
-                  t.comments.send
-                )}
+              <button className="btn btn-error btn-xs" onClick={handleDelete}>
+                {t.common.delete}
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Nested replies */}
-      {hasReplies && !collapsed && (
-        <div className="comment-replies">
-          {comment.replies!.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              postId={postId}
-              depth={depth + 1}
-              onReplyAdded={onReplyAdded}
-              onDeleted={onDeleted}
-              onEdited={onEdited}
-            />
-          ))}
-        </div>
-      )}
+        {/* Reply form */}
+        {showReply && (
+          <div className="rc-reply-form">
+            <Avatar name={session?.user?.name} image={session?.user?.image} size={24} />
+            <div className="flex-1">
+              <MarkdownEditor
+                value={replyContent}
+                onChange={setReplyContent}
+                placeholder={t.comments.writeReply}
+                rows={2}
+                compact
+              />
+              <div className="rc-reply-form-actions">
+                <button className="btn btn-ghost btn-xs" onClick={() => setShowReply(false)}>
+                  {t.common.cancel}
+                </button>
+                <button
+                  className="btn btn-primary btn-xs"
+                  onClick={handleReply}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <span className="loading loading-spinner loading-xs" />
+                  ) : (
+                    t.comments.send
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* Collapsed count */}
-      {hasReplies && collapsed && (
-        <button className="comment-collapsed-label" onClick={() => setCollapsed(false)}>
-          {t.comments.collapsedReplies.replace("{n}", String(comment.replies!.length))}
-        </button>
-      )}
+        {/* Nested replies */}
+        {hasReplies && (
+          <div className="rc-replies">
+            {comment.replies!.map((reply) => (
+              <CommentItem
+                key={reply.id}
+                comment={reply}
+                postId={postId}
+                depth={depth + 1}
+                onReplyAdded={onReplyAdded}
+                onDeleted={onDeleted}
+                onEdited={onEdited}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -344,108 +445,169 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [sortMode, setSortMode] = useState<SortMode>("newest");
+
+  /* Collapse-all / expand-all signals */
+  const [collapseSignal, setCollapseSignal] = useState(0);
+  const [expandSignal, setExpandSignal] = useState(0);
+  const [allCollapsed, setAllCollapsed] = useState(false);
 
   const total = countAll(comments);
 
   const refreshComments = useCallback(async () => {
-    const res = await fetch(`/api/comments?postId=${postId}`);
-    const data = await res.json();
-    setComments(data);
+    try {
+      const res = await fetch(`/api/comments?postId=${postId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setComments(data);
+    } catch {
+      // silently ignore network errors on refresh
+    }
   }, [postId]);
 
   const handleSubmit = async () => {
     if (!newComment.trim()) return;
     setSubmitting(true);
     try {
-      await fetch("/api/comments", {
+      const res = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: newComment, postId }),
       });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error("Failed to post comment:", res.status, errBody);
+        return;
+      }
       setNewComment("");
       await refreshComments();
+    } catch (error) {
+      console.error("Failed to post comment:", error);
     } finally {
       setSubmitting(false);
     }
   };
 
-  return (
-    <section className="comments-section">
-      {/* Section header */}
-      <div className="comments-section-header">
-        <div className="flex items-center gap-2">
-          <ChatBubbleIcon />
-          <h3 className="text-xl font-bold">{t.comments.title.replace("{n}", String(total))}</h3>
-        </div>
-      </div>
+  const handleToggleAll = () => {
+    if (allCollapsed) {
+      setExpandSignal((s) => s + 1);
+    } else {
+      setCollapseSignal((s) => s + 1);
+    }
+    setAllCollapsed(!allCollapsed);
+  };
 
-      {/* New comment form */}
-      {session ? (
-        <div className="comment-compose">
-          <Avatar name={session.user?.name} image={session.user?.image} size={40} />
-          <div className="flex-1">
-            <MarkdownEditor
-              value={newComment}
-              onChange={setNewComment}
-              placeholder={t.comments.writeComment}
-              rows={3}
-              compact
-            />
-            <div className="flex justify-end mt-2">
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={handleSubmit}
-                disabled={submitting || !newComment.trim()}
+  /* Sort top-level comments */
+  const sorted = [...comments].sort((a, b) => {
+    const ta = new Date(a.createdAt).getTime();
+    const tb = new Date(b.createdAt).getTime();
+    return sortMode === "newest" ? tb - ta : ta - tb;
+  });
+
+  return (
+    <CollapseContext.Provider value={{ collapseSignal, expandSignal }}>
+      <section className="rc-section">
+        {/* ── Section header ── */}
+        <div className="rc-section-header">
+          <div className="flex items-center gap-2">
+            <ChatBubbleIcon />
+            <h3 className="text-xl font-bold">{t.comments.title.replace("{n}", String(total))}</h3>
+          </div>
+
+          <div className="rc-header-controls">
+            {/* Sort selector */}
+            {comments.length > 1 && (
+              <select
+                className="rc-sort-select"
+                value={sortMode}
+                onChange={(e) => setSortMode(e.target.value as SortMode)}
               >
-                {submitting ? (
-                  <span className="loading loading-spinner loading-xs" />
-                ) : (
-                  <>
-                    <SendIcon />
-                    {t.comments.comment}
-                  </>
-                )}
+                <option value="newest">{t.comments.sortNewest}</option>
+                <option value="oldest">{t.comments.sortOldest}</option>
+              </select>
+            )}
+            {/* Collapse / Expand all */}
+            {comments.length > 0 && (
+              <button
+                className="rc-toggle-all-btn"
+                onClick={handleToggleAll}
+                title={allCollapsed ? t.comments.expandAll : t.comments.collapseAll}
+              >
+                {allCollapsed ? <PlusBoxIcon /> : <MinusBoxIcon />}
+                {allCollapsed ? t.comments.expandAll : t.comments.collapseAll}
               </button>
-            </div>
+            )}
           </div>
         </div>
-      ) : (
-        <div className="comment-signin-prompt">
-          <ChatBubbleIcon />
-          <p>
-            <Link href="/auth/signin" className="link link-primary font-medium">
-              {t.common.signIn}
-            </Link>
-            {t.comments.signInPrompt}
-          </p>
-        </div>
-      )}
 
-      {/* Comments list */}
-      <div className="comments-list">
-        {comments.length === 0 ? (
-          <div className="comment-empty">
-            <div className="comment-empty-icon">
-              <ChatBubbleIcon large />
+        {/* ── New comment form ── */}
+        {session ? (
+          <div className="rc-compose">
+            <Avatar name={session.user?.name} image={session.user?.image} size={36} />
+            <div className="flex-1">
+              <MarkdownEditor
+                value={newComment}
+                onChange={setNewComment}
+                placeholder={t.comments.writeComment}
+                rows={3}
+                compact
+              />
+              <div className="flex justify-end mt-2">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleSubmit}
+                  disabled={submitting || !newComment.trim()}
+                >
+                  {submitting ? (
+                    <span className="loading loading-spinner loading-xs" />
+                  ) : (
+                    <>
+                      <SendIcon />
+                      {t.comments.comment}
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
-            <p className="font-medium">{t.comments.noComments}</p>
-            <p className="text-sm text-base-content/40">{t.comments.beFirst}</p>
           </div>
         ) : (
-          comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              postId={postId}
-              depth={0}
-              onReplyAdded={refreshComments}
-              onDeleted={refreshComments}
-              onEdited={refreshComments}
-            />
-          ))
+          <div className="rc-signin-prompt">
+            <ChatBubbleIcon />
+            <p>
+              <Link href="/auth/signin" className="link link-primary font-medium">
+                {t.common.signIn}
+              </Link>
+              {t.comments.signInPrompt}
+            </p>
+          </div>
         )}
-      </div>
-    </section>
+
+        {/* ── Comments list ── */}
+        <div className="rc-list">
+          {comments.length === 0 ? (
+            <div className="rc-empty">
+              <div className="rc-empty-icon">
+                <ChatBubbleIcon large />
+              </div>
+              <p className="font-medium">{t.comments.noComments}</p>
+              <p className="text-sm text-base-content/40">{t.comments.beFirst}</p>
+            </div>
+          ) : (
+            sorted.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                postId={postId}
+                depth={0}
+                onReplyAdded={refreshComments}
+                onDeleted={refreshComments}
+                onEdited={refreshComments}
+              />
+            ))
+          )}
+        </div>
+      </section>
+    </CollapseContext.Provider>
   );
 }
 
@@ -528,6 +690,36 @@ function SendIcon() {
         strokeLinejoin="round"
         d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
       />
+    </svg>
+  );
+}
+
+function MinusIcon() {
+  return (
+    <svg
+      className="w-3.5 h-3.5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+    </svg>
+  );
+}
+
+function PlusBoxIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+  );
+}
+
+function MinusBoxIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
     </svg>
   );
 }

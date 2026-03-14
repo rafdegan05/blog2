@@ -567,6 +567,11 @@ export const en = {
     collapse: "Collapse",
     expand: "Expand",
     collapsedReplies: "{n} replies hidden — click to expand",
+    repliesWord: "replies",
+    collapseAll: "Collapse all",
+    expandAll: "Expand all",
+    sortNewest: "Newest first",
+    sortOldest: "Oldest first",
   },
 
   // ─── Reactions ───
