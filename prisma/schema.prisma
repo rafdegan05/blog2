@@ -154,6 +154,7 @@ model Podcast {
   duration    Int?     // duration in seconds
   language    String?  // ISO 639-1 code detected from audio, e.g. "en", "it"
   transcript  String?  @db.Text  // @deprecated – migrated to PodcastTranscript
+  waveform    Json?    // Pre-computed waveform peaks array (number[])
   published   Boolean  @default(false)
   moderation  ModerationStatus @default(APPROVED)
   flagReason  String?  @db.Text

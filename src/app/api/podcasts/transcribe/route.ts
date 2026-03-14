@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { canCreateContent } from "@/lib/permissions";
 import { detectLanguage } from "@/lib/language-detect";
 import { getFromS3, existsInS3 } from "@/lib/s3";
-import { writeFile, unlink, mkdir } from "fs/promises";
+import { readFile, writeFile, unlink, mkdir } from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 import { execFile } from "child_process";

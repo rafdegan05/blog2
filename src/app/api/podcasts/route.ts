@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { canCreateContent } from "@/lib/permissions";
+import { generateWaveform } from "@/lib/waveform";
 
 // GET /api/podcasts - List podcasts with pagination and search
 export async function GET(request: NextRequest) {
@@ -97,6 +98,9 @@ export async function POST(request: NextRequest) {
   const existingPodcast = await prisma.podcast.findUnique({ where: { slug } });
   const finalSlug = existingPodcast ? `${slug}-${Date.now()}` : slug;
 
+  // Generate waveform peaks from the audio file
+  const waveform = await generateWaveform(audioUrl);
+
   const podcast = await prisma.podcast.create({
     data: {
       title,
@@ -106,6 +110,7 @@ export async function POST(request: NextRequest) {
       coverImage,
       duration,
       language: language || undefined,
+      waveform: waveform ?? undefined,
       published: published || false,
       authorId: session.user.id,
       categories: categories?.length

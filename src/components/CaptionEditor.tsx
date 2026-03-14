@@ -148,7 +148,9 @@ export default function CaptionEditor({
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play();
+      audio.play().catch(() => {
+        /* autoplay blocked */
+      });
     }
   }, [isPlaying]);
 
@@ -156,6 +158,7 @@ export default function CaptionEditor({
     const audio = audioRef.current;
     if (audio) {
       audio.currentTime = time;
+      setAudioTime(time);
     }
   }, []);
 

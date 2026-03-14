@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { generateWaveform } from "@/lib/waveform";
 
 // GET /api/podcasts/[slug]
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
@@ -63,6 +64,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     transcripts,
   } = body;
 
+  // Regenerate waveform only if the audio file changed
+  const audioChanged = audioUrl && audioUrl !== existing.audioUrl;
+  const waveform = audioChanged ? await generateWaveform(audioUrl) : undefined;
+
   const podcast = await prisma.podcast.update({
     where: { slug },
     data: {
@@ -72,6 +77,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       ...(coverImage !== undefined && { coverImage }),
       ...(duration !== undefined && { duration }),
       ...(language !== undefined && { language: language || null }),
+      ...(waveform !== undefined && { waveform }),
       ...(published !== undefined && { published }),
       ...(categories && {
         categories: {

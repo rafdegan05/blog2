@@ -80,6 +80,56 @@ export async function getFromS3(key: string): Promise<{ buffer: Buffer; contentT
 }
 
 /**
+ * Get metadata (size, content type) for an S3 object without downloading it.
+ */
+export async function getS3ObjectInfo(
+  key: string
+): Promise<{ contentLength: number; contentType: string }> {
+  const client = getClient();
+  const response = await client.send(
+    new HeadObjectCommand({
+      Bucket: getBucket(),
+      Key: key,
+    })
+  );
+  return {
+    contentLength: response.ContentLength ?? 0,
+    contentType: response.ContentType || "application/octet-stream",
+  };
+}
+
+/**
+ * Get a byte range from an S3 object (for HTTP 206 Partial Content responses).
+ */
+export async function getS3Range(
+  key: string,
+  start: number,
+  end: number
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const client = getClient();
+  const response = await client.send(
+    new GetObjectCommand({
+      Bucket: getBucket(),
+      Key: key,
+      Range: `bytes=${start}-${end}`,
+    })
+  );
+
+  const stream = response.Body;
+  if (!stream) throw new Error("Empty response body from S3");
+
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of stream as AsyncIterable<Uint8Array>) {
+    chunks.push(chunk);
+  }
+
+  return {
+    buffer: Buffer.concat(chunks),
+    contentType: response.ContentType || "application/octet-stream",
+  };
+}
+
+/**
  * Check if an object exists in S3.
  */
 export async function existsInS3(key: string): Promise<boolean> {

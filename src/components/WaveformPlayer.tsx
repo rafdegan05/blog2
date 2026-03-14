@@ -1,6 +1,14 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from "react";
+import {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 
 export interface WaveformPlayerHandle {
   /** Seek audio to given time in seconds and start playing */
@@ -9,6 +17,8 @@ export interface WaveformPlayerHandle {
 
 interface WaveformPlayerProps {
   src: string;
+  /** Pre-computed waveform peaks from the server (skips client-side decode) */
+  peaks?: number[] | null;
   /** Compact mode for cards (smaller height, no speed/volume controls) */
   compact?: boolean;
 }
@@ -26,6 +36,21 @@ function fmtTime(s: number): string {
 
 const BAR_COUNT_FULL = 120;
 const BAR_COUNT_COMPACT = 60;
+
+/** Resample a peaks array to a different number of bars via linear interpolation */
+function resamplePeaks(input: number[], targetBars: number): number[] {
+  if (input.length === targetBars) return input;
+  const result: number[] = [];
+  const ratio = input.length / targetBars;
+  for (let i = 0; i < targetBars; i++) {
+    const srcIdx = i * ratio;
+    const low = Math.floor(srcIdx);
+    const high = Math.min(low + 1, input.length - 1);
+    const frac = srcIdx - low;
+    result.push(input[low] * (1 - frac) + input[high] * frac);
+  }
+  return result;
+}
 
 /** Extract peak amplitudes from an AudioBuffer, returns normalised 0..1 array */
 function extractPeaks(buffer: AudioBuffer, bars: number): number[] {
@@ -84,7 +109,7 @@ function drawWaveform(
 /* ── Component ── */
 
 const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
-  function WaveformPlayer({ src, compact = false }, ref) {
+  function WaveformPlayer({ src, peaks: serverPeaks, compact = false }, ref) {
     const audioRef = useRef<HTMLAudioElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -100,8 +125,16 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
 
     const barCount = compact ? BAR_COUNT_COMPACT : BAR_COUNT_FULL;
 
-    // Derive peaks & loading from peaksData — avoids synchronous setState in effect
-    const peaks = peaksData?.src === src ? peaksData.peaks : null;
+    // Resample server-provided peaks via useMemo (no setState needed)
+    const serverResampled = useMemo(() => {
+      if (serverPeaks && serverPeaks.length > 0) {
+        return resamplePeaks(serverPeaks, barCount);
+      }
+      return null;
+    }, [serverPeaks, barCount]);
+
+    // Derive peaks: prefer server peaks, fall back to client-decoded peaks from state
+    const peaks = serverResampled ?? (peaksData?.src === src ? peaksData.peaks : null);
     const loading = peaks === null;
 
     /* ── Expose seekTo via ref ── */
@@ -111,22 +144,47 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
         seekTo(seconds: number) {
           const audio = audioRef.current;
           if (!audio) return;
+
+          // Set the target time
           audio.currentTime = seconds;
           setCurrentTime(seconds);
           if (audio.duration) {
             setProgress(seconds / audio.duration);
           }
+
+          // If audio isn't ready to play at the new position, wait for it
           if (audio.paused) {
-            audio.play();
-            setPlaying(true);
+            const doPlay = () => {
+              audio.play().catch(() => {
+                // Browser blocked autoplay or audio not ready — ignore
+              });
+              setPlaying(true);
+            };
+
+            if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+              doPlay();
+            } else {
+              // Wait until enough data is buffered, then play
+              const onCanPlay = () => {
+                audio.removeEventListener("canplay", onCanPlay);
+                doPlay();
+              };
+              audio.addEventListener("canplay", onCanPlay);
+              // Trigger load if only metadata was preloaded
+              audio.load();
+              audio.currentTime = seconds;
+            }
           }
         },
       }),
       []
     );
 
-    /* ── Decode audio → peaks ── */
+    /* ── Decode audio → peaks (skip if server provided peaks) ── */
     useEffect(() => {
+      // Skip client-side decode if server peaks are available
+      if (serverPeaks && serverPeaks.length > 0) return;
+
       let cancelled = false;
 
       (async () => {
@@ -151,7 +209,7 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
       return () => {
         cancelled = true;
       };
-    }, [src, barCount]);
+    }, [src, barCount, serverPeaks]);
 
     /* ── Get theme colours from CSS custom properties ── */
     const getColors = useCallback(() => {
@@ -210,7 +268,9 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
       const audio = audioRef.current;
       if (!audio) return;
       if (audio.paused) {
-        audio.play();
+        audio.play().catch(() => {
+          /* autoplay blocked */
+        });
         setPlaying(true);
       } else {
         audio.pause();
@@ -221,12 +281,15 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
     const seek = (e: React.MouseEvent<HTMLCanvasElement>) => {
       const audio = audioRef.current;
       const canvas = canvasRef.current;
-      if (!audio || !canvas || !audio.duration) return;
+      if (!audio || !canvas) return;
       const rect = canvas.getBoundingClientRect();
       const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-      audio.currentTime = pct * audio.duration;
+      const dur = audio.duration || duration;
+      if (!dur) return;
+      const newTime = pct * dur;
+      audio.currentTime = newTime;
       setProgress(pct);
-      setCurrentTime(audio.currentTime);
+      setCurrentTime(newTime);
     };
 
     const onLoaded = () => {
@@ -254,12 +317,20 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
 
     const skipForward = () => {
       const audio = audioRef.current;
-      if (audio) audio.currentTime = Math.min(audio.duration, audio.currentTime + 15);
+      if (!audio) return;
+      const newTime = Math.min(audio.duration || duration, audio.currentTime + 15);
+      audio.currentTime = newTime;
+      setCurrentTime(newTime);
+      if (audio.duration) setProgress(newTime / audio.duration);
     };
 
     const skipBackward = () => {
       const audio = audioRef.current;
-      if (audio) audio.currentTime = Math.max(0, audio.currentTime - 15);
+      if (!audio) return;
+      const newTime = Math.max(0, audio.currentTime - 15);
+      audio.currentTime = newTime;
+      setCurrentTime(newTime);
+      if (audio.duration) setProgress(newTime / audio.duration);
     };
 
     const canvasHeight = compact ? 48 : 80;
@@ -273,7 +344,7 @@ const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
         <audio
           ref={audioRef}
           src={src}
-          preload="metadata"
+          preload="auto"
           onLoadedMetadata={onLoaded}
           onEnded={onEnded}
         />

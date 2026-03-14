@@ -11,7 +11,6 @@ import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
 import {
   parseCaptions,
-  detectFormat,
   serializeToSRT,
   serializeToVTT,
   serializeToPlainText,
@@ -36,6 +35,7 @@ interface PodcastDetailContentProps {
     coverImage?: string;
     duration?: number;
     language?: string;
+    waveform?: number[] | null;
     transcripts?: PodcastTranscript[];
     createdAt: string;
     author: {
@@ -85,11 +85,6 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
     if (!activeTranscript) return [];
     const { cues } = parseCaptions(activeTranscript);
     return cues;
-  }, [activeTranscript]);
-
-  const detectedFormat = useMemo<CaptionFormat>(() => {
-    if (!activeTranscript) return "txt";
-    return detectFormat(activeTranscript);
   }, [activeTranscript]);
 
   const hasCues = parsedCues.length > 0 && parsedCues.some((c) => c.startTime > 0 || c.endTime > 0);
@@ -317,7 +312,7 @@ export default function PodcastDetailContent({ podcast }: PodcastDetailContentPr
       {/* ── Player card ── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="sp-player-card">
-          <WaveformPlayer ref={playerRef} src={podcast.audioUrl} />
+          <WaveformPlayer ref={playerRef} src={podcast.audioUrl} peaks={podcast.waveform} />
         </div>
       </div>
 

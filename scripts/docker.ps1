@@ -169,6 +169,22 @@ function Invoke-EnvSetup {
         Write-Host ""
     }
 
+    # ─── AWS S3 ───
+    Write-Host "  --- AWS S3 (upload file) ---" -ForegroundColor Yellow
+    Write-Host "  Vuoi configurare AWS S3 per gli upload? (s/N)" -ForegroundColor White
+    $s3Choice = Read-Host "  Seleziona"
+    $s3Bucket = ""
+    $s3Region = ""
+    $s3AccessKey = ""
+    $s3SecretKey = ""
+    if ($s3Choice -eq "s" -or $s3Choice -eq "S") {
+        $s3Bucket    = Read-EnvValue -VariableName "AWS_S3_BUCKET"          -Description "S3 Bucket name"        -Required
+        $s3Region    = Read-EnvValue -VariableName "AWS_S3_REGION"          -Description "S3 Region"              -Default "eu-west-1"
+        $s3AccessKey = Read-EnvValue -VariableName "AWS_ACCESS_KEY_ID"      -Description "AWS Access Key ID"      -Required
+        $s3SecretKey = Read-EnvValue -VariableName "AWS_SECRET_ACCESS_KEY"  -Description "AWS Secret Access Key"  -Required
+    }
+    Write-Host ""
+
     # ─── Scrivi il file .env ───
     $envContent = @"
 # ============================================
@@ -195,6 +211,12 @@ GOOGLE_CLIENT_SECRET="$googleSecret"
 KEYCLOAK_ISSUER="$keycloakIssuer"
 KEYCLOAK_CLIENT_ID="$keycloakId"
 KEYCLOAK_CLIENT_SECRET="$keycloakSecret"
+
+# AWS S3
+AWS_S3_BUCKET="$s3Bucket"
+AWS_S3_REGION="$s3Region"
+AWS_ACCESS_KEY_ID="$s3AccessKey"
+AWS_SECRET_ACCESS_KEY="$s3SecretKey"
 "@
 
     Set-Content -Path $EnvFile -Value $envContent -Encoding UTF8
@@ -209,6 +231,7 @@ KEYCLOAK_CLIENT_SECRET="$keycloakSecret"
     if ($githubId)       { Write-Ok "  GitHub:    configurato" } else { Write-Warn "  GitHub:    non configurato" }
     if ($googleId)       { Write-Ok "  Google:    configurato" } else { Write-Warn "  Google:    non configurato" }
     if ($keycloakIssuer) { Write-Ok "  Keycloak:  configurato" } else { Write-Warn "  Keycloak:  non configurato" }
+    if ($s3Bucket)        { Write-Ok "  AWS S3:    configurato" } else { Write-Warn "  AWS S3:    non configurato" }
     Write-Host ""
 }
 
