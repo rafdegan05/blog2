@@ -272,28 +272,12 @@ function CommentItem({
      ═══════════════════════ */
   if (collapsed) {
     return (
-      <div className="rc-comment rc-comment--collapsed">
-        {/* Thread line gutter for each ancestor depth */}
-        {depth > 0 && (
-          <div className="rc-gutter" aria-hidden="true">
-            {Array.from({ length: depth }).map((_, i) => {
-              const isLastLine = i === depth - 1;
-              return (
-                <div
-                  key={i}
-                  className={`rc-thread-line${isLastLine ? " rc-thread-line--branch" : ""}${isLastLine && isLast ? " rc-thread-line--last-sibling" : ""}`}
-                />
-              );
-            })}
-          </div>
-        )}
-
+      <div className={`rc-comment rc-comment--collapsed${isLast ? " rc-comment--last" : ""}`}>
         <button
           className="rc-collapsed-bar"
           onClick={() => setCollapsed(false)}
           aria-label={t.comments.expand}
         >
-          {/* Circle + button */}
           <span className="rc-toggle-circle rc-toggle-circle--expand">
             <PlusCircleIcon />
           </span>
@@ -321,30 +305,13 @@ function CommentItem({
      Expanded state
      ═══════════════════════ */
   return (
-    <div className="rc-comment">
-      {/* Thread line gutter — one vertical bar per ancestor depth */}
-      {depth > 0 && (
-        <div className="rc-gutter" aria-hidden="true">
-          {Array.from({ length: depth }).map((_, i) => {
-            const isLastLine = i === depth - 1;
-            return (
-              <button
-                key={i}
-                className={`rc-thread-line rc-thread-line--clickable${isLastLine ? " rc-thread-line--branch" : ""}${isLastLine && isLast ? " rc-thread-line--last-sibling" : ""}`}
-                onClick={isLastLine ? () => setCollapsed(true) : undefined}
-                aria-label={isLastLine ? t.comments.collapse : undefined}
-                tabIndex={isLastLine ? 0 : -1}
-              />
-            );
-          })}
-        </div>
-      )}
-
+    <div className={`rc-comment${isLast ? " rc-comment--last" : ""}`}>
+      {/* ── Head row: avatar + content side by side ── */}
       <div className="rc-comment-inner">
         {/* Avatar column */}
         <div className="rc-avatar-col">
           <Avatar name={comment.author.name} image={comment.author.image} size={32} />
-          {/* Vertical connector from avatar down to children */}
+          {/* Vertical connector from avatar down — shown when has replies */}
           {hasReplies && <div className="rc-avatar-line" aria-hidden="true" />}
         </div>
 
@@ -395,7 +362,7 @@ function CommentItem({
           <div className="rc-actions">
             {hasReplies && (
               <button
-                className="rc-toggle-on-line"
+                className="rc-collapse-btn"
                 onClick={() => setCollapsed(true)}
                 title={t.comments.collapse}
                 aria-label={t.comments.collapse}
@@ -403,7 +370,6 @@ function CommentItem({
                 <MinusCircleIcon />
               </button>
             )}
-
             <ReactionBar commentId={comment.id} compact />
 
             {session && (
@@ -490,26 +456,26 @@ function CommentItem({
               </div>
             </div>
           )}
-
-          {/* Nested replies */}
-          {hasReplies && (
-            <div className="rc-replies">
-              {comment.replies!.map((reply, idx) => (
-                <CommentItem
-                  key={reply.id}
-                  comment={reply}
-                  postId={postId}
-                  depth={depth + 1}
-                  isLast={idx === comment.replies!.length - 1}
-                  onReplyAdded={onReplyAdded}
-                  onDeleted={onDeleted}
-                  onEdited={onEdited}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Nested replies — sibling to inner row, full width */}
+      {hasReplies && (
+        <div className="rc-replies">
+          {comment.replies!.map((reply, idx) => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              postId={postId}
+              depth={depth + 1}
+              isLast={idx === comment.replies!.length - 1}
+              onReplyAdded={onReplyAdded}
+              onDeleted={onDeleted}
+              onEdited={onEdited}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

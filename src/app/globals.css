@@ -1671,137 +1671,145 @@
 /* ─── Comment (single) ─── */
 .rc-comment {
   position: relative;
-  display: flex;
-  gap: 0;
   padding-top: 0.5rem;
 }
 
-/* ─── Gutter — holds thread lines for each ancestor ─── */
-.rc-gutter {
-  display: flex;
-  flex-shrink: 0;
-  align-self: stretch;
-}
-
-/* Thread line — the vertical bar in the gutter */
-.rc-thread-line {
-  position: relative;
-  width: 20px;
-  flex-shrink: 0;
-  align-self: stretch;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: default;
-}
-.rc-thread-line::after {
+/*
+  Thread line: drawn by the parent comment as a ::before pseudo.
+  Runs from below the avatar down to the bottom of .rc-replies.
+  Left = avatar center (16px from rc-comment left).
+*/
+.rc-comment:has(> .rc-replies)::before {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
+  left: 16px; /* avatar center */
+  top: calc(0.5rem + 32px + 4px); /* padding-top + avatar height + gap */
+  bottom: 0; /* stops exactly at bottom of rc-replies (no overshoot) */
   width: 2px;
   margin-left: -1px;
-  border-radius: 1px;
   background: color-mix(in oklch, var(--color-base-content) 20%, transparent);
-  transition:
-    background 0.15s,
-    width 0.15s;
-}
-.rc-thread-line--clickable {
-  cursor: pointer;
-}
-.rc-thread-line--clickable:hover::after {
-  width: 4px;
-  margin-left: -2px;
-  background: color-mix(in oklch, var(--color-base-content) 35%, transparent);
+  border-radius: 1px;
+  pointer-events: none;
 }
 
-/* ─── Branch connector: horizontal line from gutter to avatar ─── */
+/* ─── L-shaped (└──) and T-shaped (├──) branch connectors ─── */
+/*
+  rc-replies has padding-left: 40px (= rc-avatar-col 32px + 8px margin).
+  Children's rc-comment x=0 starts at x=40px of parent rc-comment.
+  Parent thread line is at x=16px of parent = x = (16 - 40) = -24px in child space.
+  Child avatar center is at x=16px of child.
+  Arm goes from x=-24px to x=16px → left:-24px, width:40px.
+*/
 
-/* Horizontal branch (├── for non-last siblings) */
-.rc-thread-line--branch::before {
+/* Horizontal arm — all children */
+.rc-replies > .rc-comment::before {
   content: "";
   position: absolute;
-  top: 16px;
-  left: calc(50% - 1px);
-  right: -16px;
+  left: -24px;
+  top: calc(0.5rem + 16px); /* padding-top + half avatar (32/2) */
+  width: 40px; /* from parent thread to child avatar center */
   height: 2px;
   background: color-mix(in oklch, var(--color-base-content) 20%, transparent);
+  pointer-events: none;
 }
 
-/* Last sibling: rounded L-shape (└──) connecting vertical line to avatar */
-.rc-thread-line--last-sibling::after {
-  bottom: auto;
-  height: 18px;
-  left: calc(50% - 1px);
-  right: -16px;
-  width: auto;
+/* Last child: rounded L-shape — replace straight arm with corner arc */
+.rc-replies > .rc-comment--last::before {
+  /* Rounded L via border instead of background */
   background: none;
+  width: auto;
+  height: auto;
+  left: -24px;
+  top: 0;
+  right: calc(100% - 16px); /* stop at child avatar center */
+  /* height from top of child to arm center */
+  bottom: calc(100% - (0.5rem + 17px));
   border-left: 2px solid color-mix(in oklch, var(--color-base-content) 20%, transparent);
   border-bottom: 2px solid color-mix(in oklch, var(--color-base-content) 20%, transparent);
-  margin-left: 0;
   border-radius: 0 0 0 10px;
-}
-.rc-thread-line--last-sibling::before {
-  display: none;
+  pointer-events: none;
 }
 
-/* Hover state for branch lines */
-.rc-thread-line--branch.rc-thread-line--clickable:hover::after {
-  width: 2px;
-  margin-left: -1px;
-}
-.rc-thread-line--branch.rc-thread-line--clickable:hover::before {
-  height: 3px;
-  background: color-mix(in oklch, var(--color-base-content) 35%, transparent);
-}
-.rc-thread-line--last-sibling.rc-thread-line--clickable:hover::after {
-  border-left-width: 3px;
-  border-bottom-width: 3px;
-  border-color: color-mix(in oklch, var(--color-base-content) 35%, transparent);
-  width: auto;
-  margin-left: 0;
+/*
+  Cover the parent thread line below the last child's arm.
+  We paint over the parent ::before with the background color.
+  left: -24px (= parent thread x=16px in parent space = child space x=-24px),
+  width: 2px, from arm bottom to end of child.
+*/
+.rc-replies > .rc-comment--last::after {
+  content: "";
+  position: absolute;
+  left: -25px; /* 1px to the left of center to fully cover 2px line */
+  width: 4px; /* covers the 2px thread line */
+  top: calc(0.5rem + 17px); /* just below arm */
+  bottom: 0;
+  background: var(--color-base-100);
+  pointer-events: none;
+  z-index: 1;
 }
 
-/* ─── Comment inner (avatar col + content) ─── */
+/* Collapsed comment arm adjustments (smaller avatar: 20px vs 32px) */
+.rc-replies > .rc-comment--collapsed::before {
+  top: calc(0.25rem + 10px); /* padding-top + half small avatar (20/2) */
+}
+.rc-replies > .rc-comment--last.rc-comment--collapsed::before {
+  top: 0;
+  bottom: calc(100% - (0.25rem + 11px));
+}
+.rc-replies > .rc-comment--last.rc-comment--collapsed::after {
+  top: calc(0.25rem + 11px);
+}
+
+/* ─── Comment inner (flex row: avatar | content) ─── */
 .rc-comment-inner {
   display: flex;
   gap: 0;
-  flex: 1;
-  min-width: 0;
 }
 
-/* ─── Avatar column (avatar + vertical connector line) ─── */
+/* ─── Avatar column ─── */
 .rc-avatar-col {
   display: flex;
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
   width: 32px;
-  margin-right: 0.5rem;
+  margin-right: 0.5rem; /* 8px */
+  position: relative;
 }
 
+/*
+  rc-avatar-line: visible vertical line in the avatar column.
+  Fills from below avatar to the bottom of rc-comment-inner (height of rc-comment-main).
+  Continues below as rc-comment::before through rc-replies.
+*/
 .rc-avatar-line {
   flex: 1;
   width: 2px;
-  border-radius: 1px;
+  border-radius: 0 0 1px 1px;
   margin-top: 4px;
   min-height: 8px;
   background: color-mix(in oklch, var(--color-base-content) 20%, transparent);
 }
 
-/* Toggle collapse button — positioned on the avatar-line at action-bar level */
-.rc-toggle-on-line {
+/* ⊖ Collapse button — inside rc-actions, absolutely positioned to overlay the thread line */
+/*
+  rc-actions is inside rc-comment-main which starts at x=40px of rc-comment.
+  rc-comment-main has padding-left: 0.125rem ≈ 2px.
+  Thread line center is at x=16px of rc-comment.
+  Button width = 18px, so left edge should be at x=16-9=7px of rc-comment.
+  Within rc-actions: left = 7 - (40+2) = -35px.
+  (rc-actions already has position: relative defined in its own block below)
+*/
+.rc-collapse-btn {
   position: absolute;
-  left: calc(-0.5rem - 0.125rem - 16px);
+  left: -35px;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   border: 2px solid color-mix(in oklch, var(--color-base-content) 20%, transparent);
   background: var(--color-base-100);
@@ -1809,21 +1817,28 @@
   cursor: pointer;
   padding: 0;
   z-index: 2;
+  /* Mask the line behind */
+  box-shadow: 0 0 0 3px var(--color-base-100);
   transition:
     color 0.15s,
     border-color 0.15s,
     background 0.15s,
     transform 0.15s;
 }
-.rc-toggle-on-line:hover {
+.rc-collapse-btn:hover {
   color: var(--color-primary);
   border-color: var(--color-primary);
-  background: color-mix(in oklch, var(--color-primary) 8%, transparent);
-  transform: translate(-50%, -50%) scale(1.15);
+  background: color-mix(in oklch, var(--color-primary) 8%, var(--color-base-100));
+  transform: translateY(-50%) scale(1.15);
 }
-.rc-toggle-on-line svg {
-  width: 11px;
-  height: 11px;
+.rc-collapse-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* Replies container — indents children by full avatar column width */
+.rc-replies {
+  padding-left: 40px; /* rc-avatar-col(32px) + margin-right(8px) */
 }
 
 /* Main content column */
@@ -1882,7 +1897,7 @@
 
 /* ── Action bar ── */
 .rc-actions {
-  position: relative;
+  position: relative; /* needed for rc-collapse-btn absolute positioning */
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -1964,10 +1979,7 @@
   margin-top: 0.5rem;
 }
 
-/* Replies container */
-.rc-replies {
-  margin-top: 0;
-}
+/* (rc-replies defined above in thread line section) */
 
 /* ─── Collapsed state ─── */
 .rc-comment--collapsed {
@@ -2055,21 +2067,32 @@
     max-width: 100%;
     width: 100%;
   }
-  .rc-thread-line {
-    width: 14px;
-  }
   .rc-avatar-col {
     width: 24px;
-    margin-right: 0.4rem;
+    margin-right: 0.375rem; /* 6px */
   }
-  .rc-toggle-on-line {
-    left: calc(-0.4rem - 0.125rem - 12px);
+  /* Mobile: rc-replies indent = 24px + 6px = 30px */
+  .rc-replies {
+    padding-left: 30px;
   }
-  .rc-thread-line--branch::before {
-    right: -12px;
+  /* Mobile arm: avatar center = 12px, padding = 30px → left: -(30-12)=-18px, width=18+12=30px */
+  .rc-replies > .rc-comment::before {
+    left: -18px;
+    width: 30px;
   }
-  .rc-thread-line--last-sibling::after {
-    right: -12px;
+  .rc-replies > .rc-comment--last::before {
+    left: -18px;
+    right: calc(100% - 12px);
+  }
+  .rc-replies > .rc-comment--last::after {
+    left: -19px;
+  }
+  .rc-comment:has(> .rc-replies)::before {
+    left: 12px; /* avatar center for 24px avatar-col */
+  }
+  /* Mobile collapse-btn: rc-comment-main starts at 30+2=32px, center at 12px → left=12-9=3px → -29px from rc-actions */
+  .rc-collapse-btn {
+    left: -29px;
   }
   .rc-body {
     font-size: 0.875rem;

@@ -28,14 +28,16 @@ Componente React/Next.js completamente funzionante che rappresenta una sezione c
 - La linea deve:
   - partire dall’altezza del avatar padre
   - le linee devono collegare tutti gli avatar senza interropersi
-  - all altezza delle azioni sulla linea verticale ci deve essere un pulsante con un icona di un cerchio "-" che collassa i commenti
+  - all altezza delle azioni sulla linea verticale ci deve essere un pulsante ⊖ che collassa i commenti
   - la linea deve essere arrotondata in modo da collegarsi agli avatar
   - il colore della line deve essere neutro
-  - Per l'ultimo fratello, il ramo per creare una forma a L arrotondata e armoniosa (└──) che collega il pulsante "-" la linea verticale all'avatar
+  - Per l'ultimo fratello, il ramo per creare una forma a L arrotondata e armoniosa (└──) che collega il pulsante ⊖ la linea verticale all'avatar
   - Per i fratelli non ultimi, la linea verticale continua dritta e un ramo orizzontale si estende a destra (├──) che collega all'avatar
   - Il pulsante di compressione cerchio meno deve essere posizionato sulla linea nella barra delle azioni
-  - La linea del primo commento figlio deve partire dal pulsante cerchio "-"
+  - La linea del primo commento figlio deve partire dal pulsante ⊖
   - Non lasciare spazi vuoti
+  - Per ogni figlio si crea un ramo a forma di L arrotondata e armoniosa (└──) che collega l'avatar padre a l'avatar figlio
+  - La linea vericale non deve superare l'ultimo figlio
 
 ### Stile richiesto
 
@@ -70,3 +72,17 @@ Componente React/Next.js completamente funzionante che rappresenta una sezione c
 
 - Le linee devono essere minimal, non invasive.
 - Le linee devono mantenere un allineamento perfetto anche se i commenti hanno altezze diverse.
+
+Vertical lines:
+Vertical lines connecting same-thread comments
+Lines start from parent avatar
+Lines connect all avatars without interruption
+Collapse button (⊖) on the line must be at the height of the buttons and reactions
+Rounded connections
+└── for last sibling
+├── for non-last siblings
+Collapse button on action bar line
+First child line starts from ⊖
+No gaps
+L-shaped branches for each child
+Line doesn't extend past last child
