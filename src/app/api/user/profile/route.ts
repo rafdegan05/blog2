@@ -19,6 +19,7 @@ export async function GET() {
       name: true,
       email: true,
       image: true,
+      bannerImage: true,
       bio: true,
       role: true,
       notifyComments: true,
@@ -63,8 +64,16 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: formatZodErrors(parsed.error) }, { status: 400 });
   }
 
-  const { name, bio, image, notifyComments, notifyNewPosts, currentPassword, newPassword } =
-    parsed.data;
+  const {
+    name,
+    bio,
+    image,
+    bannerImage,
+    notifyComments,
+    notifyNewPosts,
+    currentPassword,
+    newPassword,
+  } = parsed.data;
 
   // If changing password, verify current password first
   if (newPassword) {
@@ -93,6 +102,7 @@ export async function PUT(request: NextRequest) {
   if (name !== undefined) updateData.name = name;
   if (bio !== undefined) updateData.bio = bio;
   if (image !== undefined) updateData.image = image;
+  if (bannerImage !== undefined) updateData.bannerImage = bannerImage;
   if (notifyComments !== undefined) updateData.notifyComments = notifyComments;
   if (notifyNewPosts !== undefined) updateData.notifyNewPosts = notifyNewPosts;
 
@@ -108,6 +118,7 @@ export async function PUT(request: NextRequest) {
       name: true,
       email: true,
       image: true,
+      bannerImage: true,
       bio: true,
       role: true,
       notifyComments: true,

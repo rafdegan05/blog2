@@ -11,7 +11,7 @@ interface PostCardProps {
     excerpt?: string | null;
     coverImage?: string | null;
     createdAt: string;
-    author: { name?: string | null; image?: string | null };
+    author: { id?: string; name?: string | null; image?: string | null };
     categories: { name: string; slug: string }[];
     tags: { name: string; slug: string }[];
     _count?: { comments: number };

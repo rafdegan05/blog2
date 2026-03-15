@@ -130,7 +130,12 @@ export default function PostDetailContent({ post }: PostDetailContentProps) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm">{post.author.name || t.common.anonymous}</div>
+              <Link
+                href={`/u/${post.author.id}`}
+                className="font-semibold text-sm hover:text-primary transition-colors"
+              >
+                {post.author.name || t.common.anonymous}
+              </Link>
               <div className="flex items-center gap-2 text-xs text-base-content/50 flex-wrap">
                 <span>{formattedDate}</span>
                 {readingTime > 0 && (
@@ -201,7 +206,14 @@ export default function PostDetailContent({ post }: PostDetailContentProps) {
                 <p className="text-xs uppercase tracking-wider text-base-content/40 mb-1">
                   {t.blog.writtenBy}
                 </p>
-                <h3 className="font-bold text-lg mb-1">{post.author.name}</h3>
+                <h3 className="font-bold text-lg mb-1">
+                  <Link
+                    href={`/u/${post.author.id}`}
+                    className="hover:text-primary transition-colors"
+                  >
+                    {post.author.name}
+                  </Link>
+                </h3>
                 <p className="text-sm text-base-content/60 leading-relaxed">{post.author.bio}</p>
               </div>
             </div>

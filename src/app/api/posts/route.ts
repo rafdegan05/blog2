@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         author: { select: { id: true, name: true, image: true } },
         categories: true,
         tags: true,
-        _count: { select: { comments: true } },
+        _count: { select: { comments: true, reactions: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,

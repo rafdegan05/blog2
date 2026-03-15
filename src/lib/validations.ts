@@ -79,7 +79,14 @@ export const profileUpdateSchema = z.object({
   name: nameField,
   bio: z.string().max(500, "Bio must not exceed 500 characters").optional(),
   image: z
-    .url("Invalid image URL")
+    .string()
+    .max(2048, "Image URL too long")
+    .optional()
+    .or(z.literal(""))
+    .or(z.literal(null as unknown as string)),
+  bannerImage: z
+    .string()
+    .max(2048, "Banner URL too long")
     .optional()
     .or(z.literal(""))
     .or(z.literal(null as unknown as string)),

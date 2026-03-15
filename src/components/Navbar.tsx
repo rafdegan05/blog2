@@ -299,6 +299,9 @@ export default function Navbar() {
                 <Link href="/profile">{t.nav.profileSettings}</Link>
               </li>
               <li>
+                <Link href={`/u/${session.user?.id}`}>{t.userProfile.about}</Link>
+              </li>
+              <li>
                 <Link href="/dashboard">{t.nav.dashboard}</Link>
               </li>
               {isAdmin && (
