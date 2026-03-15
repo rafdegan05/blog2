@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useState } from "react";
 import { useTranslation } from "@/components/LanguageProvider";
 
@@ -12,6 +13,11 @@ interface ShareButtonsProps {
 export default function ShareButtons({ title, url, description }: ShareButtonsProps) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
@@ -104,6 +110,8 @@ export default function ShareButtons({ title, url, description }: ShareButtonsPr
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  if (!mounted) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-1">

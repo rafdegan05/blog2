@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useCallback, createContext, useContext, useMemo, useRef } from "react";
+import { useState, useCallback, createContext, useContext, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ReactionBar from "@/components/ReactionBar";
@@ -312,7 +312,7 @@ function CommentItem({
         <div className="rc-avatar-col">
           <Avatar name={comment.author.name} image={comment.author.image} size={32} />
           {/* Vertical connector from avatar down — shown when has replies */}
-          {hasReplies && <div className="rc-avatar-line" aria-hidden="true" />}
+          {hasReplies}
         </div>
 
         {/* Comment body column */}
