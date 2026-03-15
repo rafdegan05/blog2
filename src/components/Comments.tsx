@@ -90,20 +90,6 @@ function filterComments(comments: CommentData[], query: string): CommentData[] {
   }, []);
 }
 
-/** Depth-based thread-line colour classes */
-const THREAD_COLORS = [
-  "rc-line-blue",
-  "rc-line-violet",
-  "rc-line-teal",
-  "rc-line-amber",
-  "rc-line-rose",
-  "rc-line-green",
-];
-
-function threadColor(depth: number) {
-  return THREAD_COLORS[depth % THREAD_COLORS.length];
-}
-
 /* ══════════════════════════════════════
    Avatar
    ══════════════════════════════════════ */
@@ -295,7 +281,7 @@ function CommentItem({
               return (
                 <div
                   key={i}
-                  className={`rc-thread-line${isLastLine ? " rc-thread-line--branch" : ""}${isLastLine && isLast ? " rc-thread-line--last-sibling" : ""} ${threadColor(i)}`}
+                  className={`rc-thread-line${isLastLine ? " rc-thread-line--branch" : ""}${isLastLine && isLast ? " rc-thread-line--last-sibling" : ""}`}
                 />
               );
             })}
@@ -344,7 +330,7 @@ function CommentItem({
             return (
               <button
                 key={i}
-                className={`rc-thread-line rc-thread-line--clickable${isLastLine ? " rc-thread-line--branch" : ""}${isLastLine && isLast ? " rc-thread-line--last-sibling" : ""} ${threadColor(i)}`}
+                className={`rc-thread-line rc-thread-line--clickable${isLastLine ? " rc-thread-line--branch" : ""}${isLastLine && isLast ? " rc-thread-line--last-sibling" : ""}`}
                 onClick={isLastLine ? () => setCollapsed(true) : undefined}
                 aria-label={isLastLine ? t.comments.collapse : undefined}
                 tabIndex={isLastLine ? 0 : -1}
@@ -358,20 +344,8 @@ function CommentItem({
         {/* Avatar column */}
         <div className="rc-avatar-col">
           <Avatar name={comment.author.name} image={comment.author.image} size={32} />
-          {/* Vertical connector from avatar down to children + toggle */}
-          {hasReplies && (
-            <>
-              <div className={`rc-avatar-line ${threadColor(depth)}`} aria-hidden="true" />
-              <button
-                className={`rc-toggle-on-line ${threadColor(depth)}`}
-                onClick={() => setCollapsed(true)}
-                title={t.comments.collapse}
-                aria-label={t.comments.collapse}
-              >
-                <MinusCircleIcon />
-              </button>
-            </>
-          )}
+          {/* Vertical connector from avatar down to children */}
+          {hasReplies && <div className="rc-avatar-line" aria-hidden="true" />}
         </div>
 
         {/* Comment body column */}
@@ -419,6 +393,17 @@ function CommentItem({
 
           {/* ── Action bar ── */}
           <div className="rc-actions">
+            {hasReplies && (
+              <button
+                className="rc-toggle-on-line"
+                onClick={() => setCollapsed(true)}
+                title={t.comments.collapse}
+                aria-label={t.comments.collapse}
+              >
+                <MinusCircleIcon />
+              </button>
+            )}
+
             <ReactionBar commentId={comment.id} compact />
 
             {session && (
