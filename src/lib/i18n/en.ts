@@ -572,6 +572,11 @@ export const en = {
     expandAll: "Expand all",
     sortNewest: "Newest first",
     sortOldest: "Oldest first",
+    searchPlaceholder: "Search comments...",
+    roleAdmin: "Admin",
+    roleAuthor: "Author",
+    mentionUser: "Mention a user...",
+    sortMostReplies: "Most replies",
   },
 
   // ─── Reactions ───

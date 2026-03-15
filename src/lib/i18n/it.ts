@@ -576,6 +576,11 @@ export const it: Translations = {
     expandAll: "Espandi tutti",
     sortNewest: "Pi\u00f9 recenti",
     sortOldest: "Meno recenti",
+    searchPlaceholder: "Cerca commenti...",
+    roleAdmin: "Admin",
+    roleAuthor: "Autore",
+    mentionUser: "Menziona un utente...",
+    sortMostReplies: "Più risposte",
   },
 
   // ─── Reactions ───

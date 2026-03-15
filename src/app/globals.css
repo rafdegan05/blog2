@@ -1415,13 +1415,14 @@
   padding-bottom: 2rem;
 }
 
-/* ── Reddit-style Comments ── */
+/* ── Modern Threaded Comments ── */
 
 .rc-section {
   margin-top: 2.5rem;
 }
 
-.rc-section-header {
+/* ── Top bar ── */
+.rc-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1432,7 +1433,45 @@
   border-bottom: 1px solid oklch(var(--bc) / 0.08);
 }
 
-.rc-header-controls {
+.rc-topbar-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 200px;
+  max-width: 280px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid oklch(var(--bc) / 0.1);
+  background: oklch(var(--b2));
+  color: oklch(var(--bc) / 0.5);
+  transition: border-color 0.15s;
+}
+.rc-topbar-search:focus-within {
+  border-color: oklch(var(--p) / 0.4);
+}
+
+.rc-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.8125rem;
+  color: oklch(var(--bc));
+  width: 100%;
+}
+.rc-search-input::placeholder {
+  color: oklch(var(--bc) / 0.35);
+}
+
+.rc-topbar-count {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9375rem;
+  color: oklch(var(--bc) / 0.7);
+  white-space: nowrap;
+}
+
+.rc-topbar-controls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1481,7 +1520,7 @@
   border-color: oklch(var(--bc) / 0.18);
 }
 
-/* Compose */
+/* ── Compose box ── */
 .rc-compose {
   display: flex;
   gap: 0.75rem;
@@ -1491,6 +1530,80 @@
   border-radius: 0.75rem;
   background: oklch(var(--b2));
   border: 1px solid oklch(var(--bc) / 0.06);
+}
+
+.rc-compose-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.rc-compose-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  gap: 0.5rem;
+}
+
+.rc-compose-format-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.rc-fmt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  color: oklch(var(--bc) / 0.4);
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.rc-fmt-btn:hover {
+  color: oklch(var(--bc) / 0.8);
+  background: oklch(var(--bc) / 0.06);
+}
+
+.rc-fmt-divider {
+  width: 1px;
+  height: 1.25rem;
+  background: oklch(var(--bc) / 0.1);
+  margin: 0 0.25rem;
+}
+
+/* Mention popup */
+.rc-mention-popup {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: oklch(var(--b2));
+  border: 1px solid oklch(var(--bc) / 0.1);
+  animation: rc-fade-in 0.15s ease;
+}
+.rc-mention-input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid oklch(var(--bc) / 0.15);
+  background: oklch(var(--b1));
+  font-size: 0.8125rem;
+  color: oklch(var(--bc));
+  outline: none;
+}
+.rc-mention-input:focus {
+  border-color: oklch(var(--p) / 0.4);
+}
+.rc-mention-hint {
+  font-size: 0.6875rem;
+  color: oklch(var(--bc) / 0.35);
+  margin-top: 0.35rem;
 }
 
 /* Sign-in prompt */
@@ -1526,6 +1639,27 @@
   font-weight: 600;
 }
 
+/* ─── Role Badge (pill style) ─── */
+.rc-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+.rc-badge--admin {
+  background: oklch(0.65 0.18 15 / 0.15);
+  color: oklch(0.55 0.2 15);
+}
+.rc-badge--author {
+  background: oklch(0.65 0.15 250 / 0.15);
+  color: oklch(0.55 0.18 250);
+}
+
 /* ─── Comment (single) ─── */
 .rc-comment {
   position: relative;
@@ -1534,7 +1668,13 @@
   padding-top: 0.5rem;
 }
 
-/* Thread line — the vertical bar connecting parent to children */
+/* ─── Gutter — holds thread lines for each ancestor ─── */
+.rc-gutter {
+  display: flex;
+  flex-shrink: 0;
+}
+
+/* Thread line — the vertical bar in the gutter */
 .rc-thread-line {
   position: relative;
   width: 20px;
@@ -1553,7 +1693,7 @@
   width: 2px;
   margin-left: -1px;
   border-radius: 1px;
-  background: oklch(var(--bc) / 0.1);
+  background: var(--rc-thread-color, oklch(var(--bc) / 0.1));
   transition:
     background 0.15s,
     width 0.15s;
@@ -1564,37 +1704,137 @@
 .rc-thread-line--clickable:hover::after {
   width: 4px;
   margin-left: -2px;
-}
-
-/* Thread-line color variants */
-.rc-line-blue::after {
-  background: oklch(0.65 0.15 250);
-}
-.rc-line-violet::after {
-  background: oklch(0.6 0.17 290);
-}
-.rc-line-teal::after {
-  background: oklch(0.7 0.12 185);
-}
-.rc-line-amber::after {
-  background: oklch(0.75 0.14 80);
-}
-.rc-line-rose::after {
-  background: oklch(0.65 0.18 15);
-}
-.rc-line-green::after {
-  background: oklch(0.7 0.15 145);
-}
-
-.rc-thread-line--clickable:hover::after {
   filter: brightness(1.3);
+}
+
+/* Thread-line colors via custom property */
+.rc-line-blue {
+  --rc-thread-color: oklch(0.65 0.15 250);
+}
+.rc-line-violet {
+  --rc-thread-color: oklch(0.6 0.17 290);
+}
+.rc-line-teal {
+  --rc-thread-color: oklch(0.7 0.12 185);
+}
+.rc-line-amber {
+  --rc-thread-color: oklch(0.75 0.14 80);
+}
+.rc-line-rose {
+  --rc-thread-color: oklch(0.65 0.18 15);
+}
+.rc-line-green {
+  --rc-thread-color: oklch(0.7 0.15 145);
+}
+
+/* ─── Branch connector: horizontal rounded line from gutter to avatar ─── */
+
+/* Horizontal branch (for non-last siblings) */
+.rc-thread-line--branch::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: calc(50% - 1px);
+  right: -8px;
+  height: 2px;
+  background: var(--rc-thread-color, oklch(var(--bc) / 0.1));
+}
+
+/* Last sibling: replace vertical + horizontal with a single rounded L-shape */
+.rc-thread-line--last-sibling::after {
+  bottom: auto;
+  height: 17px;
+  left: calc(50% - 1px);
+  right: -8px;
+  width: auto;
+  background: none;
+  border-left: 2px solid var(--rc-thread-color, oklch(var(--bc) / 0.1));
+  border-bottom: 2px solid var(--rc-thread-color, oklch(var(--bc) / 0.1));
+  border-bottom-left-radius: 10px;
+  margin-left: 0;
+  border-radius: 0 0 0 10px;
+}
+.rc-thread-line--last-sibling::before {
+  display: none;
+}
+
+/* Hover state for branch lines */
+.rc-thread-line--branch.rc-thread-line--clickable:hover::after {
+  width: 2px;
+  margin-left: -1px;
+}
+.rc-thread-line--last-sibling.rc-thread-line--clickable:hover::after {
+  border-left-width: 3px;
+  border-bottom-width: 3px;
+  width: auto;
+  margin-left: 0;
+}
+
+/* ─── Comment inner (avatar col + content) ─── */
+.rc-comment-inner {
+  display: flex;
+  gap: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ─── Avatar column (avatar + vertical connector line + toggle) ─── */
+.rc-avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  margin-right: 0.5rem;
+}
+
+.rc-avatar-line {
+  flex: 1;
+  width: 2px;
+  border-radius: 1px;
+  margin-top: 4px;
+  min-height: 8px;
+  background: var(--rc-thread-color, oklch(var(--bc) / 0.1));
+}
+
+/* Toggle button sitting on the avatar-line (circle +/- icon) */
+.rc-toggle-on-line {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--rc-thread-color, oklch(var(--bc) / 0.15));
+  background: oklch(var(--b1));
+  color: var(--rc-thread-color, oklch(var(--bc) / 0.3));
+  cursor: pointer;
+  padding: 0;
+  margin-top: -2px;
+  z-index: 1;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s,
+    transform 0.15s;
+}
+.rc-toggle-on-line:hover {
+  color: oklch(var(--p));
+  border-color: oklch(var(--p));
+  background: oklch(var(--p) / 0.08);
+  transform: scale(1.15);
+}
+.rc-toggle-on-line svg {
+  width: 11px;
+  height: 11px;
 }
 
 /* Main content column */
 .rc-comment-main {
   flex: 1;
   min-width: 0;
-  padding-left: 0.25rem;
+  padding-left: 0.125rem;
 }
 
 /* ── Header (inline row) ── */
@@ -1621,26 +1861,6 @@
 .rc-time {
   font-size: 0.75rem;
   color: oklch(var(--bc) / 0.4);
-}
-
-/* Top-level collapse (— button) */
-.rc-collapse-top {
-  margin-left: auto;
-  background: none;
-  border: none;
-  padding: 0.2rem;
-  border-radius: 0.25rem;
-  color: oklch(var(--bc) / 0.3);
-  cursor: pointer;
-  transition:
-    color 0.15s,
-    background 0.15s;
-  display: flex;
-  align-items: center;
-}
-.rc-collapse-top:hover {
-  color: oklch(var(--bc) / 0.7);
-  background: oklch(var(--bc) / 0.06);
 }
 
 /* ── Body ── */
@@ -1697,6 +1917,18 @@
 .rc-action-btn--danger:hover {
   color: oklch(var(--er));
   background: oklch(var(--er) / 0.08);
+}
+
+/* Toggle circle icon in collapsed state */
+.rc-toggle-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: oklch(var(--bc) / 0.35);
+  flex-shrink: 0;
+}
+.rc-toggle-circle--expand {
+  color: oklch(var(--p) / 0.7);
 }
 
 /* Delete confirmation */
@@ -1762,15 +1994,7 @@
 .rc-collapsed-bar:hover {
   background: oklch(var(--bc) / 0.04);
 }
-
-.rc-expand-icon {
-  font-family: monospace;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: oklch(var(--bc) / 0.35);
-  flex-shrink: 0;
-}
-.rc-collapsed-bar:hover .rc-expand-icon {
+.rc-collapsed-bar:hover .rc-toggle-circle--expand {
   color: oklch(var(--p));
 }
 
@@ -1826,15 +2050,30 @@
 
 /* ── Responsive: stack on mobile ── */
 @media (max-width: 640px) {
-  .rc-section-header {
+  .rc-topbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+  .rc-topbar-search {
+    max-width: 100%;
+    width: 100%;
   }
   .rc-thread-line {
     width: 14px;
   }
+  .rc-avatar-col {
+    width: 24px;
+    margin-right: 0.4rem;
+  }
   .rc-body {
     font-size: 0.875rem;
+  }
+  .rc-compose-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .rc-compose-toolbar .btn {
+    align-self: flex-end;
   }
 }
 

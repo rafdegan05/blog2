@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useCallback, createContext, useContext } from "react";
+import { useState, useCallback, createContext, useContext, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ReactionBar from "@/components/ReactionBar";
@@ -9,7 +9,9 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import MarkdownEditor from "@/components/MarkdownEditor";
 import { useTranslation } from "@/components/LanguageProvider";
 
-/* ── Collapse context (for collapse-all / expand-all) ── */
+/* ══════════════════════════════════════
+   Context — collapse / expand all
+   ══════════════════════════════════════ */
 
 interface CollapseCtx {
   collapseSignal: number;
@@ -21,13 +23,20 @@ const CollapseContext = createContext<CollapseCtx>({
   expandSignal: 0,
 });
 
-/* ── Types ── */
+/* ══════════════════════════════════════
+   Types
+   ══════════════════════════════════════ */
 
 interface CommentData {
   id: string;
   content: string;
   createdAt: string;
-  author: { id: string; name?: string | null; image?: string | null };
+  author: {
+    id: string;
+    name?: string | null;
+    image?: string | null;
+    role?: "USER" | "AUTHOR" | "ADMIN";
+  };
   replies?: CommentData[];
 }
 
@@ -36,9 +45,11 @@ interface CommentsProps {
   initialComments: CommentData[];
 }
 
-type SortMode = "newest" | "oldest";
+type SortMode = "newest" | "oldest" | "most-replies";
 
-/* ── Helpers ── */
+/* ══════════════════════════════════════
+   Helpers
+   ══════════════════════════════════════ */
 
 function useRelativeTime() {
   const { t } = useTranslation();
@@ -61,7 +72,25 @@ function countAll(comments: CommentData[]): number {
   return comments.reduce((sum, c) => sum + 1 + (c.replies ? countAll(c.replies) : 0), 0);
 }
 
-/** Depth-based thread-line color classes */
+/** Recursively filter comments that match a search query */
+function filterComments(comments: CommentData[], query: string): CommentData[] {
+  if (!query.trim()) return comments;
+  const q = query.toLowerCase();
+  return comments.reduce<CommentData[]>((acc, c) => {
+    const matchesSelf =
+      c.content.toLowerCase().includes(q) || (c.author.name?.toLowerCase().includes(q) ?? false);
+    const filteredReplies = c.replies ? filterComments(c.replies, query) : [];
+    if (matchesSelf || filteredReplies.length > 0) {
+      acc.push({
+        ...c,
+        replies: matchesSelf ? c.replies : filteredReplies,
+      });
+    }
+    return acc;
+  }, []);
+}
+
+/** Depth-based thread-line colour classes */
 const THREAD_COLORS = [
   "rc-line-blue",
   "rc-line-violet",
@@ -75,7 +104,9 @@ function threadColor(depth: number) {
   return THREAD_COLORS[depth % THREAD_COLORS.length];
 }
 
-/* ── Avatar ── */
+/* ══════════════════════════════════════
+   Avatar
+   ══════════════════════════════════════ */
 
 function Avatar({
   name,
@@ -87,7 +118,13 @@ function Avatar({
   size?: number;
 }) {
   const cls =
-    size <= 28 ? "w-7 h-7 text-[10px]" : size <= 32 ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+    size <= 24
+      ? "w-6 h-6 text-[9px]"
+      : size <= 28
+        ? "w-7 h-7 text-[10px]"
+        : size <= 32
+          ? "w-8 h-8 text-xs"
+          : "w-10 h-10 text-sm";
   return (
     <div className={`rc-avatar ${cls}`}>
       {image ? (
@@ -105,14 +142,27 @@ function Avatar({
   );
 }
 
-/* ═══════════════════════════════════════
-   CommentItem — Reddit-style
-   ═══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   RoleBadge
+   ══════════════════════════════════════ */
+
+function RoleBadge({ role }: { role?: string | null }) {
+  const { t } = useTranslation();
+  if (!role || role === "USER") return null;
+  const label = role === "ADMIN" ? t.comments.roleAdmin : t.comments.roleAuthor;
+  const cls = role === "ADMIN" ? "rc-badge rc-badge--admin" : "rc-badge rc-badge--author";
+  return <span className={cls}>{label}</span>;
+}
+
+/* ══════════════════════════════════════
+   CommentItem — threaded, recursive
+   ══════════════════════════════════════ */
 
 function CommentItem({
   comment,
   postId,
   depth,
+  isLast,
   onReplyAdded,
   onDeleted,
   onEdited,
@@ -120,6 +170,7 @@ function CommentItem({
   comment: CommentData;
   postId: string;
   depth: number;
+  isLast: boolean;
   onReplyAdded: () => void;
   onDeleted: () => void;
   onEdited: () => void;
@@ -230,30 +281,45 @@ function CommentItem({
     }
   };
 
-  /* ── Collapsed view (Reddit-style: [+] username · 3h ago (5 replies)) ── */
+  /* ═══════════════════════
+     Collapsed state
+     ═══════════════════════ */
   if (collapsed) {
     return (
-      <div
-        className="rc-comment rc-comment--collapsed"
-        style={{ "--rc-depth": depth } as React.CSSProperties}
-      >
+      <div className="rc-comment rc-comment--collapsed">
+        {/* Thread line gutter for each ancestor depth */}
         {depth > 0 && (
-          <div className={`rc-thread-line ${threadColor(depth - 1)}`} aria-hidden="true" />
+          <div className="rc-gutter" aria-hidden="true">
+            {Array.from({ length: depth }).map((_, i) => {
+              const isLastLine = i === depth - 1;
+              return (
+                <div
+                  key={i}
+                  className={`rc-thread-line${isLastLine ? " rc-thread-line--branch" : ""}${isLastLine && isLast ? " rc-thread-line--last-sibling" : ""} ${threadColor(i)}`}
+                />
+              );
+            })}
+          </div>
         )}
+
         <button
           className="rc-collapsed-bar"
           onClick={() => setCollapsed(false)}
           aria-label={t.comments.expand}
         >
-          <span className="rc-expand-icon">[+]</span>
+          {/* Circle + button */}
+          <span className="rc-toggle-circle rc-toggle-circle--expand">
+            <PlusCircleIcon />
+          </span>
           <Avatar name={comment.author.name} image={comment.author.image} size={20} />
           <span className="rc-collapsed-meta">
             <span className="rc-author">{comment.author.name || t.common.anonymous}</span>
-            <span className="rc-sep">·</span>
+            <RoleBadge role={comment.author.role} />
+            <span className="rc-sep">&middot;</span>
             <span className="rc-time">{relativeTime(comment.createdAt)}</span>
             {hasReplies && (
               <>
-                <span className="rc-sep">·</span>
+                <span className="rc-sep">&middot;</span>
                 <span className="rc-children-count">
                   ({replyCount} {replyCount === 1 ? t.comments.reply : t.comments.repliesWord})
                 </span>
@@ -265,169 +331,325 @@ function CommentItem({
     );
   }
 
-  /* ── Expanded view ── */
+  /* ═══════════════════════
+     Expanded state
+     ═══════════════════════ */
   return (
-    <div className="rc-comment" style={{ "--rc-depth": depth } as React.CSSProperties}>
-      {/* Clickable thread line for nesting — click to collapse */}
+    <div className="rc-comment">
+      {/* Thread line gutter — one vertical bar per ancestor depth */}
       {depth > 0 && (
-        <button
-          className={`rc-thread-line rc-thread-line--clickable ${threadColor(depth - 1)}`}
-          onClick={() => setCollapsed(true)}
-          aria-label={t.comments.collapse}
-        />
+        <div className="rc-gutter" aria-hidden="true">
+          {Array.from({ length: depth }).map((_, i) => {
+            const isLastLine = i === depth - 1;
+            return (
+              <button
+                key={i}
+                className={`rc-thread-line rc-thread-line--clickable${isLastLine ? " rc-thread-line--branch" : ""}${isLastLine && isLast ? " rc-thread-line--last-sibling" : ""} ${threadColor(i)}`}
+                onClick={isLastLine ? () => setCollapsed(true) : undefined}
+                aria-label={isLastLine ? t.comments.collapse : undefined}
+                tabIndex={isLastLine ? 0 : -1}
+              />
+            );
+          })}
+        </div>
       )}
 
-      <div className="rc-comment-main">
-        {/* ── Header: avatar · username · time ── */}
-        <div className="rc-header">
-          <Avatar name={comment.author.name} image={comment.author.image} size={28} />
-          <span className="rc-author">{comment.author.name || t.common.anonymous}</span>
-          <span className="rc-sep">·</span>
-          <span className="rc-time">{relativeTime(comment.createdAt)}</span>
-          {/* Top-level collapse button */}
-          {depth === 0 && (
-            <button
-              className="rc-collapse-top"
-              onClick={() => setCollapsed(true)}
-              aria-label={t.comments.collapse}
-              title={t.comments.collapse}
-            >
-              <MinusIcon />
-            </button>
-          )}
-        </div>
-
-        {/* ── Body ── */}
-        {editing ? (
-          <div className="rc-edit-area">
-            <MarkdownEditor
-              value={editContent}
-              onChange={setEditContent}
-              placeholder={t.comments.writeComment}
-              rows={3}
-              compact
-            />
-            <div className="rc-edit-actions">
-              <button
-                className="btn btn-ghost btn-xs"
-                onClick={() => {
-                  setEditing(false);
-                  setEditContent(comment.content);
-                }}
-              >
-                {t.common.cancel}
-              </button>
-              <button className="btn btn-primary btn-xs" onClick={handleEdit} disabled={saving}>
-                {saving ? <span className="loading loading-spinner loading-xs" /> : t.common.save}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="rc-body">
-            <MarkdownRenderer content={comment.content} />
-          </div>
-        )}
-
-        {/* ── Action bar (Reddit-style: inline row) ── */}
-        <div className="rc-actions">
-          <ReactionBar commentId={comment.id} compact />
-
-          {session && (
-            <button
-              className="rc-action-btn"
-              onClick={() => {
-                setShowReply(!showReply);
-                setShowDeleteConfirm(false);
-              }}
-            >
-              <ReplyIcon />
-              {t.comments.reply}
-            </button>
-          )}
-          {isOwner && (
+      <div className="rc-comment-inner">
+        {/* Avatar column */}
+        <div className="rc-avatar-col">
+          <Avatar name={comment.author.name} image={comment.author.image} size={32} />
+          {/* Vertical connector from avatar down to children + toggle */}
+          {hasReplies && (
             <>
+              <div className={`rc-avatar-line ${threadColor(depth)}`} aria-hidden="true" />
               <button
-                className="rc-action-btn"
-                onClick={() => {
-                  setEditing(true);
-                  setShowDeleteConfirm(false);
-                }}
+                className={`rc-toggle-on-line ${threadColor(depth)}`}
+                onClick={() => setCollapsed(true)}
+                title={t.comments.collapse}
+                aria-label={t.comments.collapse}
               >
-                <EditIcon />
-                {t.common.edit}
-              </button>
-              <button
-                className="rc-action-btn rc-action-btn--danger"
-                onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
-              >
-                <TrashIcon />
-                {t.common.delete}
+                <MinusCircleIcon />
               </button>
             </>
           )}
         </div>
 
-        {/* Delete confirmation */}
-        {showDeleteConfirm && (
-          <div className="rc-delete-confirm">
-            <span>{t.comments.deleteConfirm}</span>
-            <div className="flex gap-2">
-              <button className="btn btn-ghost btn-xs" onClick={() => setShowDeleteConfirm(false)}>
-                {t.common.cancel}
-              </button>
-              <button className="btn btn-error btn-xs" onClick={handleDelete}>
-                {t.common.delete}
-              </button>
-            </div>
+        {/* Comment body column */}
+        <div className="rc-comment-main">
+          {/* ── Header ── */}
+          <div className="rc-header">
+            <span className="rc-author">{comment.author.name || t.common.anonymous}</span>
+            <RoleBadge role={comment.author.role} />
+            <span className="rc-sep">&middot;</span>
+            <time className="rc-time" dateTime={comment.createdAt}>
+              {relativeTime(comment.createdAt)}
+            </time>
           </div>
-        )}
 
-        {/* Reply form */}
-        {showReply && (
-          <div className="rc-reply-form">
-            <Avatar name={session?.user?.name} image={session?.user?.image} size={24} />
-            <div className="flex-1">
+          {/* ── Body ── */}
+          {editing ? (
+            <div className="rc-edit-area">
               <MarkdownEditor
-                value={replyContent}
-                onChange={setReplyContent}
-                placeholder={t.comments.writeReply}
-                rows={2}
+                value={editContent}
+                onChange={setEditContent}
+                placeholder={t.comments.writeComment}
+                rows={3}
                 compact
               />
-              <div className="rc-reply-form-actions">
-                <button className="btn btn-ghost btn-xs" onClick={() => setShowReply(false)}>
+              <div className="rc-edit-actions">
+                <button
+                  className="btn btn-ghost btn-xs"
+                  onClick={() => {
+                    setEditing(false);
+                    setEditContent(comment.content);
+                  }}
+                >
                   {t.common.cancel}
                 </button>
-                <button
-                  className="btn btn-primary btn-xs"
-                  onClick={handleReply}
-                  disabled={submitting}
-                >
-                  {submitting ? (
-                    <span className="loading loading-spinner loading-xs" />
-                  ) : (
-                    t.comments.send
-                  )}
+                <button className="btn btn-primary btn-xs" onClick={handleEdit} disabled={saving}>
+                  {saving ? <span className="loading loading-spinner loading-xs" /> : t.common.save}
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="rc-body">
+              <MarkdownRenderer content={comment.content} />
+            </div>
+          )}
 
-        {/* Nested replies */}
-        {hasReplies && (
-          <div className="rc-replies">
-            {comment.replies!.map((reply) => (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
-                postId={postId}
-                depth={depth + 1}
-                onReplyAdded={onReplyAdded}
-                onDeleted={onDeleted}
-                onEdited={onEdited}
-              />
-            ))}
+          {/* ── Action bar ── */}
+          <div className="rc-actions">
+            <ReactionBar commentId={comment.id} compact />
+
+            {session && (
+              <button
+                className="rc-action-btn"
+                onClick={() => {
+                  setShowReply(!showReply);
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                <ReplyIcon />
+                {t.comments.reply}
+              </button>
+            )}
+            {isOwner && (
+              <>
+                <button
+                  className="rc-action-btn"
+                  onClick={() => {
+                    setEditing(true);
+                    setShowDeleteConfirm(false);
+                  }}
+                >
+                  <EditIcon />
+                  {t.common.edit}
+                </button>
+                <button
+                  className="rc-action-btn rc-action-btn--danger"
+                  onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
+                >
+                  <TrashIcon />
+                  {t.common.delete}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Delete confirmation */}
+          {showDeleteConfirm && (
+            <div className="rc-delete-confirm">
+              <span>{t.comments.deleteConfirm}</span>
+              <div className="flex gap-2">
+                <button
+                  className="btn btn-ghost btn-xs"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  {t.common.cancel}
+                </button>
+                <button className="btn btn-error btn-xs" onClick={handleDelete}>
+                  {t.common.delete}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Reply form */}
+          {showReply && (
+            <div className="rc-reply-form">
+              <Avatar name={session?.user?.name} image={session?.user?.image} size={24} />
+              <div className="flex-1">
+                <MarkdownEditor
+                  value={replyContent}
+                  onChange={setReplyContent}
+                  placeholder={t.comments.writeReply}
+                  rows={2}
+                  compact
+                />
+                <div className="rc-reply-form-actions">
+                  <button className="btn btn-ghost btn-xs" onClick={() => setShowReply(false)}>
+                    {t.common.cancel}
+                  </button>
+                  <button
+                    className="btn btn-primary btn-xs"
+                    onClick={handleReply}
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <span className="loading loading-spinner loading-xs" />
+                    ) : (
+                      t.comments.send
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Nested replies */}
+          {hasReplies && (
+            <div className="rc-replies">
+              {comment.replies!.map((reply, idx) => (
+                <CommentItem
+                  key={reply.id}
+                  comment={reply}
+                  postId={postId}
+                  depth={depth + 1}
+                  isLast={idx === comment.replies!.length - 1}
+                  onReplyAdded={onReplyAdded}
+                  onDeleted={onDeleted}
+                  onEdited={onEdited}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   ComposeBox — new comment form
+   ══════════════════════════════════════ */
+
+function ComposeBox({
+  value,
+  onChange,
+  onSubmit,
+  submitting,
+  placeholder,
+  sessionUser,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  submitting: boolean;
+  placeholder: string;
+  sessionUser: { name?: string | null; image?: string | null };
+}) {
+  const { t } = useTranslation();
+  const [showMention, setShowMention] = useState(false);
+
+  const insertMention = useCallback(
+    (username: string) => {
+      onChange(value + `@${username} `);
+      setShowMention(false);
+    },
+    [value, onChange]
+  );
+
+  return (
+    <div className="rc-compose">
+      <Avatar name={sessionUser.name} image={sessionUser.image} size={36} />
+      <div className="rc-compose-body">
+        <MarkdownEditor
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={3}
+          compact
+        />
+
+        {/* Formatting + mention toolbar */}
+        <div className="rc-compose-toolbar">
+          <div className="rc-compose-format-icons">
+            <button
+              type="button"
+              className="rc-fmt-btn"
+              title="Bold"
+              onClick={() => onChange(value + "**text**")}
+            >
+              <BoldIcon />
+            </button>
+            <button
+              type="button"
+              className="rc-fmt-btn"
+              title="Italic"
+              onClick={() => onChange(value + "*text*")}
+            >
+              <ItalicIcon />
+            </button>
+            <button
+              type="button"
+              className="rc-fmt-btn"
+              title="Code"
+              onClick={() => onChange(value + "`code`")}
+            >
+              <CodeIcon />
+            </button>
+            <button
+              type="button"
+              className="rc-fmt-btn"
+              title="Link"
+              onClick={() => onChange(value + "[text](url)")}
+            >
+              <LinkIcon />
+            </button>
+            <div className="rc-fmt-divider" />
+            <button
+              type="button"
+              className="rc-fmt-btn"
+              title={t.comments.mentionUser}
+              onClick={() => setShowMention(!showMention)}
+            >
+              <AtIcon />
+            </button>
+          </div>
+
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={onSubmit}
+            disabled={submitting || !value.trim()}
+          >
+            {submitting ? (
+              <span className="loading loading-spinner loading-xs" />
+            ) : (
+              <>
+                <SendIcon />
+                {t.comments.comment}
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Mention dropdown (simple inline) */}
+        {showMention && (
+          <div className="rc-mention-popup">
+            <input
+              type="text"
+              placeholder={t.comments.mentionUser}
+              className="rc-mention-input"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const val = (e.target as HTMLInputElement).value.trim();
+                  if (val) insertMention(val);
+                }
+                if (e.key === "Escape") setShowMention(false);
+              }}
+            />
+            <p className="rc-mention-hint">Type a username and press Enter</p>
           </div>
         )}
       </div>
@@ -435,9 +657,9 @@ function CommentItem({
   );
 }
 
-/* ═══════════════════════════════════════
-   Comments (root)
-   ═══════════════════════════════════════ */
+/* ══════════════════════════════════════
+   Comments — root component
+   ══════════════════════════════════════ */
 
 export default function Comments({ postId, initialComments }: CommentsProps) {
   const { data: session } = useSession();
@@ -446,6 +668,7 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [searchQuery, setSearchQuery] = useState("");
 
   /* Collapse-all / expand-all signals */
   const [collapseSignal, setCollapseSignal] = useState(0);
@@ -461,7 +684,7 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
       const data = await res.json();
       if (Array.isArray(data)) setComments(data);
     } catch {
-      // silently ignore network errors on refresh
+      /* silently ignore network errors on refresh */
     }
   }, [postId]);
 
@@ -497,36 +720,57 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
     setAllCollapsed(!allCollapsed);
   };
 
-  /* Sort top-level comments */
-  const sorted = [...comments].sort((a, b) => {
-    const ta = new Date(a.createdAt).getTime();
-    const tb = new Date(b.createdAt).getTime();
-    return sortMode === "newest" ? tb - ta : ta - tb;
-  });
+  /* Sort & filter */
+  const processed = useMemo(() => {
+    let list = filterComments(comments, searchQuery);
+
+    list = [...list].sort((a, b) => {
+      if (sortMode === "most-replies") {
+        return countAll(b.replies || []) - countAll(a.replies || []);
+      }
+      const ta = new Date(a.createdAt).getTime();
+      const tb = new Date(b.createdAt).getTime();
+      return sortMode === "newest" ? tb - ta : ta - tb;
+    });
+
+    return list;
+  }, [comments, searchQuery, sortMode]);
 
   return (
     <CollapseContext.Provider value={{ collapseSignal, expandSignal }}>
-      <section className="rc-section">
-        {/* ── Section header ── */}
-        <div className="rc-section-header">
-          <div className="flex items-center gap-2">
-            <ChatBubbleIcon />
-            <h3 className="text-xl font-bold">{t.comments.title.replace("{n}", String(total))}</h3>
+      <section className="rc-section" aria-label="Comments">
+        {/* ── Top bar ── */}
+        <div className="rc-topbar">
+          {/* Left: search */}
+          <div className="rc-topbar-search">
+            <SearchIcon />
+            <input
+              type="text"
+              className="rc-search-input"
+              placeholder={t.comments.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
-          <div className="rc-header-controls">
-            {/* Sort selector */}
-            {comments.length > 1 && (
-              <select
-                className="rc-sort-select"
-                value={sortMode}
-                onChange={(e) => setSortMode(e.target.value as SortMode)}
-              >
-                <option value="newest">{t.comments.sortNewest}</option>
-                <option value="oldest">{t.comments.sortOldest}</option>
-              </select>
-            )}
-            {/* Collapse / Expand all */}
+          {/* Center: counter */}
+          <div className="rc-topbar-count">
+            <ChatBubbleIcon />
+            <span className="font-semibold">{t.comments.title.replace("{n}", String(total))}</span>
+          </div>
+
+          {/* Right: sort + collapse */}
+          <div className="rc-topbar-controls">
+            <select
+              className="rc-sort-select"
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as SortMode)}
+            >
+              <option value="newest">{t.comments.sortNewest}</option>
+              <option value="oldest">{t.comments.sortOldest}</option>
+              <option value="most-replies">{t.comments.sortMostReplies}</option>
+            </select>
+
             {comments.length > 0 && (
               <button
                 className="rc-toggle-all-btn"
@@ -534,7 +778,9 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
                 title={allCollapsed ? t.comments.expandAll : t.comments.collapseAll}
               >
                 {allCollapsed ? <PlusBoxIcon /> : <MinusBoxIcon />}
-                {allCollapsed ? t.comments.expandAll : t.comments.collapseAll}
+                <span className="hidden sm:inline">
+                  {allCollapsed ? t.comments.expandAll : t.comments.collapseAll}
+                </span>
               </button>
             )}
           </div>
@@ -542,34 +788,17 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
 
         {/* ── New comment form ── */}
         {session ? (
-          <div className="rc-compose">
-            <Avatar name={session.user?.name} image={session.user?.image} size={36} />
-            <div className="flex-1">
-              <MarkdownEditor
-                value={newComment}
-                onChange={setNewComment}
-                placeholder={t.comments.writeComment}
-                rows={3}
-                compact
-              />
-              <div className="flex justify-end mt-2">
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={handleSubmit}
-                  disabled={submitting || !newComment.trim()}
-                >
-                  {submitting ? (
-                    <span className="loading loading-spinner loading-xs" />
-                  ) : (
-                    <>
-                      <SendIcon />
-                      {t.comments.comment}
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+          <ComposeBox
+            value={newComment}
+            onChange={setNewComment}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            placeholder={t.comments.writeComment}
+            sessionUser={{
+              name: session.user?.name,
+              image: session.user?.image,
+            }}
+          />
         ) : (
           <div className="rc-signin-prompt">
             <ChatBubbleIcon />
@@ -584,7 +813,7 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
 
         {/* ── Comments list ── */}
         <div className="rc-list">
-          {comments.length === 0 ? (
+          {processed.length === 0 ? (
             <div className="rc-empty">
               <div className="rc-empty-icon">
                 <ChatBubbleIcon large />
@@ -593,12 +822,13 @@ export default function Comments({ postId, initialComments }: CommentsProps) {
               <p className="text-sm text-base-content/40">{t.comments.beFirst}</p>
             </div>
           ) : (
-            sorted.map((comment) => (
+            processed.map((comment, idx) => (
               <CommentItem
                 key={comment.id}
                 comment={comment}
                 postId={postId}
                 depth={0}
+                isLast={idx === processed.length - 1}
                 onReplyAdded={refreshComments}
                 onDeleted={refreshComments}
                 onEdited={refreshComments}
@@ -623,6 +853,18 @@ function ChatBubbleIcon({ large }: { large?: boolean } = {}) {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"
+      />
+    </svg>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
       />
     </svg>
   );
@@ -694,16 +936,20 @@ function SendIcon() {
   );
 }
 
-function MinusIcon() {
+function PlusCircleIcon() {
   return (
-    <svg
-      className="w-3.5 h-3.5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M12 8v8m-4-4h8" />
+    </svg>
+  );
+}
+
+function MinusCircleIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M8 12h8" />
     </svg>
   );
 }
@@ -720,6 +966,62 @@ function MinusBoxIcon() {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+    </svg>
+  );
+}
+
+function BoldIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zm0 8h9a4 4 0 014 4 4 4 0 01-4 4H6z"
+      />
+    </svg>
+  );
+}
+
+function ItalicIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M10 4h4m-2 0l-4 16m0 0h4m4-16l-4 16" />
+    </svg>
+  );
+}
+
+function CodeIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25"
+      />
+    </svg>
+  );
+}
+
+function LinkIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.282a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.656"
+      />
+    </svg>
+  );
+}
+
+function AtIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25"
+      />
     </svg>
   );
 }

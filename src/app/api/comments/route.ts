@@ -5,9 +5,9 @@ import { auth } from "@/lib/auth";
 /** Reusable include for nested replies (up to 4 levels deep) */
 const repliesInclude = (depth: number): object =>
   depth <= 0
-    ? { author: { select: { id: true, name: true, image: true } } }
+    ? { author: { select: { id: true, name: true, image: true, role: true } } }
     : {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, image: true, role: true } },
         replies: {
           include: repliesInclude(depth - 1),
           orderBy: { createdAt: "asc" as const },
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
         parentId: parentId || null,
       },
       include: {
-        author: { select: { id: true, name: true, image: true } },
+        author: { select: { id: true, name: true, image: true, role: true } },
       },
     });
 
