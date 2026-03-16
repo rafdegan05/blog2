@@ -257,12 +257,15 @@ export async function POST(request: NextRequest) {
     const { pipeline } = await import("@huggingface/transformers");
 
     // Create automatic speech recognition pipeline with Whisper
+    const cacheDir = process.env.HF_CACHE_DIR || path.join(os.homedir(), ".cache", "huggingface");
+    await mkdir(cacheDir, { recursive: true });
     const transcriber = await pipeline(
       "automatic-speech-recognition",
       "onnx-community/whisper-small",
       {
         dtype: "q4", // Use quantized model for faster inference
         device: "cpu",
+        cache_dir: cacheDir,
       }
     );
 

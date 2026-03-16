@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -43,10 +43,24 @@ export default function BlogContent({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [viewMode, setViewMode] = useState<ViewMode>("feed");
+  const [showCatDropdown, setShowCatDropdown] = useState(false);
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const catRef = useRef<HTMLDivElement>(null);
+  const tagRef = useRef<HTMLDivElement>(null);
 
   const activeSort = (searchParams.get("sort") as SortMode) || "latest";
   const activeCategory = searchParams.get("category") || "";
   const activeTag = searchParams.get("tag") || "";
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) setShowCatDropdown(false);
+      if (tagRef.current && !tagRef.current.contains(e.target as Node)) setShowTagDropdown(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   function buildUrl(overrides: Record<string, string>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -86,8 +100,9 @@ export default function BlogContent({
         </div>
       </header>
 
-      {/* ── Toolbar: Sort tabs + View toggle + Filters ── */}
+      {/* ── Toolbar: Sort tabs + Filters + View toggle ── */}
       <div className="engage-toolbar">
+        {/* Row 1: sort + view toggle */}
         <div className="engage-toolbar-left">
           <div className="engage-sort-tabs">
             <button
@@ -113,37 +128,113 @@ export default function BlogContent({
             </button>
           </div>
 
+          {/* Filter dropdowns */}
           {categories.length > 0 && (
-            <select
-              className="engage-filter-select"
-              value={activeCategory}
-              onChange={(e) => router.push(buildUrl({ category: e.target.value }))}
-            >
-              <option value="">{t.blog.allCategories}</option>
-              {categories.map((cat) => (
-                <option key={cat.slug} value={cat.slug}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            <div ref={catRef} className="engage-chip-dropdown">
+              <button
+                className={`engage-chip-trigger ${activeCategory ? "engage-chip-trigger-active" : ""}`}
+                onClick={() => {
+                  setShowCatDropdown(!showCatDropdown);
+                  setShowTagDropdown(false);
+                }}
+              >
+                <FolderIcon />
+                {activeCategory
+                  ? categories.find((c) => c.slug === activeCategory)?.name || activeCategory
+                  : t.blog.filterByCategory}
+                <ChevronDownIcon />
+              </button>
+              {showCatDropdown && (
+                <div className="engage-chip-panel">
+                  <div className="engage-chip-panel-header">
+                    <span>{t.blog.filterByCategory}</span>
+                    {activeCategory && (
+                      <button
+                        className="engage-chip-panel-clear"
+                        onClick={() => {
+                          router.push(buildUrl({ category: "" }));
+                          setShowCatDropdown(false);
+                        }}
+                      >
+                        {t.blog.clearFilters}
+                      </button>
+                    )}
+                  </div>
+                  <div className="engage-chip-list">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.slug}
+                        className={`engage-chip ${activeCategory === cat.slug ? "engage-chip-selected" : ""}`}
+                        onClick={() => {
+                          router.push(
+                            buildUrl({
+                              category: activeCategory === cat.slug ? "" : cat.slug,
+                            })
+                          );
+                          setShowCatDropdown(false);
+                        }}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
           {tags.length > 0 && (
-            <select
-              className="engage-filter-select"
-              value={activeTag}
-              onChange={(e) => router.push(buildUrl({ tag: e.target.value }))}
-            >
-              <option value="">{t.blog.allTags}</option>
-              {tags.map((tag) => (
-                <option key={tag.slug} value={tag.slug}>
-                  {tag.name}
-                </option>
-              ))}
-            </select>
+            <div ref={tagRef} className="engage-chip-dropdown">
+              <button
+                className={`engage-chip-trigger ${activeTag ? "engage-chip-trigger-active" : ""}`}
+                onClick={() => {
+                  setShowTagDropdown(!showTagDropdown);
+                  setShowCatDropdown(false);
+                }}
+              >
+                <TagIcon />
+                {activeTag
+                  ? `#${tags.find((tg) => tg.slug === activeTag)?.name || activeTag}`
+                  : t.blog.filterByTag}
+                <ChevronDownIcon />
+              </button>
+              {showTagDropdown && (
+                <div className="engage-chip-panel">
+                  <div className="engage-chip-panel-header">
+                    <span>{t.blog.filterByTag}</span>
+                    {activeTag && (
+                      <button
+                        className="engage-chip-panel-clear"
+                        onClick={() => {
+                          router.push(buildUrl({ tag: "" }));
+                          setShowTagDropdown(false);
+                        }}
+                      >
+                        {t.blog.clearFilters}
+                      </button>
+                    )}
+                  </div>
+                  <div className="engage-chip-list">
+                    {tags.map((tag) => (
+                      <button
+                        key={tag.slug}
+                        className={`engage-chip ${activeTag === tag.slug ? "engage-chip-selected" : ""}`}
+                        onClick={() => {
+                          router.push(buildUrl({ tag: activeTag === tag.slug ? "" : tag.slug }));
+                          setShowTagDropdown(false);
+                        }}
+                      >
+                        #{tag.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
         <div className="engage-toolbar-right">
+          {/* Active filter badges */}
           {hasFilters && (
             <div className="engage-active-filters">
               {activeCategory && (
@@ -648,6 +739,13 @@ function DocumentIcon() {
         strokeWidth={1}
         d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
       />
+    </svg>
+  );
+}
+function ChevronDownIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
     </svg>
   );
 }

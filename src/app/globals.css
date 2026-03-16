@@ -2811,17 +2811,131 @@
   background: color-mix(in oklch, var(--color-primary) 10%, transparent);
 }
 
-/* ── Filter select ── */
-.engage-filter-select {
-  padding: 0.3rem 1.75rem 0.3rem 0.625rem;
+/* ── Filter chip dropdown ── */
+.engage-chip-dropdown {
+  position: relative;
+}
+
+.engage-chip-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.35rem 0.625rem;
   font-size: 0.8125rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
+  font-weight: 600;
+  border-radius: 9999px;
   border: 1px solid var(--color-base-300);
   background: var(--color-base-100);
   color: var(--color-base-content);
+  opacity: 0.7;
   cursor: pointer;
-  appearance: auto;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.engage-chip-trigger:hover {
+  opacity: 1;
+  border-color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 5%, var(--color-base-100));
+}
+
+.engage-chip-trigger-active {
+  opacity: 1;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 10%, transparent);
+}
+
+.engage-chip-panel {
+  position: absolute;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  z-index: 50;
+  min-width: 14rem;
+  max-width: 20rem;
+  background: var(--color-base-100);
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 30px -4px oklch(0 0 0 / 0.15);
+  padding: 0.5rem;
+  animation: engage-chip-in 0.15s ease;
+}
+
+@keyframes engage-chip-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.engage-chip-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.375rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-base-content);
+  opacity: 0.45;
+}
+
+.engage-chip-panel-clear {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-error);
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.8;
+}
+
+.engage-chip-panel-clear:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.engage-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.engage-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid var(--color-base-300);
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+  opacity: 0.7;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.engage-chip:hover {
+  opacity: 1;
+  border-color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 8%, transparent);
+}
+
+.engage-chip-selected {
+  opacity: 1;
+  border-color: var(--color-primary);
+  color: white;
+  background: var(--color-primary);
 }
 
 /* ── Active filter badges ── */

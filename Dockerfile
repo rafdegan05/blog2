@@ -36,7 +36,8 @@ WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=3000 \
-    HOSTNAME="0.0.0.0"
+    HOSTNAME="0.0.0.0" \
+    HF_CACHE_DIR="/app/.cache/huggingface"
 
 # ffmpeg (needed for audio transcription)
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
@@ -62,6 +63,9 @@ COPY --from=prisma-cli --chown=nextjs:nodejs /prisma-cli/node_modules  /app/pris
 COPY --from=builder    --chown=nextjs:nodejs /app/prisma/seed.ts       /app/prisma-cli/prisma/seed.ts
 COPY --from=builder    --chown=nextjs:nodejs /app/prisma/migrate-transcripts.ts /app/prisma-cli/prisma/migrate-transcripts.ts
 COPY --from=builder    --chown=nextjs:nodejs /app/src/generated        /app/prisma-cli/src/generated
+
+# Hugging Face model cache (writable by nextjs user)
+RUN mkdir -p /app/.cache/huggingface && chown nextjs:nodejs /app/.cache/huggingface
 
 # Entrypoint
 COPY scripts/start.sh ./start.sh
