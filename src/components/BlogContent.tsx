@@ -11,6 +11,25 @@ import { useTranslation } from "@/components/LanguageProvider";
 type ViewMode = "feed" | "grid";
 type SortMode = "latest" | "popular" | "discussed";
 
+const REACTION_EMOJI: Record<string, string> = {
+  LIKE: "👍",
+  DISLIKE: "👎",
+  LOVE: "❤️",
+  LAUGH: "😂",
+  FIRE: "🔥",
+  CLAP: "👏",
+  ROCKET: "🚀",
+  THINK: "🤔",
+  SURPRISE: "😮",
+  SAD: "😢",
+  ANGRY: "😡",
+  EYES: "👀",
+  HUNDRED: "💯",
+  PRAY: "🙏",
+  SKULL: "💀",
+  HEART_EYES: "😍",
+};
+
 interface Post {
   slug: string;
   title: string;
@@ -21,6 +40,7 @@ interface Post {
   categories: { name: string; slug: string }[];
   tags: { name: string; slug: string }[];
   _count?: { comments: number; reactions?: number };
+  topReactions?: string[];
   readingTime?: number;
 }
 
@@ -469,7 +489,17 @@ function FeedCard({ post }: { post: Post }) {
 
       <div className="engage-feed-actions">
         <div className="engage-action-btn engage-action-reactions">
-          <HeartIcon />
+          {post.topReactions && post.topReactions.length > 0 ? (
+            <span className="flex -space-x-0.5">
+              {post.topReactions.map((type) => (
+                <span key={type} className="text-sm">
+                  {REACTION_EMOJI[type]}
+                </span>
+              ))}
+            </span>
+          ) : (
+            <ReactionIcon />
+          )}
           <span>{reactionCount}</span>
         </div>
         <Link href={`/blog/${post.slug}#comments`} className="engage-action-btn">
@@ -570,7 +600,18 @@ function GridCard({ post }: { post: Post }) {
 
           <div className="engage-grid-stats">
             <span className="engage-grid-stat">
-              <HeartIcon /> {reactionCount}
+              {post.topReactions && post.topReactions.length > 0 ? (
+                <span className="flex -space-x-0.5">
+                  {post.topReactions.map((type) => (
+                    <span key={type} className="text-sm">
+                      {REACTION_EMOJI[type]}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <ReactionIcon />
+              )}
+              {reactionCount}
             </span>
             <span className="engage-grid-stat">
               <CommentIcon /> {commentCount}
@@ -651,14 +692,14 @@ function GridIcon() {
     </svg>
   );
 }
-function HeartIcon() {
+function ReactionIcon() {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={2}
-        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+        d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
       />
     </svg>
   );

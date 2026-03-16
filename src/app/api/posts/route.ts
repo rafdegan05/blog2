@@ -60,6 +60,7 @@ export async function GET(request: NextRequest) {
         author: { select: { id: true, name: true, image: true } },
         categories: true,
         tags: true,
+        reactions: { select: { type: true } },
         _count: { select: { comments: true, reactions: true } },
       },
       orderBy,
@@ -70,7 +71,19 @@ export async function GET(request: NextRequest) {
   ]);
 
   return NextResponse.json({
-    posts: posts.map((p) => ({ ...p, readingTime: calcReadingTime(p.content) })),
+    posts: posts.map((p) => {
+      // Compute all reaction types by frequency (most popular first)
+      const typeCounts: Record<string, number> = {};
+      for (const r of p.reactions) {
+        typeCounts[r.type] = (typeCounts[r.type] || 0) + 1;
+      }
+      const topReactions = Object.entries(typeCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([type]) => type);
+
+      const { reactions: _reactions, ...rest } = p;
+      return { ...rest, topReactions, readingTime: calcReadingTime(p.content) };
+    }),
     pagination: {
       page,
       limit,
