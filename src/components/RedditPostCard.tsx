@@ -74,14 +74,15 @@ export default function RedditPostCard({ post }: RedditPostCardProps) {
       <div className="reddit-post-content">
         {/* Top meta line */}
         <div className="flex items-center gap-2 text-xs text-base-content/50 flex-wrap">
-          {post.categories.length > 0 && (
+          {post.categories.map((cat) => (
             <Link
-              href={`/blog?category=${post.categories[0].slug}`}
+              key={cat.slug}
+              href={`/blog?category=${cat.slug}`}
               className="badge badge-primary badge-xs hover:brightness-110"
             >
-              {post.categories[0].name}
+              {cat.name}
             </Link>
-          )}
+          ))}
           <span>·</span>
           <span>{t.userProfile.postedBy}</span>
           {post.author.id ? (

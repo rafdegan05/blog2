@@ -85,14 +85,15 @@ export default function PodcastCard({ podcast, featured = false }: PodcastCardPr
           {/* Info */}
           <div className="flex-1 flex flex-col p-6 lg:p-8 justify-center min-w-0">
             {/* Category */}
-            {podcast.categories.length > 0 && (
+            {podcast.categories.map((cat) => (
               <Link
-                href={`/podcasts?category=${podcast.categories[0].slug}`}
+                key={cat.slug}
+                href={`/podcasts?category=${cat.slug}`}
                 className="ted-category-label"
               >
-                {podcast.categories[0].name}
+                {cat.name}
               </Link>
-            )}
+            ))}
 
             <Link href={`/podcasts/${podcast.slug}`}>
               <h2 className="text-2xl lg:text-3xl font-bold leading-tight mb-3 group-hover:text-primary transition-colors duration-200 line-clamp-3">
@@ -178,14 +179,15 @@ export default function PodcastCard({ podcast, featured = false }: PodcastCardPr
       {/* Body */}
       <div className="ted-card-body">
         {/* Category */}
-        {podcast.categories.length > 0 && (
+        {podcast.categories.map((cat) => (
           <Link
-            href={`/podcasts?category=${podcast.categories[0].slug}`}
+            key={cat.slug}
+            href={`/podcasts?category=${cat.slug}`}
             className="ted-category-label"
           >
-            {podcast.categories[0].name}
+            {cat.name}
           </Link>
-        )}
+        ))}
 
         <Link href={`/podcasts/${podcast.slug}`}>
           <h3 className="font-bold text-[1.05rem] leading-snug mb-2 group-hover:text-primary transition-colors duration-200 line-clamp-2">

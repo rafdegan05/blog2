@@ -69,11 +69,11 @@ export default function PostCard({ post, featured = false }: PostCardProps) {
 
           {/* Meta */}
           <div className="flex items-center gap-3 mb-3">
-            {post.categories.length > 0 && (
-              <span className="badge badge-primary badge-sm font-medium">
-                {post.categories[0].name}
+            {post.categories.map((cat) => (
+              <span key={cat.slug} className="badge badge-primary badge-sm font-medium">
+                {cat.name}
               </span>
-            )}
+            ))}
             <span className="text-xs text-base-content/50">{formattedDate}</span>
             {readingTime > 0 && (
               <>
@@ -159,11 +159,11 @@ export default function PostCard({ post, featured = false }: PostCardProps) {
 
         {/* Meta row */}
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          {post.categories.length > 0 && (
-            <span className="badge badge-primary badge-xs font-medium">
-              {post.categories[0].name}
+          {post.categories.map((cat) => (
+            <span key={cat.slug} className="badge badge-primary badge-xs font-medium">
+              {cat.name}
             </span>
-          )}
+          ))}
           <span className="text-xs text-base-content/50">{formattedDate}</span>
           {readingTime > 0 && (
             <>

@@ -325,12 +325,14 @@ function FeedCard({ post }: { post: Post }) {
         {post.categories.length > 0 && (
           <>
             <span className="engage-feed-dot">in</span>
-            <Link
-              href={`/blog?category=${post.categories[0].slug}`}
-              className="engage-feed-community"
-            >
-              {post.categories[0].name}
-            </Link>
+            {post.categories.map((cat, i) => (
+              <span key={cat.slug} className="inline-flex items-center gap-1">
+                {i > 0 && <span className="engage-feed-dot">,</span>}
+                <Link href={`/blog?category=${cat.slug}`} className="engage-feed-community">
+                  {cat.name}
+                </Link>
+              </span>
+            ))}
           </>
         )}
         <span className="engage-feed-dot">·</span>
@@ -434,7 +436,13 @@ function GridCard({ post }: { post: Post }) {
             </div>
           )}
           {post.categories.length > 0 && (
-            <span className="engage-grid-badge">{post.categories[0].name}</span>
+            <div className="flex flex-wrap gap-1 absolute bottom-2 left-2">
+              {post.categories.map((cat) => (
+                <span key={cat.slug} className="engage-grid-badge">
+                  {cat.name}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 
