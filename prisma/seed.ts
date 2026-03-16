@@ -199,7 +199,7 @@ TypeScript is an essential tool for modern web development. Start using it today
       slug: "web-dev-weekly-ep1",
       description:
         "In our first episode, we discuss the future of React, Server Components, and what it means for web developers.",
-      audioUrl: "https://example.com/podcast/ep1.mp3",
+      audioUrl: "",
       duration: 2400,
       published: true,
       authorId: admin.id,

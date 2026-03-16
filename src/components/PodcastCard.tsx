@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/components/LanguageProvider";
 import { WHISPER_LANGUAGES } from "@/lib/captions";
+import WaveformPlayer from "@/components/WaveformPlayer";
 
 interface PodcastCardProps {
   podcast: {
@@ -14,6 +15,7 @@ interface PodcastCardProps {
     audioUrl: string;
     duration?: number | null;
     language?: string | null;
+    waveform?: number[] | null;
     createdAt: string;
     author: { name?: string | null; image?: string | null };
     categories: { name: string; slug: string }[];
@@ -45,71 +47,85 @@ export default function PodcastCard({ podcast, featured = false }: PodcastCardPr
   const formattedDate = new Date(podcast.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
+    day: "numeric",
   });
+
+  const hasTranscript =
+    podcast.transcript || (podcast.transcripts && podcast.transcripts.length > 0);
 
   /* ── Featured / Hero card ── */
   if (featured) {
     return (
-      <article className="ted-card-featured group">
-        <div className="flex flex-col lg:flex-row gap-0">
-          {/* Thumbnail */}
-          <Link
-            href={`/podcasts/${podcast.slug}`}
-            className="relative flex-shrink-0 w-full lg:w-[55%] aspect-video overflow-hidden"
-          >
-            {podcast.coverImage ? (
+      <Link href={`/podcasts/${podcast.slug}`} className="group block">
+        <article className="post-card-featured">
+          {/* Cover image */}
+          {podcast.coverImage ? (
+            <div className="relative aspect-[16/9] md:aspect-[21/9] overflow-hidden rounded-xl mb-6">
               <Image
                 src={podcast.coverImage}
                 alt={podcast.title}
                 fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 priority
               />
-            ) : (
-              <div className="w-full h-full bg-neutral flex items-center justify-center">
-                <WaveIcon className="w-20 h-20 text-neutral-content/20" />
-              </div>
-            )}
-            {/* Dark overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/10" />
-            {/* Play circle */}
-            <div className="ted-play-overlay">
-              <PlayCircle size={64} />
+              <div className="absolute inset-0 bg-gradient-to-t from-base-100/60 to-transparent" />
+              {podcast.duration && (
+                <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs font-semibold px-2 py-0.5 rounded">
+                  {formatDuration(podcast.duration)}
+                </div>
+              )}
             </div>
-            {/* Duration pill */}
-            {podcast.duration && (
-              <div className="ted-duration-pill">{formatDuration(podcast.duration)}</div>
-            )}
-          </Link>
+          ) : (
+            <div className="aspect-[16/9] md:aspect-[21/9] rounded-xl mb-6 bg-base-200 flex items-center justify-center">
+              <WaveIcon className="w-16 h-16 opacity-20" />
+            </div>
+          )}
 
-          {/* Info */}
-          <div className="flex-1 flex flex-col p-6 lg:p-8 justify-center min-w-0">
-            {/* Category */}
+          {/* Meta */}
+          <div className="flex items-center gap-3 mb-3 flex-wrap">
             {podcast.categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/podcasts?category=${cat.slug}`}
-                className="ted-category-label"
-              >
+              <span key={cat.slug} className="badge badge-primary badge-sm font-medium">
                 {cat.name}
-              </Link>
+              </span>
             ))}
-
-            <Link href={`/podcasts/${podcast.slug}`}>
-              <h2 className="text-2xl lg:text-3xl font-bold leading-tight mb-3 group-hover:text-primary transition-colors duration-200 line-clamp-3">
-                {podcast.title}
-              </h2>
-            </Link>
-
-            {podcast.description && (
-              <p className="text-base-content/55 leading-relaxed line-clamp-3 mb-4 text-[0.95rem]">
-                {podcast.description}
-              </p>
+            {hasTranscript && (
+              <span className="badge badge-ghost badge-sm gap-1">
+                <TranscriptIcon className="w-3 h-3" />
+                Transcript
+              </span>
             )}
+            <span className="text-xs text-base-content/50">{formattedDate}</span>
+            {podcast.duration && (
+              <>
+                <span className="text-xs text-base-content/30">·</span>
+                <span className="text-xs text-base-content/50">
+                  {formatMinutes(podcast.duration)}
+                </span>
+              </>
+            )}
+          </div>
 
-            {/* Author + Meta */}
-            <div className="flex items-center gap-3 mt-auto">
-              <div className="ted-avatar">
+          {/* Title */}
+          <h2 className="text-2xl md:text-3xl font-bold mb-3 group-hover:text-primary transition-colors duration-200 leading-tight">
+            {podcast.title}
+          </h2>
+
+          {/* Description */}
+          {podcast.description && (
+            <p className="text-base-content/60 text-lg leading-relaxed line-clamp-3 mb-4">
+              {podcast.description}
+            </p>
+          )}
+
+          {/* Waveform player */}
+          <div className="mb-4" onClick={(e) => e.preventDefault()}>
+            <WaveformPlayer src={podcast.audioUrl} peaks={podcast.waveform} compact />
+          </div>
+
+          {/* Author */}
+          <div className="flex items-center gap-3">
+            <div className="avatar placeholder">
+              <div className="bg-neutral text-neutral-content w-9 h-9 rounded-full flex items-center justify-center overflow-hidden">
                 {podcast.author.image ? (
                   <Image
                     src={podcast.author.image}
@@ -119,151 +135,148 @@ export default function PodcastCard({ podcast, featured = false }: PodcastCardPr
                     className="rounded-full object-cover"
                   />
                 ) : (
-                  <span>{podcast.author.name?.charAt(0)?.toUpperCase() || "?"}</span>
+                  <span className="text-xs font-medium">
+                    {podcast.author.name?.charAt(0)?.toUpperCase() || "?"}
+                  </span>
                 )}
               </div>
-              <div>
-                <p className="font-semibold text-sm">{podcast.author.name || t.common.anonymous}</p>
-                <div className="flex items-center gap-1.5 text-xs text-base-content/40">
-                  <span>{formattedDate}</span>
-                  {podcast.duration && (
-                    <>
-                      <span>·</span>
-                      <span>{formatMinutes(podcast.duration)}</span>
-                    </>
-                  )}
-                </div>
-              </div>
             </div>
+            <span className="text-sm font-medium text-base-content/70">
+              {podcast.author.name || t.common.anonymous}
+            </span>
           </div>
-        </div>
-      </article>
+        </article>
+      </Link>
     );
   }
 
   /* ── Regular card ── */
   return (
-    <article className="ted-card group">
-      {/* Thumbnail */}
-      <Link href={`/podcasts/${podcast.slug}`} className="ted-card-thumb">
+    <Link href={`/podcasts/${podcast.slug}`} className="group block">
+      <article className="post-card h-full flex flex-col">
+        {/* Cover image */}
         {podcast.coverImage ? (
-          <Image
-            src={podcast.coverImage}
-            alt={podcast.title}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-          />
+          <div className="relative aspect-[16/10] overflow-hidden rounded-lg mb-4">
+            <Image
+              src={podcast.coverImage}
+              alt={podcast.title}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            {podcast.duration && (
+              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-[0.7rem] font-semibold px-1.5 py-0.5 rounded">
+                {formatDuration(podcast.duration)}
+              </div>
+            )}
+          </div>
         ) : (
-          <div className="w-full h-full bg-neutral flex items-center justify-center">
-            <WaveIcon className="w-12 h-12 text-neutral-content/15" />
+          <div className="aspect-[16/10] rounded-lg mb-4 bg-base-200 flex items-center justify-center">
+            <WaveIcon className="w-10 h-10 opacity-15" />
           </div>
         )}
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        {/* Play circle */}
-        <div className="ted-play-overlay">
-          <PlayCircle size={48} />
+
+        {/* Meta row */}
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          {podcast.categories.map((cat) => (
+            <span key={cat.slug} className="badge badge-primary badge-xs font-medium">
+              {cat.name}
+            </span>
+          ))}
+          {hasTranscript && (
+            <span className="badge badge-ghost badge-xs gap-1">
+              <TranscriptIcon className="w-2.5 h-2.5" />
+            </span>
+          )}
+          <span className="text-xs text-base-content/50">{formattedDate}</span>
+          {podcast.duration && (
+            <>
+              <span className="text-xs text-base-content/30">·</span>
+              <span className="text-xs text-base-content/50">
+                {formatMinutes(podcast.duration)}
+              </span>
+            </>
+          )}
         </div>
-        {/* Duration pill */}
-        {podcast.duration && (
-          <div className="ted-duration-pill">{formatDuration(podcast.duration)}</div>
-        )}
-        {/* Transcript badge */}
-        {(podcast.transcript || (podcast.transcripts && podcast.transcripts.length > 0)) && (
-          <div className="ted-transcript-badge">
-            <TranscriptIcon className="w-3 h-3" />
-          </div>
-        )}
-      </Link>
 
-      {/* Body */}
-      <div className="ted-card-body">
-        {/* Category */}
-        {podcast.categories.map((cat) => (
-          <Link
-            key={cat.slug}
-            href={`/podcasts?category=${cat.slug}`}
-            className="ted-category-label"
-          >
-            {cat.name}
-          </Link>
-        ))}
+        {/* Title */}
+        <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors duration-200 leading-snug line-clamp-2">
+          {podcast.title}
+        </h3>
 
-        <Link href={`/podcasts/${podcast.slug}`}>
-          <h3 className="font-bold text-[1.05rem] leading-snug mb-2 group-hover:text-primary transition-colors duration-200 line-clamp-2">
-            {podcast.title}
-          </h3>
-        </Link>
-
+        {/* Description */}
         {podcast.description && (
-          <p className="text-sm text-base-content/50 leading-relaxed line-clamp-2 mb-3">
+          <p className="text-sm text-base-content/60 leading-relaxed line-clamp-2 mb-3">
             {podcast.description}
           </p>
         )}
 
-        {/* Footer */}
-        <div className="mt-auto flex items-center gap-2.5 pt-2">
-          <div className="ted-avatar ted-avatar-sm">
-            {podcast.author.image ? (
-              <Image
-                src={podcast.author.image}
-                alt=""
-                width={24}
-                height={24}
-                className="rounded-full object-cover"
-              />
-            ) : (
-              <span>{podcast.author.name?.charAt(0)?.toUpperCase() || "?"}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-base-content/45 min-w-0">
-            <span className="font-medium text-base-content/65 truncate">
+        {/* Compact waveform player */}
+        <div className="mb-3" onClick={(e) => e.preventDefault()}>
+          <WaveformPlayer src={podcast.audioUrl} peaks={podcast.waveform} compact />
+        </div>
+
+        {/* Footer: author + language */}
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-base-200">
+          <div className="flex items-center gap-2">
+            <div className="avatar placeholder">
+              <div className="bg-neutral text-neutral-content w-6 h-6 rounded-full flex items-center justify-center overflow-hidden">
+                {podcast.author.image ? (
+                  <Image
+                    src={podcast.author.image}
+                    alt=""
+                    width={24}
+                    height={24}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-[10px] font-medium">
+                    {podcast.author.name?.charAt(0)?.toUpperCase() || "?"}
+                  </span>
+                )}
+              </div>
+            </div>
+            <span className="text-xs text-base-content/60">
               {podcast.author.name || t.common.anonymous}
             </span>
-            <span>·</span>
-            <span className="whitespace-nowrap">{formattedDate}</span>
-            {podcast.duration && (
-              <>
-                <span>·</span>
-                <span className="whitespace-nowrap">{formatMinutes(podcast.duration)}</span>
-              </>
-            )}
-            {podcast.language &&
-              (() => {
-                const langInfo = WHISPER_LANGUAGES.find((l) => l.code === podcast.language);
-                return (
-                  <>
-                    <span>·</span>
-                    <span className="whitespace-nowrap">
-                      {langInfo
-                        ? uiLang === "it"
-                          ? langInfo.labelIt
-                          : langInfo.label
-                        : podcast.language.toUpperCase()}
-                    </span>
-                  </>
-                );
-              })()}
           </div>
-        </div>
-      </div>
 
-      {/* Accent bottom line on hover */}
-      <div className="ted-card-accent" />
-    </article>
+          {podcast.language &&
+            (() => {
+              const langInfo = WHISPER_LANGUAGES.find((l) => l.code === podcast.language);
+              return (
+                <span className="text-xs text-base-content/40">
+                  {langInfo
+                    ? uiLang === "it"
+                      ? langInfo.labelIt
+                      : langInfo.label
+                    : podcast.language.toUpperCase()}
+                </span>
+              );
+            })()}
+        </div>
+
+        {/* Tags */}
+        {podcast.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {podcast.tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag.slug}
+                className="text-[10px] text-base-content/40 font-medium uppercase tracking-wider"
+              >
+                #{tag.name}
+              </span>
+            ))}
+            {podcast.tags.length > 3 && (
+              <span className="text-[10px] text-base-content/30">+{podcast.tags.length - 3}</span>
+            )}
+          </div>
+        )}
+      </article>
+    </Link>
   );
 }
 
 /* ── Icons ── */
-
-function PlayCircle({ size = 48 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="23" fill="rgba(0,0,0,0.55)" stroke="white" strokeWidth="2" />
-      <path d="M20 16l12 8-12 8V16z" fill="white" />
-    </svg>
-  );
-}
 
 function WaveIcon({ className }: { className?: string }) {
   return (
