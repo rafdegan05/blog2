@@ -14,7 +14,7 @@ interface PostSummary {
   excerpt?: string | null;
   coverImage?: string | null;
   createdAt: string;
-  author: { name?: string | null; image?: string | null };
+  author: { id?: string; name?: string | null; image?: string | null };
   categories: { name: string; slug: string }[];
   tags: { name: string; slug: string }[];
   _count?: { comments: number };
@@ -28,10 +28,14 @@ interface PodcastSummary {
   coverImage?: string | null;
   audioUrl: string;
   duration?: number | null;
+  language?: string | null;
+  waveform?: number[] | null;
   createdAt: string;
   author: { name?: string | null; image?: string | null };
   categories: { name: string; slug: string }[];
   tags: { name: string; slug: string }[];
+  transcript?: string | null;
+  transcripts?: { language: string }[];
 }
 
 /** Intersection-Observer hook: adds `.revealed` when elements enter viewport */
