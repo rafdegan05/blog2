@@ -282,6 +282,12 @@ export const en = {
     editorMarkdown: "Markdown editor",
     viewReddit: "List view",
     viewCards: "Card view",
+    sortLatest: "Latest",
+    sortPopular: "Popular",
+    sortDiscussed: "Discussed",
+    communityInfo: "About",
+    communityDesc: "Discover stories, ideas and insights from the community.",
+    totalPosts: "Posts",
   },
 
   // ─── User Profile (public) ───

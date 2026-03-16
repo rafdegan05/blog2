@@ -283,6 +283,12 @@ export const it: Translations = {
     editorMarkdown: "Editor Markdown",
     viewReddit: "Vista lista",
     viewCards: "Vista schede",
+    sortLatest: "Recenti",
+    sortPopular: "Popolari",
+    sortDiscussed: "Discussi",
+    communityInfo: "Info",
+    communityDesc: "Scopri storie, idee e approfondimenti dalla community.",
+    totalPosts: "Post",
   },
 
   // ─── Profilo Utente (pubblico) ───

@@ -2849,7 +2849,741 @@
 }
 
 /* ═══════════════════════════════════════════════════════
-   Post Card styles
+   Engage / Reddit Blog Styles
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Blog Container ── */
+.engage-blog-container {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+/* ── Blog Header ── */
+.engage-blog-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.engage-blog-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.engage-blog-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-base-content);
+  opacity: 0.5;
+  margin-top: 0.25rem;
+}
+
+.engage-blog-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ── Toolbar ── */
+.engage-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-base-200);
+}
+
+.engage-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.engage-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ── Sort tabs ── */
+.engage-sort-tabs {
+  display: flex;
+  gap: 0.125rem;
+}
+
+.engage-sort-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-base-content);
+  opacity: 0.55;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.engage-sort-tab:hover {
+  opacity: 0.85;
+  background: var(--color-base-200);
+}
+
+.engage-sort-tab-active {
+  opacity: 1;
+  color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 10%, transparent);
+}
+
+/* ── Filter select ── */
+.engage-filter-select {
+  padding: 0.3rem 1.75rem 0.3rem 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-base-300);
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+  cursor: pointer;
+  appearance: auto;
+}
+
+/* ── Active filter badges ── */
+.engage-active-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.engage-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.engage-filter-badge:hover {
+  background: color-mix(in oklch, var(--color-error) 15%, transparent);
+  color: var(--color-error);
+}
+
+.engage-clear-btn {
+  font-size: 0.75rem;
+  color: var(--color-error);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.engage-clear-btn:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+/* ── View toggle ── */
+.engage-view-toggle {
+  display: flex;
+  border: 1px solid var(--color-base-300);
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.engage-view-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  background: var(--color-base-100);
+  border: none;
+  color: var(--color-base-content);
+  opacity: 0.4;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.engage-view-btn:not(:last-child) {
+  border-right: 1px solid var(--color-base-300);
+}
+
+.engage-view-btn:hover {
+  opacity: 0.7;
+  background: var(--color-base-200);
+}
+
+.engage-view-btn-active {
+  opacity: 1;
+  color: var(--color-primary);
+  background: color-mix(in oklch, var(--color-primary) 8%, transparent);
+}
+
+/* ── Layout: main + sidebar ── */
+.engage-blog-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .engage-blog-layout {
+    grid-template-columns: 1fr 18rem;
+  }
+}
+
+.engage-blog-main {
+  min-width: 0;
+}
+
+/* ── Feed view ── */
+.engage-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+/* ── Feed Card ── */
+.engage-feed-card {
+  background: var(--color-base-100);
+  border: 1px solid var(--color-base-200);
+  border-radius: 0.625rem;
+  padding: 0.875rem 1rem;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.engage-feed-card:hover {
+  border-color: var(--color-base-300);
+  box-shadow: 0 2px 12px oklch(0 0 0 / 0.06);
+}
+
+.engage-feed-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.engage-feed-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: white;
+}
+
+.engage-feed-author {
+  font-weight: 600;
+  color: var(--color-base-content);
+  text-decoration: none;
+}
+
+.engage-feed-author:hover {
+  text-decoration: underline;
+}
+
+.engage-feed-dot {
+  color: var(--color-base-content);
+  opacity: 0.35;
+  font-size: 0.75rem;
+}
+
+.engage-feed-community {
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: 0.8125rem;
+}
+
+.engage-feed-community:hover {
+  text-decoration: underline;
+}
+
+.engage-feed-date {
+  color: var(--color-base-content);
+  opacity: 0.45;
+  font-size: 0.75rem;
+}
+
+/* ── Feed body: text + thumbnail ── */
+.engage-feed-body {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.engage-feed-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.engage-feed-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.engage-feed-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.15s ease;
+}
+
+.engage-feed-title-link:hover .engage-feed-title {
+  color: var(--color-primary);
+}
+
+.engage-feed-excerpt {
+  font-size: 0.875rem;
+  color: var(--color-base-content);
+  opacity: 0.55;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.engage-feed-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+
+.engage-tag-pill {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  opacity: 0.7;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.engage-tag-pill:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.engage-feed-thumb {
+  width: 10rem;
+  height: 6.5rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .engage-feed-thumb {
+    display: block;
+  }
+}
+
+/* ── Feed action bar ── */
+.engage-feed-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-top: 0.625rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-base-200);
+}
+
+.engage-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-base-content);
+  opacity: 0.5;
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.engage-action-btn:hover {
+  opacity: 0.85;
+  background: var(--color-base-200);
+}
+
+.engage-action-reactions {
+  color: var(--color-error);
+  opacity: 0.6;
+}
+
+.engage-action-reactions:hover {
+  opacity: 1;
+  background: color-mix(in oklch, var(--color-error) 10%, transparent);
+}
+
+.engage-action-read {
+  margin-left: auto;
+  color: var(--color-primary);
+  opacity: 0.7;
+  font-weight: 700;
+}
+
+.engage-action-read:hover {
+  opacity: 1;
+}
+
+/* ── Grid view ── */
+.engage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+.engage-grid-card {
+  background: var(--color-base-100);
+  border: 1px solid var(--color-base-200);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.engage-grid-card:hover {
+  border-color: var(--color-base-300);
+  box-shadow: 0 6px 24px oklch(0 0 0 / 0.08);
+  transform: translateY(-2px);
+}
+
+.engage-grid-image {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--color-base-200);
+  overflow: hidden;
+}
+
+.engage-grid-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.engage-grid-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-radius: 0.25rem;
+  background: var(--color-primary);
+  color: var(--color-primary-content, #fff);
+}
+
+.engage-grid-body {
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.engage-grid-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 0.375rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color 0.15s ease;
+}
+
+.engage-grid-card:hover .engage-grid-title {
+  color: var(--color-primary);
+}
+
+.engage-grid-excerpt {
+  font-size: 0.8125rem;
+  color: var(--color-base-content);
+  opacity: 0.55;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 auto;
+}
+
+.engage-grid-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--color-base-200);
+}
+
+.engage-grid-author {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.engage-grid-avatar {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.engage-grid-author-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-base-content);
+  opacity: 0.7;
+}
+
+.engage-grid-meta {
+  display: flex;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  color: var(--color-base-content);
+  opacity: 0.45;
+}
+
+.engage-grid-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.engage-grid-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-base-content);
+  opacity: 0.45;
+}
+
+/* ── Sidebar ── */
+.engage-sidebar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .engage-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    position: sticky;
+    top: 5rem;
+    align-self: start;
+  }
+}
+
+.engage-sidebar-card {
+  background: var(--color-base-100);
+  border: 1px solid var(--color-base-200);
+  border-radius: 0.625rem;
+  padding: 1rem;
+}
+
+.engage-sidebar-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.625rem;
+  color: var(--color-base-content);
+  opacity: 0.7;
+}
+
+.engage-sidebar-text {
+  font-size: 0.8125rem;
+  color: var(--color-base-content);
+  opacity: 0.55;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.engage-sidebar-stats {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-base-200);
+}
+
+.engage-sidebar-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.engage-sidebar-stat-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.engage-sidebar-stat-label {
+  font-size: 0.6875rem;
+  color: var(--color-base-content);
+  opacity: 0.45;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.engage-sidebar-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.engage-sidebar-tag {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.25rem;
+  background: var(--color-base-200);
+  color: var(--color-base-content);
+  opacity: 0.7;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.engage-sidebar-tag:hover {
+  background: color-mix(in oklch, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+  opacity: 1;
+}
+
+.engage-sidebar-tag-active {
+  background: color-mix(in oklch, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+  opacity: 1;
+  font-weight: 700;
+}
+
+/* ── Empty state ── */
+.engage-empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: var(--color-base-100);
+  border: 1px solid var(--color-base-200);
+  border-radius: 0.75rem;
+}
+
+.engage-empty-icon {
+  font-size: 3.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.engage-empty-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-bottom: 0.375rem;
+}
+
+.engage-empty-text {
+  font-size: 0.875rem;
+  color: var(--color-base-content);
+  opacity: 0.5;
+}
+
+/* ── Mobile adjustments ── */
+@media (max-width: 640px) {
+  .engage-blog-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .engage-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .engage-toolbar-left,
+  .engage-toolbar-right {
+    justify-content: space-between;
+  }
+
+  .engage-sort-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .engage-feed-card {
+    padding: 0.75rem;
+  }
+
+  .engage-feed-title {
+    font-size: 1rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   Post Card styles (legacy — kept for compatibility)
    ═══════════════════════════════════════════════════════ */
 
 .post-card {

@@ -2,7 +2,13 @@ import BlogContent from "@/components/BlogContent";
 import { prisma } from "@/lib/prisma";
 
 interface BlogPageProps {
-  searchParams: Promise<{ page?: string; search?: string; category?: string; tag?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    search?: string;
+    category?: string;
+    tag?: string;
+    sort?: string;
+  }>;
 }
 
 async function getPosts(params: {
@@ -10,12 +16,14 @@ async function getPosts(params: {
   search?: string;
   category?: string;
   tag?: string;
+  sort?: string;
 }) {
   const url = new URL(`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/posts`);
   if (params.page) url.searchParams.set("page", params.page);
   if (params.search) url.searchParams.set("search", params.search);
   if (params.category) url.searchParams.set("category", params.category);
   if (params.tag) url.searchParams.set("tag", params.tag);
+  if (params.sort) url.searchParams.set("sort", params.sort);
 
   try {
     const res = await fetch(url.toString(), { cache: "no-store" });

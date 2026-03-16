@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search") || "";
   const category = searchParams.get("category") || "";
   const tag = searchParams.get("tag") || "";
+  const sort = searchParams.get("sort") || "latest";
 
   const where: Record<string, unknown> = { published: true, moderation: "APPROVED" };
 
@@ -36,6 +37,22 @@ export async function GET(request: NextRequest) {
     where.tags = { some: { slug: tag } };
   }
 
+  // Sorting
+  let orderBy: Record<string, unknown> | Record<string, unknown>[];
+  switch (sort) {
+    case "popular":
+      orderBy = { reactions: { _count: "desc" } };
+      break;
+    case "discussed":
+      orderBy = { comments: { _count: "desc" } };
+      break;
+    case "oldest":
+      orderBy = { createdAt: "asc" };
+      break;
+    default: // "latest"
+      orderBy = { createdAt: "desc" };
+  }
+
   const [posts, total] = await Promise.all([
     prisma.post.findMany({
       where,
@@ -45,7 +62,7 @@ export async function GET(request: NextRequest) {
         tags: true,
         _count: { select: { comments: true, reactions: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy,
       skip: (page - 1) * limit,
       take: limit,
     }),
