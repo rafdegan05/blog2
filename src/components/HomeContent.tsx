@@ -147,55 +147,89 @@ export default function HomeContent({
       </section>
 
       {/* ════════════════════════════════════════════════
-          Latest Posts — reuses PostCard
+          Latest Posts
          ════════════════════════════════════════════════ */}
       {posts.length > 0 && (
-        <section className="py-20 px-4 bg-gradient-to-br from-base-200 to-base-300">
-          <div className="max-w-6xl mx-auto">
-            <div className="reveal flex justify-between items-end mb-10">
-              <div>
-                <h2 className="text-3xl font-bold">{t.home.latestArticles}</h2>
-                <p className="text-base-content/50 text-sm mt-1">
-                  {t.blog.articlesPlural.replace("{n}", String(posts.length))}
-                </p>
+        <section className="py-24 px-4 bg-base-100 relative overflow-hidden">
+          {/* Decorative accent */}
+          <div className="absolute top-0 left-0 w-72 h-72 bg-primary/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+
+          <div className="max-w-6xl mx-auto relative">
+            {/* Section header */}
+            <div className="reveal text-center mb-14">
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+                <BookIcon />
+                {t.home.featureBlog}
               </div>
-              <Link href="/blog" className="btn btn-ghost btn-sm gap-1 shrink-0">
-                {t.home.viewAll}
-                <ChevronRightIcon />
-              </Link>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+                {t.home.latestArticles}
+              </h2>
+              <p className="text-base-content/50 max-w-lg mx-auto">{t.home.latestArticlesDesc}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post, i) => (
-                <div key={post.slug} className={`reveal-scale reveal-delay-${Math.min(i + 1, 3)}`}>
-                  <PostCard post={post} featured={i === 0 && posts.length >= 3} />
+            {/* Featured post (first) + side posts */}
+            {posts.length >= 3 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-10">
+                <div className="lg:col-span-3 reveal-scale reveal-delay-1">
+                  <PostCard post={posts[0]} featured />
                 </div>
-              ))}
+                <div className="lg:col-span-2 flex flex-col gap-6">
+                  {posts.slice(1).map((post, i) => (
+                    <div key={post.slug} className={`reveal-scale reveal-delay-${i + 2} flex-1`}>
+                      <PostCard post={post} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                {posts.map((post, i) => (
+                  <div
+                    key={post.slug}
+                    className={`reveal-scale reveal-delay-${Math.min(i + 1, 3)}`}
+                  >
+                    <PostCard post={post} />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* CTA */}
+            <div className="reveal text-center">
+              <Link
+                href="/blog"
+                className="btn btn-primary btn-wide gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow"
+              >
+                {t.home.exploreArticles}
+                <ArrowRightIcon />
+              </Link>
             </div>
           </div>
         </section>
       )}
 
       {/* ════════════════════════════════════════════════
-          Latest Podcasts — reuses PodcastCard
+          Latest Podcasts
          ════════════════════════════════════════════════ */}
       {podcasts.length > 0 && (
-        <section className="py-20 px-4 bg-gradient-to-br from-base-200 to-base-300">
-          <div className="max-w-6xl mx-auto">
-            <div className="reveal flex justify-between items-end mb-10">
-              <div>
-                <h2 className="text-3xl font-bold">{t.home.latestEpisodes}</h2>
-                <p className="text-base-content/50 text-sm mt-1">
-                  {t.podcasts.episodesPlural.replace("{n}", String(podcasts.length))}
-                </p>
+        <section className="py-24 px-4 bg-base-200 relative overflow-hidden">
+          {/* Decorative accent */}
+          <div className="absolute bottom-0 right-0 w-72 h-72 bg-secondary/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
+
+          <div className="max-w-6xl mx-auto relative">
+            {/* Section header */}
+            <div className="reveal text-center mb-14">
+              <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+                <MicIcon />
+                {t.home.featurePodcast}
               </div>
-              <Link href="/podcasts" className="btn btn-ghost btn-sm gap-1 shrink-0">
-                {t.home.viewAll}
-                <ChevronRightIcon />
-              </Link>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">
+                {t.home.latestEpisodes}
+              </h2>
+              <p className="text-base-content/50 max-w-lg mx-auto">{t.home.latestEpisodesDesc}</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
               {podcasts.map((podcast, i) => (
                 <div
                   key={podcast.slug}
@@ -204,6 +238,17 @@ export default function HomeContent({
                   <PodcastCard podcast={podcast} />
                 </div>
               ))}
+            </div>
+
+            {/* CTA */}
+            <div className="reveal text-center">
+              <Link
+                href="/podcasts"
+                className="btn btn-secondary btn-wide gap-2 shadow-lg shadow-secondary/20 hover:shadow-secondary/40 transition-shadow"
+              >
+                {t.home.exploreEpisodes}
+                <ArrowRightIcon />
+              </Link>
             </div>
           </div>
         </section>

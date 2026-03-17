@@ -89,8 +89,14 @@ export const it: Translations = {
     pillarGrowthDesc:
       "Seguo come le mie competenze e la mia mentalità evolvono nel tempo. Ogni post segna un passo avanti nel percorso.",
     latestArticles: "Ultime Riflessioni",
+    latestArticlesDesc:
+      "Pensieri, idee e lezioni dal mio percorso — documentate per chi è curioso.",
     latestEpisodes: "Ultimi Episodi",
+    latestEpisodesDesc:
+      "Conversazioni e approfondimenti da ascoltare ovunque, in qualsiasi momento.",
     viewAll: "Vedi tutti",
+    exploreArticles: "Esplora tutti gli articoli",
+    exploreEpisodes: "Esplora tutti gli episodi",
     ctaTitle: "Questo è il mio quaderno aperto.",
     ctaText:
       "Se qualcosa ti colpisce, mi piacerebbe sentire la tua prospettiva. Ogni conversazione arricchisce il pensiero.",

@@ -86,8 +86,13 @@ export const en = {
     pillarGrowthDesc:
       "I track how my skills and mindset evolve over time. Each post marks a step forward in the journey.",
     latestArticles: "Latest Reflections",
+    latestArticlesDesc:
+      "Thoughts, ideas, and lessons from my journey — documented for anyone curious.",
     latestEpisodes: "Latest Episodes",
+    latestEpisodesDesc: "Conversations and deep dives you can listen to anytime, anywhere.",
     viewAll: "View all",
+    exploreArticles: "Explore all articles",
+    exploreEpisodes: "Explore all episodes",
     ctaTitle: "This is my open notebook.",
     ctaText:
       "If something here resonates with you, I'd love to hear your perspective. Every conversation makes the thinking richer.",
